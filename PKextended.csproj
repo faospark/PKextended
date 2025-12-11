@@ -1,0 +1,142 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9C3C2616-666D-44AF-9263-5DD3E40136E2}</ProjectGuid>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>PKextended</RootNamespace>
+    <AssemblyName>PKextended</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <GameRegistryPath>HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1932640</GameRegistryPath>
+    <GamePath Condition="'$(GamePath)' == ''">$([MSBuild]::GetRegistryValueFromView('$(GameRegistryPath)', 'InstallLocation', null, RegistryView.Registry32))</GamePath>
+    <GamePath Condition="'$(GamePath)' == ''">$([MSBuild]::GetRegistryValueFromView('$(GameRegistryPath)', 'InstallLocation', null, RegistryView.Registry64))</GamePath>
+    <OutputPath>$(GamePath)\BepInEx\plugins\</OutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ZipFileName>$(MSBuildProjectName).zip</ZipFileName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="build\**" />
+    <EmbeddedResource Remove="build\**" />
+    <None Remove="build\**" />
+    <Compile Remove="forlater\**" />
+    <EmbeddedResource Remove="forlater\**" />
+    <None Remove="forlater\**" />
+    <Compile Remove="reserve\**" />
+    <EmbeddedResource Remove="reserve\**" />
+    <None Remove="reserve\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(GamePath)\BepInEx\core\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(GamePath)\BepInEx\core\BepInEx.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>$(GamePath)\BepInEx\core\BepInEx.Unity.IL2CPP.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(GamePath)\BepInEx\core\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    
+    <!-- Dependency on Suikoden_Fix -->
+    <Reference Include="Suikoden_Fix">
+      <HintPath>$(GamePath)\BepInEx\plugins\Suikoden_Fix.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    
+    <!-- Game assemblies -->
+    <Reference Include="GSDShare">
+      <HintPath>$(GamePath)\BepInEx\interop\GSDShare.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GSD2">
+      <HintPath>$(GamePath)\BepInEx\interop\GSD2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(GamePath)\BepInEx\interop\Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(GamePath)\BepInEx\interop\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GamePath)\BepInEx\interop\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(GamePath)\BepInEx\interop\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(GamePath)\BepInEx\interop\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(GamePath)\BepInEx\interop\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(GamePath)\BepInEx\interop\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.Postprocessing.Runtime">
+      <HintPath>$(GamePath)\BepInEx\interop\Unity.Postprocessing.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>%(Filename)%(Extension)</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+    
+  <!-- Custom target to zip the output after publish -->
+  <Target Name="ZipOutputAfterPublish" AfterTargets="Publish">
+    <Message Text="PublishDir: $(PublishDir)" Importance="high" />
+    <Message Text="ZipFileName: $(ZipFileName)" Importance="high" />
+
+    <Error Condition="!Exists('$(PublishDir)')" Text="PublishDir '$(PublishDir)' does not exist!" />
+
+    <Exec Condition="'$(OS)' == 'Windows_NT'" Command="powershell -NoProfile -Command &quot;Get-ChildItem -Path '$(PublishDir)' -Exclude '$(MSBuildProjectName).deps.json', '$(ZipFileName)' | Compress-Archive -DestinationPath '$(ProjectDir)build\$(ZipFileName)' -Force&quot;" />
+    <Exec Condition="'$(OS)' != 'Windows_NT'" Command="zip -r '$(ProjectDir)build\$(ZipFileName)' '$(PublishDir)' -x '$(MSBuildProjectName).deps.json' '$(ZipFileName)'" />
+
+    <Message Text="Zipped publish output to $(ProjectDir)build\$(ZipFileName)" Importance="high" />
+  </Target>
+</Project>

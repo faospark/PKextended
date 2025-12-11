@@ -1,0 +1,31 @@
+# Reserve folder - contains deprecated/unused features
+reserve/
+
+# Build outputs
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+bld/
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+packages/
+
+# Visual Studio cache files
+project.lock.json
+project.fragment.lock.json
+artifacts/
