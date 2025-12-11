@@ -1,0 +1,60 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore
+        run: dotnet restore PKextended.csproj
+
+      - name: Build Release
+        run: dotnet build PKextended.csproj --configuration Release --no-restore
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PKextended-Release
+          path: bin/Release/net6.0/PKextended.dll
+
+  publish-release:
+    runs-on: windows-latest
+    if: github.event_name == 'release'
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore
+        run: dotnet restore PKextended.csproj
+
+      - name: Build Release
+        run: dotnet build PKextended.csproj --configuration Release --no-restore
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bin/Release/net6.0/PKextended.dll
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
