@@ -15,22 +15,6 @@ Built to enhance the upscaled sprites from Project Kyaro with proper texture fil
 
 ## Features
 
-### Sprite Smoothing (Core Feature)
-
-Designed for **Project Kyaro's upscaled sprites** - adds proper texture filtering:
-
-- **High Quality** (default): Trilinear + 8x Anisotropic filtering
-- **Medium**: Trilinear + 4x Anisotropic  
-- **Low**: Bilinear + 2x Anisotropic
-- **Off**: Pure pixel art (no filtering)
-- Includes mipmap bias control to prevent white outlines
-
-### Additional Features
-
-- **Resolution Scaling**: Lower internal resolution for better performance (0.5x - 2.0x)
-- **Post-Processing Control**: Disable effects on sprites while keeping them on backgrounds
-- **Borderless Window Mode**: Instant alt-tab and better multi-monitor support
-
 ### Controller Prompt Override (v1.5+)
 
 Force specific controller button icons regardless of detected controller:
@@ -39,6 +23,25 @@ Force specific controller button icons regardless of detected controller:
 - **Xbox Support**: Xbox controller button prompts
 - **Smart Swapping**: Automatically swaps button icons throughout the entire game
 - **Minigame Support**: Intelligent button cycling for minigame prompts
+
+### Sprite Post Processing Correction
+
+- **Post-Processing Control**: Disable effects on sprites while keeping them on backgrounds, This is crucial to disable the game effects that affects the sprites Eg: Sand storm in Effect in battle appearing on seams of the battle sprites. 
+
+### Sprite Smoothing
+
+Designed for **Project Kyaro's upscaled sprites** - adds a more granular texture filtering Options:
+
+- **High Quality** (default): Trilinear + 8x Anisotropic filtering
+- **Medium**: Trilinear + 4x Anisotropic  
+- **Low**: Bilinear + 2x Anisotropic
+- **Off**: Pure pixel art (no filtering for the base game)
+- Includes mipmap bias control to prevent white outlines, Really more about your choice on how you want Project Kyaro Sprites to look
+
+### Additional Features
+
+- **Resolution Scaling**: Lower internal resolution for better performance (0.5x - 2.0x)
+- **Borderless Window Mode**: Instant alt-tab and better multi-monitor support, Only use this if you dont want to use the in-game full screen option
 
 ## Installation
 
@@ -71,7 +74,7 @@ EnableBorderlessWindow = false
 
 [Visual]
 # Remove post-processing effects from sprites (true/false)
-DisableSpritePostProcessing = false
+DisableSpritePostProcessing = true
 
 [Controller]
 # Force specific controller button prompts (true/false)
