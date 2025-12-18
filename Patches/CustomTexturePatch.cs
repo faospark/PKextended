@@ -102,13 +102,23 @@ public class CustomTexturePatch
             Sprite customSprite = LoadCustomSprite(originalName, value);
             if (customSprite != null)
             {
-                if (isBathBackground || isBgManager)
+                // Skip logging for sactx and character sprites to reduce spam
+                bool shouldSkipReplacementLog = originalName.StartsWith("sactx");
+                if (!shouldSkipReplacementLog && texturePathIndex.TryGetValue(originalName, out string replacementTexPath))
                 {
-                    Plugin.Log.LogInfo($"Replaced sprite: {originalName} (from {objectPath})");
+                    shouldSkipReplacementLog = replacementTexPath.ToLower().Contains("characters");
                 }
-                else
+                
+                if (!shouldSkipReplacementLog)
                 {
-                    Plugin.Log.LogInfo($"Replaced sprite: {originalName}");
+                    if (isBathBackground || isBgManager)
+                    {
+                        Plugin.Log.LogInfo($"Replaced sprite: {originalName} (from {objectPath})");
+                    }
+                    else
+                    {
+                        Plugin.Log.LogInfo($"Replaced sprite: {originalName}");
+                    }
                 }
                 value = customSprite;
             }
@@ -146,7 +156,18 @@ public class CustomTexturePatch
             if (customSprite != null)
             {
                 __result = customSprite;
-                Plugin.Log.LogInfo($"Replaced atlas sprite: {spriteName}");
+                
+                // Skip logging for sactx and character sprites to reduce spam
+                bool shouldSkipAtlasLog = spriteName.StartsWith("sactx");
+                if (!shouldSkipAtlasLog && texturePathIndex.TryGetValue(spriteName, out string atlasTexPath))
+                {
+                    shouldSkipAtlasLog = atlasTexPath.ToLower().Contains("characters");
+                }
+                
+                if (!shouldSkipAtlasLog)
+                {
+                    Plugin.Log.LogInfo($"Replaced atlas sprite: {spriteName}");
+                }
             }
         }
         
@@ -438,13 +459,24 @@ public class CustomTexturePatch
                     if (customSprite != null)
                     {
                         sr.sprite = customSprite;
-                        if (isBathBackground || isBgManager)
+                        
+                        // Skip logging for sactx and character sprites to reduce spam
+                        bool shouldSkipActivationLog = spriteName.StartsWith("sactx");
+                        if (!shouldSkipActivationLog && texturePathIndex.TryGetValue(spriteName, out string activationTexPath))
                         {
-                            Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
+                            shouldSkipActivationLog = activationTexPath.ToLower().Contains("characters");
                         }
-                        else
+                        
+                        if (!shouldSkipActivationLog)
                         {
-                            Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName}");
+                            if (isBathBackground || isBgManager)
+                            {
+                                Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
+                            }
+                            else
+                            {
+                                Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName}");
+                            }
                         }
                     }
                 }
@@ -476,6 +508,13 @@ public class CustomTexturePatch
         Texture2D customTexture = LoadCustomTexture(originalName);
         if (customTexture != null)
         {
+            // Skip logging for sactx and character textures to reduce spam
+            bool shouldSkipMaterialLog = originalName.StartsWith("sactx");
+            if (!shouldSkipMaterialLog && texturePathIndex.TryGetValue(originalName, out string materialTexPath))
+            {
+                shouldSkipMaterialLog = materialTexPath.ToLower().Contains("characters");
+            }
+            
             // Get original texture dimensions
             Texture2D originalTexture = value as Texture2D;
             if (originalTexture != null)
@@ -488,11 +527,17 @@ public class CustomTexturePatch
                 // This makes the custom texture display at the same visual size as the original
                 __instance.mainTextureScale = new Vector2(scaleX, scaleY);
                 
-                Plugin.Log.LogInfo($"Replaced texture: {originalName} (scale: {scaleX:F2}x, {scaleY:F2}y)");
+                if (!shouldSkipMaterialLog)
+                {
+                    Plugin.Log.LogInfo($"Replaced texture: {originalName} (scale: {scaleX:F2}x, {scaleY:F2}y)");
+                }
             }
             else
             {
-                Plugin.Log.LogInfo($"Replaced texture: {originalName}");
+                if (!shouldSkipMaterialLog)
+                {
+                    Plugin.Log.LogInfo($"Replaced texture: {originalName}");
+                }
             }
             value = customTexture;
         }
@@ -529,7 +574,17 @@ public class CustomTexturePatch
         Sprite customSprite = LoadCustomSprite(originalName, value);
         if (customSprite != null)
         {
-            Plugin.Log.LogInfo($"Replaced UI sprite: {originalName}");
+            // Skip logging for sactx and character sprites to reduce spam
+            bool shouldSkipUILog = originalName.StartsWith("sactx");
+            if (!shouldSkipUILog && texturePathIndex.TryGetValue(originalName, out string uiTexPath))
+            {
+                shouldSkipUILog = uiTexPath.ToLower().Contains("characters");
+            }
+            
+            if (!shouldSkipUILog)
+            {
+                Plugin.Log.LogInfo($"Replaced UI sprite: {originalName}");
+            }
             value = customSprite;
         }
     }
@@ -566,7 +621,17 @@ public class CustomTexturePatch
         Sprite customSprite = LoadCustomSprite(originalName, value);
         if (customSprite != null)
         {
-            Plugin.Log.LogInfo($"Replaced UI override sprite: {originalName}");
+            // Skip logging for sactx and character sprites to reduce spam
+            bool shouldSkipOverrideLog = originalName.StartsWith("sactx");
+            if (!shouldSkipOverrideLog && texturePathIndex.TryGetValue(originalName, out string overrideTexPath))
+            {
+                shouldSkipOverrideLog = overrideTexPath.ToLower().Contains("characters");
+            }
+            
+            if (!shouldSkipOverrideLog)
+            {
+                Plugin.Log.LogInfo($"Replaced UI override sprite: {originalName}");
+            }
             value = customSprite;
         }
     }
@@ -829,9 +894,19 @@ public class CustomTexturePatch
             // Higher resolution = higher pixelsPerUnit to maintain same display size
             pixelsPerUnit = originalSprite.pixelsPerUnit * scaleRatio;
             
-            Plugin.Log.LogInfo($"Texture scaling: {spriteName}");
-            Plugin.Log.LogInfo($"  Original: {originalWidth}x{originalHeight} @ {originalSprite.pixelsPerUnit} ppu");
-            Plugin.Log.LogInfo($"  Custom: {customWidth}x{customHeight} @ {pixelsPerUnit:F2} ppu (scale: {scaleRatio:F2}x)");
+            // Skip logging for sactx and character sprites to reduce spam
+            bool shouldSkipScalingLog = spriteName.StartsWith("sactx");
+            if (!shouldSkipScalingLog && texturePathIndex.TryGetValue(spriteName, out string scalingTexPath))
+            {
+                shouldSkipScalingLog = scalingTexPath.ToLower().Contains("characters");
+            }
+            
+            if (!shouldSkipScalingLog)
+            {
+                Plugin.Log.LogInfo($"Texture scaling: {spriteName}");
+                Plugin.Log.LogInfo($"  Original: {originalWidth}x{originalHeight} @ {originalSprite.pixelsPerUnit} ppu");
+                Plugin.Log.LogInfo($"  Custom: {customWidth}x{customHeight} @ {pixelsPerUnit:F2} ppu (scale: {scaleRatio:F2}x)");
+            }
         }
 
         // Create sprite from texture with adjusted properties
@@ -851,7 +926,18 @@ public class CustomTexturePatch
 
         // Cache the sprite for reuse
         customSpriteCache[spriteName] = sprite;
-        Plugin.Log.LogInfo($"Created and cached sprite: {spriteName} (pivot: {pivot}, ppu: {pixelsPerUnit:F2})");
+        
+        // Skip logging for sactx and character sprites to reduce spam
+        bool shouldSkipCacheLog = spriteName.StartsWith("sactx");
+        if (!shouldSkipCacheLog && texturePathIndex.TryGetValue(spriteName, out string cacheTexPath))
+        {
+            shouldSkipCacheLog = cacheTexPath.ToLower().Contains("characters");
+        }
+        
+        if (!shouldSkipCacheLog)
+        {
+            Plugin.Log.LogInfo($"Created and cached sprite: {spriteName} (pivot: {pivot}, ppu: {pixelsPerUnit:F2})");
+        }
         
         return sprite;
     }
@@ -932,7 +1018,14 @@ public class CustomTexturePatch
 
             // Cache the texture for reuse
             customTextureCache[textureName] = texture;
-            Plugin.Log.LogInfo($"Loaded and cached custom texture: {textureName} ({texture.width}x{texture.height}) from {Path.GetExtension(filePath)}");
+            
+            // Skip logging for sactx and character textures to reduce spam
+            bool shouldSkipLoadLog = textureName.StartsWith("sactx") || filePath.ToLower().Contains("characters");
+            
+            if (!shouldSkipLoadLog)
+            {
+                Plugin.Log.LogInfo($"Loaded and cached custom texture: {textureName} ({texture.width}x{texture.height}) from {Path.GetExtension(filePath)}");
+            }
             
             return texture;
         }
