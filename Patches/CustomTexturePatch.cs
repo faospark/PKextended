@@ -264,7 +264,13 @@ public class CustomTexturePatch
     /// </summary>
     public static void ScanAndReplaceBathSprites(HDBath instance)
     {
-        if (instance == null) return;
+        if (instance == null)
+        {
+            Plugin.Log.LogWarning("ScanAndReplaceBathSprites: instance is null");
+            return;
+        }
+        
+        Plugin.Log.LogInfo($"ScanAndReplaceBathSprites: Checking HDBath instance at {GetGameObjectPath(instance.gameObject)}");
         
         // The HDBath component is attached to the bath_X GameObject
         // Get the SpriteRenderer on the same GameObject
@@ -290,34 +296,57 @@ public class CustomTexturePatch
         }
         else
         {
-            // If the SpriteRenderer isn't on this GameObject, scan parent BathBG/bg
-            var bathBG = GameObject.Find("AppRoot/BathBG");
+            Plugin.Log.LogInfo($"No SpriteRenderer on HDBath instance, scanning from parent GameObject...");
+            
+            // The HDBath instance tells us where BathBG is - use its parent!
+            var bathBG = instance.gameObject; // This IS the BathBG GameObject
             if (bathBG != null)
             {
+                Plugin.Log.LogInfo($"Scanning BathBG at: {GetGameObjectPath(bathBG)}");
                 var bgTransform = bathBG.transform.Find("bg");
                 if (bgTransform != null)
                 {
-                    Plugin.Log.LogInfo("Scanning BathBG/bg for bath sprites...");
-                    foreach (Transform child in bgTransform)
+                    Plugin.Log.LogInfo($"  Found 'bg' child, scanning for bath sprites...");
+                    int found = 0;
+                    
+                    // Use GetChild() for Il2Cpp compatibility instead of foreach
+                    for (int i = 0; i < bgTransform.childCount; i++)
                     {
+                        Transform child = bgTransform.GetChild(i);
                         if (child.name.StartsWith("bath_"))
                         {
+                            found++;
                             var childSr = child.GetComponent<SpriteRenderer>();
                             if (childSr != null && childSr.sprite != null)
                             {
                                 string childSpriteName = childSr.sprite.name;
+                                Plugin.Log.LogInfo($"  Found bath sprite: {childSpriteName} (in texture index: {texturePathIndex.ContainsKey(childSpriteName)})");
                                 if (texturePathIndex.ContainsKey(childSpriteName))
                                 {
+                                    Plugin.Log.LogInfo($"  Attempting to load custom sprite for: {childSpriteName}");
                                     Sprite customSprite = LoadCustomSprite(childSpriteName, childSr.sprite);
                                     if (customSprite != null)
                                     {
                                         childSr.sprite = customSprite;
-                                        Plugin.Log.LogInfo($"✓ Replaced bath sprite in BathBG/bg: {childSpriteName}");
+                                        Plugin.Log.LogInfo($"✓ Replaced bath sprite: {childSpriteName}");
+                                    }
+                                    else
+                                    {
+                                        Plugin.Log.LogWarning($"LoadCustomSprite returned null for: {childSpriteName}");
                                     }
                                 }
                             }
                         }
                     }
+                    
+                    if (found == 0)
+                    {
+                        Plugin.Log.LogWarning("BathBG/bg exists but no bath_ GameObjects found as children");
+                    }
+                }
+                else
+                {
+                    Plugin.Log.LogWarning("BathBG found but 'bg' child not found");
                 }
             }
         }
@@ -834,9 +863,13 @@ public class CustomTexturePatch
     /// </summary>
     private static Sprite LoadCustomSprite(string spriteName, Sprite originalSprite)
     {
+        bool isBathSprite = spriteName.StartsWith("bath_");
+        
         // Check cache first for performance
         if (customSpriteCache.TryGetValue(spriteName, out Sprite cachedSprite))
         {
+            if (isBathSprite) Plugin.Log.LogInfo($"    [LoadCustomSprite] Cache hit for {spriteName}");
+            
             // Only validate cache for dynamic sprites (characters, portraits) that get destroyed
             // Static sprites (backgrounds) can be trusted in cache
             if (texturePathIndex.TryGetValue(spriteName, out string cachedPath))
@@ -868,10 +901,15 @@ public class CustomTexturePatch
             }
         }
 
+        if (isBathSprite) Plugin.Log.LogInfo($"    [LoadCustomSprite] No cache, calling LoadCustomTexture for {spriteName}");
+        
         // Try to load texture from file (will use texture cache internally)
         Texture2D texture = LoadCustomTexture(spriteName);
         if (texture == null)
+        {
+            if (isBathSprite) Plugin.Log.LogWarning($"    [LoadCustomSprite] LoadCustomTexture returned null for {spriteName}");
             return null;
+        }
 
         // Preserve original sprite properties if available
         Vector2 pivot = originalSprite != null ? originalSprite.pivot / originalSprite.rect.size : new Vector2(0.5f, 0.5f);
@@ -949,9 +987,13 @@ public class CustomTexturePatch
     /// </summary>
     private static Texture2D LoadCustomTexture(string textureName)
     {
+        bool isBathTexture = textureName.StartsWith("bath_");
+        
         // Check cache first for performance
         if (customTextureCache.TryGetValue(textureName, out Texture2D cachedTexture))
         {
+            if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] Texture cache hit for {textureName}, validating...");
+            
             // Only validate cache for dynamic textures (characters, portraits) that get destroyed
             // Static textures (backgrounds) can be trusted in cache
             if (texturePathIndex.TryGetValue(textureName, out string cachedPath))
@@ -972,25 +1014,44 @@ public class CustomTexturePatch
                 }
                 else
                 {
-                    // Static texture - trust the cache without validation for performance
-                    return cachedTexture;
+                    // Static texture - but still validate it's not null/destroyed
+                    if (cachedTexture != null && cachedTexture)
+                    {
+                        if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] Returning valid cached texture");
+                        return cachedTexture;
+                    }
+                    else
+                    {
+                        if (isBathTexture) Plugin.Log.LogWarning($"      [LoadCustomTexture] Cached texture was null/destroyed, removing from cache");
+                        customTextureCache.Remove(textureName); // Clean up invalid cache entry
+                    }
                 }
             }
             else
             {
-                // Fallback: trust cache if path not found
-                return cachedTexture;
+                // Fallback: validate before trusting cache
+                if (cachedTexture != null && cachedTexture)
+                    return cachedTexture;
+                else
+                    customTextureCache.Remove(textureName);
             }
         }
         
         // Look up full path from index (supports subfolders)
         if (!texturePathIndex.TryGetValue(textureName, out string filePath))
+        {
+            if (isBathTexture) Plugin.Log.LogWarning($"      [LoadCustomTexture] {textureName} not found in texture index");
             return null;
+        }
+
+        if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] Found path: {filePath}");
+        if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] File exists: {File.Exists(filePath)}");
 
         try
         {
             // Load image file
             byte[] fileData = File.ReadAllBytes(filePath);
+            if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] Read {fileData.Length} bytes");
             
             // Create texture with mipmaps enabled for better quality
             // IMPORTANT: Must be readable for IL2CPP
