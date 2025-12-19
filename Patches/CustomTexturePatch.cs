@@ -1313,26 +1313,6 @@ public class CustomTexturePatch
         // Build texture index (supports subfolders)
         BuildTextureIndex();
         
-        // DIAGNOSTIC: Log summon/gate effect textures in index
-        var summonTextures = texturePathIndex.Where(kvp => 
-            kvp.Key.Contains("gat") || 
-            kvp.Key.Contains("summon") || 
-            kvp.Key.StartsWith("m_") ||
-            kvp.Key.Contains("sactx")).ToList();
-        
-        if (summonTextures.Count > 0)
-        {
-            Plugin.Log.LogInfo($"[DIAGNOSTIC] Found {summonTextures.Count} summon/gate texture(s) in index:");
-            foreach (var kvp in summonTextures)
-            {
-                Plugin.Log.LogInfo($"  [{kvp.Key}] -> {Path.GetFileName(kvp.Value)}");
-            }
-        }
-        else
-        {
-            Plugin.Log.LogWarning("[DIAGNOSTIC] No summon/gate textures found in index!");
-        }
-        
         // Preload bath sprites for instant replacement
         PreloadBathSprites();
         
