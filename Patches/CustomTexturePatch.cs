@@ -61,6 +61,71 @@ public class CustomTexturePatch
     }
 
     /// <summary>
+    /// Try to replace bath sprites in the BathBG GameObject
+    /// Checks for new BathBG instances and replaces bath_1 through bath_5 sprites
+    /// </summary>
+    /// <returns>Number of sprites replaced, or -1 if BathBG not found or not a new instance</returns>
+    private static int TryReplaceBathSprites()
+    {
+        if (!Plugin.Config.EnableCustomTextures.Value)
+            return -1;
+
+        var bathBG = GameObject.Find("AppRoot/BathBG");
+        if (bathBG == null)
+            return -1;
+
+        int currentInstanceID = bathBG.GetInstanceID();
+        
+        // Only replace if this is a NEW BathBG instance (different from last one)
+        if (currentInstanceID == lastBathBGInstanceID)
+            return -1;
+
+        if (Plugin.Config.DetailedTextureLog.Value)
+        {
+            Plugin.Log.LogInfo($"New BathBG instance detected (ID: {currentInstanceID}, previous: {lastBathBGInstanceID})");
+        }
+        
+        lastBathBGInstanceID = currentInstanceID;
+        
+        // Get all SpriteRenderers in BathBG
+        var bathRenderers = bathBG.GetComponentsInChildren<SpriteRenderer>(true);
+        int replaced = 0;
+        
+        foreach (var sr in bathRenderers)
+        {
+            if (sr.sprite != null)
+            {
+                string srSpriteName = sr.sprite.name;
+                
+                // Check if this is a bath sprite and we have a custom texture
+                if (srSpriteName.StartsWith("bath_") && texturePathIndex.ContainsKey(srSpriteName))
+                {
+                    // Load custom sprite (this internally handles texture caching)
+                    Sprite customSprite = LoadCustomSprite(srSpriteName, sr.sprite);
+                    if (customSprite != null)
+                    {
+                        sr.sprite = customSprite;
+                        
+                        if (Plugin.Config.DetailedTextureLog.Value)
+                        {
+                            Plugin.Log.LogInfo($"Replaced bath sprite: {srSpriteName} in new BathBG instance");
+                        }
+                        
+                        replaced++;
+                    }
+                }
+            }
+        }
+        
+        if (replaced > 0 && Plugin.Config.DetailedTextureLog.Value)
+        {
+            Plugin.Log.LogInfo($"Replaced {replaced} bath sprite(s) in new BathBG instance");
+        }
+        
+        return replaced;
+    }
+
+    /// <summary>
     /// Try to replace a texture with a custom version
     /// Returns true if replacement was successful
     /// </summary>

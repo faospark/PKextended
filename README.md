@@ -60,6 +60,20 @@ Replace game sprites/textures with custom PNG files:
 3. Name files exactly as the original texture (use `LogReplaceableTextures = true` to discover names)
 4. Supports subfolders for organization
 
+**Priority Override System:**
+- **`00-Mods/` folder** has **highest priority** - textures here override base textures
+- Recommended structure:
+  ```
+  Textures/
+  ├── GSD1/              ← Base textures
+  ├── GSD2/              ← Base textures
+  └── 00-Mods/           ← Your custom mods (HIGHEST PRIORITY)
+      ├── MyMod1/
+      └── MyMod2/
+  ```
+- Example: If both `GSD1/launcher_menu_gs1.png` and `00-Mods/MyMod/launcher_menu_gs1.png` exist, the mod version will be used
+- Users can add their own texture mods to `00-Mods/` without modifying base texture packs
+
 **Discovery Mode:**
 - Set `LogReplaceableTextures = true` to see which textures are detectable
 - Check BepInEx console for `[Replaceable Sprite]` and `[Replaceable UI Sprite]` messages
