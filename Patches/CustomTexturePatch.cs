@@ -5,6 +5,7 @@ using UnityEngine.U2D; // SpriteAtlas support
 using UnityEngine.SceneManagement; // Scene loading
 using UnityEngine.AddressableAssets; // Addressables support
 using UnityEngine.ResourceManagement.AsyncOperations; // AsyncOperationHandle
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -1033,8 +1034,8 @@ public class CustomTexturePatch
         );
 
         // Prevent Unity from destroying the sprite
-        Object.DontDestroyOnLoad(sprite);
-        Object.DontDestroyOnLoad(texture);
+        UnityEngine.Object.DontDestroyOnLoad(sprite);
+        UnityEngine.Object.DontDestroyOnLoad(texture);
 
         // Cache the sprite for reuse
         customSpriteCache[spriteName] = sprite;
@@ -1107,7 +1108,7 @@ public class CustomTexturePatch
             if (!UnityEngine.ImageConversion.LoadImage(texture, fileData))
             {
                 Plugin.Log.LogError($"Failed to load image: {filePath}");
-                Object.Destroy(texture);
+                UnityEngine.Object.Destroy(texture);
                 return null;
             }
 
@@ -1120,7 +1121,7 @@ public class CustomTexturePatch
             texture.Apply(true, false); // updateMipmaps=true, makeNoLongerReadable=false
             
             // Prevent Unity from unloading the texture
-            Object.DontDestroyOnLoad(texture);
+            UnityEngine.Object.DontDestroyOnLoad(texture);
 
             // Cache the texture for reuse
             customTextureCache[textureName] = texture;
@@ -1155,13 +1156,24 @@ public class CustomTexturePatch
         // Supported image extensions
         string[] extensions = { "*.png", "*.jpg", "*.jpeg", "*.tga" };
         
-        // Recursively find all image files in all subdirectories
+        // PRIORITY SYSTEM:
+        // 1. Scan all folders EXCEPT 00-Mods first (base textures)
+        // 2. Scan 00-Mods folder LAST (override textures - highest priority)
+        
+        string modsFolder = Path.Combine(customTexturesPath, "00-Mods");
+        bool hasModsFolder = Directory.Exists(modsFolder);
+        
+        // Phase 1: Scan base textures (all folders except 00-Mods)
         foreach (string extension in extensions)
         {
             string[] files = Directory.GetFiles(customTexturesPath, extension, SearchOption.AllDirectories);
             
             foreach (string filePath in files)
             {
+                // Skip files in 00-Mods folder for now (will process later)
+                if (hasModsFolder && filePath.StartsWith(modsFolder, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                
                 string textureName = Path.GetFileNameWithoutExtension(filePath);
                 
                 // Check for duplicate texture names
@@ -1171,14 +1183,62 @@ public class CustomTexturePatch
                     string existingRelative = existingPath.Replace(customTexturesPath, "").TrimStart('\\', '/');
                     string newRelative = filePath.Replace(customTexturesPath, "").TrimStart('\\', '/');
                     
-                    Plugin.Log.LogWarning($"Duplicate texture name '{textureName}':");
-                    Plugin.Log.LogWarning($"  Using: {existingRelative}");
-                    Plugin.Log.LogWarning($"  Ignoring: {newRelative}");
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogWarning($"Duplicate texture name '{textureName}':");
+                        Plugin.Log.LogWarning($"  Using: {existingRelative}");
+                        Plugin.Log.LogWarning($"  Ignoring: {newRelative}");
+                    }
                 }
                 else
                 {
                     texturePathIndex[textureName] = filePath;
                 }
+            }
+        }
+        
+        // Phase 2: Scan 00-Mods folder LAST (overrides base textures)
+        if (hasModsFolder)
+        {
+            int overrideCount = 0;
+            
+            foreach (string extension in extensions)
+            {
+                string[] modFiles = Directory.GetFiles(modsFolder, extension, SearchOption.AllDirectories);
+                
+                foreach (string filePath in modFiles)
+                {
+                    string textureName = Path.GetFileNameWithoutExtension(filePath);
+                    string modRelative = filePath.Replace(customTexturesPath, "").TrimStart('\\', '/');
+                    
+                    // Check if this overrides an existing texture
+                    if (texturePathIndex.ContainsKey(textureName))
+                    {
+                        string existingPath = texturePathIndex[textureName];
+                        string existingRelative = existingPath.Replace(customTexturesPath, "").TrimStart('\\', '/');
+                        
+                        // OVERRIDE: Replace with mod version
+                        texturePathIndex[textureName] = filePath;
+                        overrideCount++;
+                        
+                        if (Plugin.Config.DetailedTextureLog.Value)
+                        {
+                            Plugin.Log.LogInfo($"[Override] '{textureName}':");
+                            Plugin.Log.LogInfo($"  Base: {existingRelative}");
+                            Plugin.Log.LogInfo($"  Mod:  {modRelative}");
+                        }
+                    }
+                    else
+                    {
+                        // New texture from mods folder
+                        texturePathIndex[textureName] = filePath;
+                    }
+                }
+            }
+            
+            if (overrideCount > 0)
+            {
+                Plugin.Log.LogInfo($"Applied {overrideCount} texture override(s) from 00-Mods folder");
             }
         }
     }
@@ -1212,8 +1272,8 @@ public class CustomTexturePatch
                         SpriteMeshType.FullRect
                     );
 
-                    Object.DontDestroyOnLoad(sprite);
-                    Object.DontDestroyOnLoad(texture);
+                    UnityEngine.Object.DontDestroyOnLoad(sprite);
+                    UnityEngine.Object.DontDestroyOnLoad(texture);
 
                     preloadedBathSprites[bathName] = sprite;
                     
@@ -1382,7 +1442,7 @@ public class CustomTexturePatch
         int replacedCount = 0;
 
         // Scan all SpriteRenderers
-        var spriteRenderers = Object.FindObjectsOfType<SpriteRenderer>();
+        var spriteRenderers = UnityEngine.Object.FindObjectsOfType<SpriteRenderer>();
         foreach (var sr in spriteRenderers)
         {
             if (sr.sprite != null)
@@ -1411,7 +1471,7 @@ public class CustomTexturePatch
         }
 
         // Scan all UI Images
-        var images = Object.FindObjectsOfType<Image>();
+        var images = UnityEngine.Object.FindObjectsOfType<Image>();
         Plugin.Log.LogInfo($"Found {images.Length} UI Image components in scene");
         
         foreach (var img in images)
@@ -1461,7 +1521,7 @@ public class CustomTexturePatch
         }
 
         // Scan all RawImages
-        var rawImages = Object.FindObjectsOfType<RawImage>();
+        var rawImages = UnityEngine.Object.FindObjectsOfType<RawImage>();
         foreach (var raw in rawImages)
         {
             if (raw.texture != null)
