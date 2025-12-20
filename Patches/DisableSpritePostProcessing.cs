@@ -2,7 +2,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 
-namespace PKextended.Patches;
+namespace PKCore.Patches;
 
 public class DisableSpritePostProcessingPatch
 {

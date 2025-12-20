@@ -1,6 +1,6 @@
 using BepInEx.Configuration;
 
-namespace PKextended;
+namespace PKCore;
 
 public sealed class ModConfiguration
 {
@@ -28,6 +28,7 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> EnableCustomTextures { get; private set; }
     public ConfigEntry<bool> LogReplaceableTextures { get; private set; }
     public ConfigEntry<bool> LogTexturePaths { get; private set; }
+    public ConfigEntry<bool> DetailedTextureLog { get; private set; }
 
     public ModConfiguration(ConfigFile config)
     {
@@ -56,7 +57,7 @@ public sealed class ModConfiguration
         EnableResolutionScaling = _config.Bind(
             "Display",
             "EnableResolutionScaling",
-            true,
+            false,
             "Enable resolution scaling. When true, the game will render at ResolutionScale multiplier and stretch to fill the window."
         );
 
@@ -88,7 +89,7 @@ public sealed class ModConfiguration
         ForceControllerPrompts = _config.Bind(
             "Controller",
             "ForceControllerPrompts",
-            false,
+            true,
             "Force specific controller button prompts regardless of detected controller. Useful if you prefer PS/Xbox/Switch button icons."
         );
 
@@ -107,7 +108,7 @@ public sealed class ModConfiguration
             "Custom Textures",
             "EnableCustomTextures",
             true,
-            "Enable custom texture replacement. Place PNG files in BepInEx/plugins/PKextended/Textures/ with the same name as the game texture (e.g., hp_telepo_00.png)."
+            "Enable custom texture replacement. Place PNG files in BepInEx/plugins/PKCore/Textures/ with the same name as the game texture (e.g., hp_telepo_00.png)."
         );
 
         LogReplaceableTextures = _config.Bind(
@@ -122,6 +123,13 @@ public sealed class ModConfiguration
             "LogTexturePaths",
             false,
             "Include GameObject hierarchy paths in texture logs. Enable for detailed debugging to see exactly which UI elements use which textures."
+        );
+
+        DetailedTextureLog = _config.Bind(
+            "Custom Textures",
+            "DetailedTextureLog",
+            false,
+            "Enable detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation (only errors will be logged)."
         );
     }
 }

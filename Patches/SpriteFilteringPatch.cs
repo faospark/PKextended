@@ -1,7 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
 
-namespace PKextended.Patches;
+namespace PKCore.Patches;
 
 public class SpriteFilteringPatch
 {

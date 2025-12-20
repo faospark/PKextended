@@ -5,8 +5,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{9C3C2616-666D-44AF-9263-5DD3E40136E2}</ProjectGuid>
     <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>PKextended</RootNamespace>
-    <AssemblyName>PKextended</AssemblyName>
+    <RootNamespace>PKCore</RootNamespace>
+    <AssemblyName>PKCore</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace PKextended.Patches;
+namespace PKCore.Patches;
 
 public class BorderlessWindowPatch
 {

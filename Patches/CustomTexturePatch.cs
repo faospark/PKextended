@@ -9,7 +9,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PKextended.Patches;
+namespace PKCore.Patches;
 
 /// <summary>
 /// Replaces game textures/sprites with custom PNG files from a folder
@@ -20,6 +20,7 @@ public class CustomTexturePatch
     private static Dictionary<string, Texture2D> customTextureCache = new Dictionary<string, Texture2D>();
     private static Dictionary<string, string> texturePathIndex = new Dictionary<string, string>(); // Maps texture name -> full file path
     private static HashSet<string> loggedTextures = new HashSet<string>(); // Track logged textures to prevent duplicates
+    private static HashSet<string> replacedTextures = new HashSet<string>(); // Track replaced textures to prevent duplicate replacement logs
     private static Dictionary<string, Sprite> preloadedBathSprites = new Dictionary<string, Sprite>(); // Preloaded bath_1 to bath_5
     private static int lastBathBGInstanceID = -1; // Track the last BathBG instance we replaced
     private static string customTexturesPath;
@@ -76,9 +77,12 @@ public class CustomTexturePatch
 
         value = customTexture;
 
-        if (logReplacement && !ShouldSkipSpamLog(textureName))
+        // Only log if enabled, not already logged, and not spam
+        if (logReplacement && Plugin.Config.DetailedTextureLog.Value && 
+            !replacedTextures.Contains(textureName) && !ShouldSkipSpamLog(textureName))
         {
             Plugin.Log.LogInfo($"Replaced texture: {textureName}");
+            replacedTextures.Add(textureName);
         }
 
         return true;
@@ -99,12 +103,15 @@ public class CustomTexturePatch
 
         value = customSprite;
 
-        if (logReplacement && !ShouldSkipSpamLog(spriteName))
+        // Only log if enabled, not already logged, and not spam
+        if (logReplacement && Plugin.Config.DetailedTextureLog.Value && 
+            !replacedTextures.Contains(spriteName) && !ShouldSkipSpamLog(spriteName))
         {
             string message = string.IsNullOrEmpty(context)
                 ? $"Replaced sprite: {spriteName}"
                 : $"Replaced sprite: {spriteName} ({context})";
             Plugin.Log.LogInfo(message);
+            replacedTextures.Add(spriteName);
         }
 
         return true;
@@ -848,7 +855,13 @@ public class CustomTexturePatch
             {
                 __instance.sprite = customSprite;
                 __instance.overrideSprite = customSprite;
-                Plugin.Log.LogInfo($"Replaced UI sprite on enable: {spriteName}");
+                
+                // Only log if enabled and not already logged
+                if (Plugin.Config.DetailedTextureLog.Value && !replacedTextures.Contains(spriteName))
+                {
+                    Plugin.Log.LogInfo($"Replaced UI sprite on enable: {spriteName}");
+                    replacedTextures.Add(spriteName);
+                }
             }
         }
     }
@@ -1006,20 +1019,6 @@ public class CustomTexturePatch
             // Adjust pixelsPerUnit proportionally
             // Higher resolution = higher pixelsPerUnit to maintain same display size
             pixelsPerUnit = originalSprite.pixelsPerUnit * scaleRatio;
-            
-            // Skip logging for sactx and character sprites to reduce spam
-            bool shouldSkipScalingLog = spriteName.StartsWith("sactx");
-            if (!shouldSkipScalingLog && texturePathIndex.TryGetValue(spriteName, out string scalingTexPath))
-            {
-                shouldSkipScalingLog = scalingTexPath.ToLower().Contains("characters");
-            }
-            
-            if (!shouldSkipScalingLog)
-            {
-                Plugin.Log.LogInfo($"Texture scaling: {spriteName}");
-                Plugin.Log.LogInfo($"  Original: {originalWidth}x{originalHeight} @ {originalSprite.pixelsPerUnit} ppu");
-                Plugin.Log.LogInfo($"  Custom: {customWidth}x{customHeight} @ {pixelsPerUnit:F2} ppu (scale: {scaleRatio:F2}x)");
-            }
         }
 
         // Create sprite from texture with adjusted properties
@@ -1040,18 +1039,6 @@ public class CustomTexturePatch
         // Cache the sprite for reuse
         customSpriteCache[spriteName] = sprite;
         
-        // Skip logging for sactx and character sprites to reduce spam
-        bool shouldSkipCacheLog = spriteName.StartsWith("sactx");
-        if (!shouldSkipCacheLog && texturePathIndex.TryGetValue(spriteName, out string cacheTexPath))
-        {
-            shouldSkipCacheLog = cacheTexPath.ToLower().Contains("characters");
-        }
-        
-        if (!shouldSkipCacheLog)
-        {
-            Plugin.Log.LogInfo($"Created and cached sprite: {spriteName} (pivot: {pivot}, ppu: {pixelsPerUnit:F2})");
-        }
-        
         return sprite;
     }
 
@@ -1062,13 +1049,9 @@ public class CustomTexturePatch
     /// </summary>
     private static Texture2D LoadCustomTexture(string textureName)
     {
-        bool isBathTexture = textureName.StartsWith("bath_");
-        
         // Check cache first for performance
         if (customTextureCache.TryGetValue(textureName, out Texture2D cachedTexture))
         {
-            if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] Texture cache hit for {textureName}, validating...");
-            
             // Only validate cache for dynamic textures (characters, portraits) that get destroyed
             // Static textures (backgrounds) can be trusted in cache
             if (texturePathIndex.TryGetValue(textureName, out string cachedPath))
@@ -1091,15 +1074,9 @@ public class CustomTexturePatch
                 {
                     // Static texture - but still validate it's not null/destroyed
                     if (cachedTexture != null && cachedTexture)
-                    {
-                        if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] Returning valid cached texture");
                         return cachedTexture;
-                    }
                     else
-                    {
-                        if (isBathTexture) Plugin.Log.LogWarning($"      [LoadCustomTexture] Cached texture was null/destroyed, removing from cache");
                         customTextureCache.Remove(textureName); // Clean up invalid cache entry
-                    }
                 }
             }
             else
@@ -1114,19 +1091,12 @@ public class CustomTexturePatch
         
         // Look up full path from index (supports subfolders)
         if (!texturePathIndex.TryGetValue(textureName, out string filePath))
-        {
-            if (isBathTexture) Plugin.Log.LogWarning($"      [LoadCustomTexture] {textureName} not found in texture index");
             return null;
-        }
-
-        if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] Found path: {filePath}");
-        if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] File exists: {File.Exists(filePath)}");
 
         try
         {
             // Load image file
             byte[] fileData = File.ReadAllBytes(filePath);
-            if (isBathTexture) Plugin.Log.LogInfo($"      [LoadCustomTexture] Read {fileData.Length} bytes");
             
             // Create texture with mipmaps enabled for better quality
             // IMPORTANT: Must be readable for IL2CPP
@@ -1158,7 +1128,7 @@ public class CustomTexturePatch
             // Skip logging for sactx and character textures to reduce spam
             bool shouldSkipLoadLog = textureName.StartsWith("sactx") || filePath.ToLower().Contains("characters");
             
-            if (!shouldSkipLoadLog)
+            if (!shouldSkipLoadLog && Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"Loaded and cached custom texture: {textureName} ({texture.width}x{texture.height}) from {Path.GetExtension(filePath)}");
             }
@@ -1219,39 +1189,20 @@ public class CustomTexturePatch
     /// </summary>
     private static void PreloadBathSprites()
     {
-        Plugin.Log.LogInfo("Preloading bath sprites...");
         int preloaded = 0;
-
-        // Debug: show what's in the texture index for bath sprites
-        var bathTextures = texturePathIndex.Where(kvp => kvp.Key.StartsWith("bath_")).ToList();
-        if (bathTextures.Count > 0)
-        {
-            Plugin.Log.LogInfo($"Found {bathTextures.Count} bath texture(s) in index:");
-            foreach (var kvp in bathTextures)
-            {
-                Plugin.Log.LogInfo($"  {kvp.Key} -> {kvp.Value}");
-            }
-        }
-        else
-        {
-            Plugin.Log.LogInfo("No bath textures found in index (looking for 'bath_*')");
-        }
 
         for (int i = 1; i <= 5; i++)
         {
             string bathName = $"bath_{i}";
-            Plugin.Log.LogInfo($"Checking for: {bathName}");
             
             // Check if custom texture exists
             if (texturePathIndex.ContainsKey(bathName))
             {
-                Plugin.Log.LogInfo($"  Found in index: {bathName}");
                 // Load texture
                 Texture2D texture = LoadCustomTexture(bathName);
                 if (texture != null)
                 {
                     // Create sprite with default properties (will be adjusted when actually used)
-                    // Using 1920x1080 as default size, 1 ppu as default
                     Sprite sprite = Sprite.Create(
                         texture,
                         new Rect(0, 0, texture.width, texture.height),
@@ -1265,17 +1216,15 @@ public class CustomTexturePatch
                     Object.DontDestroyOnLoad(texture);
 
                     preloadedBathSprites[bathName] = sprite;
-                    Plugin.Log.LogInfo($"  Preloaded: {bathName} ({texture.width}x{texture.height})");
+                    
+                    // Only log details if verbose logging enabled
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogInfo($"  Preloaded: {bathName} ({texture.width}x{texture.height})");
+                    }
+                    
                     preloaded++;
                 }
-                else
-                {
-                    Plugin.Log.LogWarning($"  Failed to load texture for: {bathName}");
-                }
-            }
-            else
-            {
-                Plugin.Log.LogInfo($"  Not found in index: {bathName}");
             }
         }
 
@@ -1283,19 +1232,15 @@ public class CustomTexturePatch
         {
             Plugin.Log.LogInfo($"Preloaded {preloaded} bath sprite(s) for instant replacement");
         }
-        else
-        {
-            Plugin.Log.LogInfo("No bath sprites found to preload");
-        }
     }
 
     public static void Initialize()
     {
         // Set custom textures folder path
-        // BepInEx/plugins/PKextended/Textures/
+        // BepInEx/plugins/PKCore/Textures/
         customTexturesPath = Path.Combine(
             BepInEx.Paths.PluginPath,
-            "PKextended",
+            "PKCore",
             "Textures"
         );
 
@@ -1319,22 +1264,26 @@ public class CustomTexturePatch
         // Log indexed textures
         if (texturePathIndex.Count > 0)
         {
-            Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} custom texture(s):");
+            Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} custom texture(s) ready to use");
             
-            // Group by directory for cleaner output
-            var groupedByDir = texturePathIndex
-                .GroupBy(kvp => Path.GetDirectoryName(kvp.Value))
-                .OrderBy(g => g.Key);
-            
-            foreach (var dirGroup in groupedByDir)
+            // Only show detailed list if verbose logging is enabled
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
-                string relativePath = dirGroup.Key.Replace(customTexturesPath, "").TrimStart('\\', '/');
-                string displayPath = string.IsNullOrEmpty(relativePath) ? "[Root]" : relativePath;
+                // Group by directory for cleaner output
+                var groupedByDir = texturePathIndex
+                    .GroupBy(kvp => Path.GetDirectoryName(kvp.Value))
+                    .OrderBy(g => g.Key);
                 
-                Plugin.Log.LogInfo($"  {displayPath}/");
-                foreach (var texture in dirGroup.OrderBy(kvp => kvp.Key))
+                foreach (var dirGroup in groupedByDir)
                 {
-                    Plugin.Log.LogInfo($"    - {texture.Key}{Path.GetExtension(texture.Value)}");
+                    string relativePath = dirGroup.Key.Replace(customTexturesPath, "").TrimStart('\\', '/');
+                    string displayPath = string.IsNullOrEmpty(relativePath) ? "[Root]" : relativePath;
+                    
+                    Plugin.Log.LogInfo($"  {displayPath}/");
+                    foreach (var texture in dirGroup.OrderBy(kvp => kvp.Key))
+                    {
+                        Plugin.Log.LogInfo($"    - {texture.Key}{Path.GetExtension(texture.Value)}");
+                    }
                 }
             }
         }

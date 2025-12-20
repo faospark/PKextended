@@ -1,15 +1,49 @@
 # Changelog
 
-All notable changes to PKextended will be documented in this file.
+All notable changes to PKCore (formerly PKextended) will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### TODO
+- Refactor bath background replacement logic to reduce code duplication
+
+---
+
+## [1.6.0] - 2025-12-20
+
+### Changed - Project Rebranding
+
+> **⚠️ BREAKING CHANGE**: This release includes a project rename that requires manual migration for existing users.
+
+- **Project Name**: `PKextended` (Project Kyaro Extended) → **`PKCore`** (Project Kyaro Core)
+- **Plugin ID**: `faospark.pkextended` → `faospark.pkcore`
+- **DLL Name**: `PKextended.dll` → `PKCore.dll`
+- **Config File**: `faospark.pkextended.cfg` → `faospark.pkcore.cfg`
+- **Custom Textures Folder**: `BepInEx/plugins/PKextended/Textures/` → `BepInEx/plugins/PKCore/Textures/`
+
+**Migration Steps for Existing Users:**
+1. Rename your custom textures folder from `PKextended` to `PKCore` (if you have custom textures)
+2. Remove old `PKextended.dll` from `BepInEx/plugins/`
+3. Add new `PKCore.dll` to `BepInEx/plugins/`
+4. (Optional) Copy settings from old config file to new one, or let it regenerate with defaults
+
+**Rationale:**
+The name "Extended" implied adding new features to the game, but this mod is the **core foundation** for how Project Kyaro works now. Previously, Project Kyaro relied on Special K for texture replacement, but PKCore now provides native BepInEx-based texture replacement, sprite filtering, and visual enhancements. "Core" accurately reflects its role as the essential enhancement suite that powers Project Kyaro.
+
+### Improved
+- **Reduced Log Spam**: Texture replacements are now logged only once per texture instead of multiple times when accessed through different code paths
+- **Simplified Texture Loading**: Removed verbose "Replaced texture", "Texture scaling", and "Created and cached sprite" messages - only essential "Loaded and cached" message remains
+- **Concise Texture List**: Startup now shows "Indexed X custom texture(s) ready to use" instead of enumerating all textures (detailed list still available when `DetailedTextureLog = true`)
+- **New Config Option**: `DetailedTextureLog` - enables/disables detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation.
+
 ### Fixed
 - **Bath Background In-Game Switcher**: Custom bath backgrounds now work with in-game switching
-  - **Known Limitation**: Visual update requires screen refresh (exit and re-enter bath scene when using the in game switcher) to display the new custom background immediately. The sprite is replaced in memory correctly, but Unity's render pipeline doesn't automatically redraw until triggered by a scene change or menu interaction.
+  - **Known Limitation**: Visual update requires screen refresh (exit and re-enter bath scene) to display the new custom background immediately. The sprite is replaced in memory correctly, but Unity's render pipeline doesn't automatically redraw until triggered by a scene change or menu interaction.
+
+---
 
 ## [1.5.1] - 2025-12-16
 

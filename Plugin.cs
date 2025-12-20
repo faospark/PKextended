@@ -2,12 +2,12 @@ using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
-using PKextended.Patches;
+using PKCore.Patches;
 using UnityEngine;
 
-namespace PKextended;
+namespace PKCore;
 
-[BepInPlugin("faospark.pkextended", "PKCore", "1.5.1")]
+[BepInPlugin("faospark.pkcore", "PKCore (Project Kyaro Core)", "1.6.0")]
 [BepInDependency("d3xMachina.suikoden_fix", BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BasePlugin
 {
@@ -20,7 +20,7 @@ public class Plugin : BasePlugin
         Instance = this;
         Log = base.Log;
 
-        Log.LogInfo("Loading PKextended (Project Kyaro Extended) by faospark...");
+        Log.LogInfo("Loading PKCore (Project Kyaro Core) by faospark...");
 
         Config = new ModConfiguration(base.Config);
         Config.Init();
@@ -30,12 +30,12 @@ public class Plugin : BasePlugin
         
         ApplyPatches();
 
-        Log.LogInfo("PKextended loaded successfully!");
+        Log.LogInfo("PKCore loaded successfully!");
     }
 
     private void ApplyPatches()
     {
-        var harmony = new Harmony("faospark.pkextended");
+        var harmony = new Harmony("faospark.pkcore");
 
         // Apply Sprite Filtering patch independently
         if (Config.SpriteFilteringQuality.Value > 0)

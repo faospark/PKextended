@@ -1,11 +1,11 @@
-# PKextended - Project Kyaro Extended
+# PKCore - Project Kyaro Core
 
 **By faospark**  
-**Current Version: 1.5.1**
+**Current Version: 1.6.0**
 
-A companion mod to **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)** that adds sprite smoothing, anti-aliasing, performance scaling, and controller prompt customization for **Suikoden I & II HD Remaster**.
+The **core companion mod** for **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)** that provides sprite smoothing, anti-aliasing, texture replacement, and visual enhancements for **Suikoden I & II HD Remaster**.
 
-Built to enhance the upscaled sprites from Project Kyaro with proper texture filtering and modern rendering features.
+Built as the foundational enhancement suite for Project Kyaro's upscaled sprites, replacing the previous Special K dependency with native BepInEx integration.
 
 ## Requirements
 
@@ -49,13 +49,14 @@ Designed for **Project Kyaro's upscaled sprites** - adds a more granular texture
 
 Replace game sprites/textures with custom PNG files:
 
-- **Works Best For**: Event backgrounds, some UI elements, static sprites
-- **Limited Support**: Animated UI sprites, character sprites, battle backgrounds  
-- **Recommended**: Use with [SpecialK](https://www.special-k.info/) for comprehensive texture replacement
+- **Works Best For**: Event backgrounds, UI elements, static sprites, bath backgrounds
+- **Limited Support**: Animated UI sprites, character sprites, battle backgrounds
+- **Not Supported**: Summon effects (`Eff_tex_Summon_*.png`)
+- **Legacy**: Use with [SpecialK](https://www.special-k.info/) for comprehensive texture replacement including summons for Legacy versions
 
 **Usage:**
 1. Enable `EnableCustomTextures = true` in config
-2. Place PNG files in `BepInEx/plugins/PKextended/Textures/`
+2. Place PNG files in `BepInEx/plugins/PKCore/Textures/`
 3. Name files exactly as the original texture (use `LogReplaceableTextures = true` to discover names)
 4. Supports subfolders for organization
 
@@ -69,8 +70,8 @@ Replace game sprites/textures with custom PNG files:
 1. Install **BepInEx 6.0.0-pre.2 IL2CPP**
 2. Install **[Suikoden Fix](https://github.com/d3xMachina/BepInEx.Suikoden)** (highly recommended)
 3. Install **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)** sprites (optional, but this mod is designed for them)
-4. Place **PKextended.dll** in `BepInEx\plugins\`
-5. Launch game (config auto-generates in `BepInEx\config\faospark.pkextended.cfg`)
+4. Place **PKCore.dll** in `BepInEx\plugins\`
+5. Launch game (config auto-generates in `BepInEx\config\faospark.pkcore.cfg`)
 
 ## Configuration
 
@@ -113,6 +114,11 @@ EnableCustomTextures = false
 
 # Log all replaceable textures to help discover texture names (true/false)
 LogReplaceableTextures = false
+
+# Enable detailed texture logging (true/false)
+# Shows replacement confirmations and full texture list on startup
+# Disable for silent operation - only errors will be logged
+DetailedTextureLog = false
 ```
 
 ## Quick Presets
@@ -156,7 +162,19 @@ Fullscreen = -1
 
 ## Changelog
 
-### Version 1.5 (Current)
+### Version 1.6.0 (Current)
+**Project Rebranding:**
+- **Name Change**: PKextended (Project Kyaro Extended) → **PKCore (Project Kyaro Core)**
+- **Folder Change**: `BepInEx/plugins/PKextended/` → `BepInEx/plugins/PKCore/`
+- **Config File**: `faospark.pkextended.cfg` → `faospark.pkcore.cfg`
+
+> **⚠️ Migration Required**: Existing users must rename their custom textures folder from `PKextended` to `PKCore`. See migration guide below.
+
+**Improvements:**
+- **Reduced Log Spam**: Texture replacements are now logged only once per texture (previously logged multiple times)
+- **New Config Option**: `DetailedTextureLog` - disable to silence replacement logs for cleaner console output
+
+### Version 1.5
 **New Features:**
 - **Controller Prompt Override**: Force specific controller button icons
   - PlayStation (PS4/PS5), Xbox, and Generic controller support
@@ -176,6 +194,23 @@ Fullscreen = -1
 - **Resolution Scaling**: Performance optimization (0.5x - 2.0x)
 - **Post-Processing Control**: Disable sprite effects
 - **Borderless Window Mode**: Fullscreen windowed mode support
+
+## Migration Guide (v1.5 → v1.6)
+
+If you're upgrading from PKextended to PKCore:
+
+1. **Rename Custom Textures Folder** (if you have custom textures):
+   - Old: `BepInEx/plugins/PKextended/Textures/`
+   - New: `BepInEx/plugins/PKCore/Textures/`
+   
+2. **Config File** (optional - will auto-generate):
+   - Old: `BepInEx/config/faospark.pkextended.cfg`
+   - New: `BepInEx/config/faospark.pkcore.cfg`
+   - You can copy your old settings to the new file, or let it regenerate with defaults
+
+3. **DLL File**:
+   - Remove old `PKextended.dll` from `BepInEx/plugins/`
+   - Add new `PKCore.dll` to `BepInEx/plugins/`
 
 ## Development
 

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-namespace PKextended.Patches
+namespace PKCore.Patches
 {
     /// <summary>
     /// Global sprite swap patch that intercepts ALL Image.sprite assignments
