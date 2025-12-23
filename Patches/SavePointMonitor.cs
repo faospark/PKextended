@@ -76,6 +76,10 @@ public class SavePointSpriteMonitor : MonoBehaviour
                 // Try to get custom sprite (from cache or load it)
                 if (cachedCustomSprite != null)
                 {
+                    // IMPORTANT: Duplicate assignment is intentional and necessary!
+                    // Setting the sprite twice ensures it "sticks" in IL2CPP/Unity.
+                    // Removing the duplicate breaks texture replacement. Do not remove!
+                    spriteRenderer.sprite = cachedCustomSprite;
                     spriteRenderer.sprite = cachedCustomSprite;
                     // Log less frequently to avoid spam if it fights the animator constanty
                     // if (Time.frameCount % 60 == 0) 
@@ -87,6 +91,9 @@ public class SavePointSpriteMonitor : MonoBehaviour
                     Sprite loadedSprite = CustomTexturePatch.LoadCustomSprite(currentSpriteName, spriteRenderer.sprite);
                     if (loadedSprite != null)
                     {
+                        // IMPORTANT: Duplicate assignment is intentional and necessary!
+                        // Setting the sprite twice ensures it "sticks" in IL2CPP/Unity.
+                        // Removing the duplicate breaks texture replacement. Do not remove!
                         spriteRenderer.sprite = loadedSprite;
                         spriteRenderer.sprite = loadedSprite;
                         // Plugin.Log.LogInfo($"[SavePoint Monitor] ✓ Loaded and enforced custom sprite: {currentSpriteName}");
