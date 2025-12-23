@@ -92,6 +92,10 @@ public class Plugin : BasePlugin
             
             harmony.PatchAll(typeof(CustomTexturePatch));
             CustomTexturePatch.Initialize();
+            
+            // Apply GRSpriteRenderer patches for better sprite interception
+            harmony.PatchAll(typeof(GRSpriteRendererPatch));
+            GRSpriteRendererPatch.Initialize();
         }
 
         // NPC Portrait Injection

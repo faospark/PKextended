@@ -122,8 +122,8 @@ public class NPCPortraitPatch
         
         Plugin.Log.LogInfo("========================================");
         
-        // Create NPCPortraits folder inside PKCore plugin directory
-        portraitsPath = Path.Combine(BepInEx.Paths.PluginPath, "PKCore", "NPCPortraits");
+        // Create NPCPortraits folder inside PKCore/Textures directory (game root)
+        portraitsPath = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore", "Textures", "NPCPortraits");
         
         if (!Directory.Exists(portraitsPath))
         {

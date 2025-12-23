@@ -1,0 +1,400 @@
+
+        // Create sprite from texture with adjusted properties
+        Sprite sprite = Sprite.Create(
+            texture,
+            new Rect(0, 0, texture.width, texture.height),
+            pivot,
+            pixelsPerUnit,
+            0, // extrude
+            SpriteMeshType.FullRect,
+            border
+        );
+
+        // Prevent Unity from destroying the sprite
+        UnityEngine.Object.DontDestroyOnLoad(sprite);
+        UnityEngine.Object.DontDestroyOnLoad(texture);
+
+        // Cache the sprite for reuse
+        customSpriteCache[spriteName] = sprite;
+        
+        return sprite;
+    }
+
+
+
+    /// <summary>
+    /// Load a custom texture from image file (supports PNG, JPG, TGA)
+    /// </summary>
+    private static Texture2D LoadCustomTexture(string textureName)
+    {
+        // Check cache first for performance
+        if (customTextureCache.TryGetValue(textureName, out Texture2D cachedTexture))
+        {
+            // Only validate cache for dynamic textures (characters, portraits) that get destroyed
+            // Static textures (backgrounds) can be trusted in cache
+            if (texturePathIndex.TryGetValue(textureName, out string cachedPath))
+            {
+                // Treat as dynamic if:
+                // 1. In characters/portraits folder
+                // 2. Is a summon effect texture or Gate model
+                bool isDynamic = cachedPath.Contains("characters", StringComparison.OrdinalIgnoreCase) || 
+                                cachedPath.Contains("portraits", StringComparison.OrdinalIgnoreCase) || 
+                                cachedPath.Contains("character", StringComparison.OrdinalIgnoreCase) || 
+                                cachedPath.Contains("portrait", StringComparison.OrdinalIgnoreCase) ||
+                                textureName.Contains("summon", StringComparison.OrdinalIgnoreCase) ||
+                                textureName.Contains("m_gat", StringComparison.OrdinalIgnoreCase) ||
+                                textureName.StartsWith("eff_tex", StringComparison.OrdinalIgnoreCase);
+                
+                if (isDynamic)
+                {
+                    // Validate that the cached texture is still valid (not destroyed by Unity)
+                    if (cachedTexture != null && cachedTexture)
+                        return cachedTexture;
+                    else
+                        customTextureCache.Remove(textureName); // Clean up invalid cache entry
+                }
+                else
+                {
+                    // Static texture - but still validate it's not null/destroyed
+                    if (cachedTexture != null && cachedTexture)
+                        return cachedTexture;
+                    else
+                        customTextureCache.Remove(textureName); // Clean up invalid cache entry
+                }
+            }
+            else
+            {
+                // Fallback: validate before trusting cache
+                if (cachedTexture != null && cachedTexture)
+                    return cachedTexture;
+                else
+                    customTextureCache.Remove(textureName);
+            }
+        }
+        
+        // Try to load from binary cache first (Fixes Stutters)
+        Texture2D cachedBin = LoadFromBinaryCache(textureName);
+        if (cachedBin != null)
+        {
+            // Cache in memory and return
+            customTextureCache[textureName] = cachedBin;
+            return cachedBin;
+        }
+
+        // Look up full path from index (supports subfolders)
+        if (!texturePathIndex.TryGetValue(textureName, out string filePath))
+            return null;
+
+        try
+        {
+            // Load image file
+            byte[] fileData = File.ReadAllBytes(filePath);
+            
+            // Create texture with mipmaps enabled for better quality
+            // IMPORTANT: Must be readable for IL2CPP
+            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, true);
+            
+            // Use ImageConversion static class (IL2CPP compatible)
+            // Supports PNG, JPG, TGA formats automatically
+            if (!UnityEngine.ImageConversion.LoadImage(texture, fileData))
+            {
+                Plugin.Log.LogError($"Failed to load image: {filePath}");
+                UnityEngine.Object.Destroy(texture);
+                return null;
+            }
+
+            // Apply texture settings for quality
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.anisoLevel = 4; // Better quality at angles
+            
+            // CRITICAL: Apply with mipmaps enabled and keep readable
+            texture.Apply(true, false); // updateMipmaps=true, makeNoLongerReadable=false
+            
+            // Prevent Unity from unloading the texture
+            UnityEngine.Object.DontDestroyOnLoad(texture);
+
+            // Cache the texture for reuse
+            customTextureCache[textureName] = texture;
+            
+            // Save to binary cache for future runs
+            SaveToBinaryCache(textureName, texture);
+            
+            // Skip logging for sactx and character textures to reduce spam
+            bool shouldSkipLoadLog = textureName.StartsWith("sactx") || filePath.ToLower().Contains("characters");
+            
+            if (!shouldSkipLoadLog && Plugin.Config.DetailedTextureLog.Value)
+            {
+                Plugin.Log.LogInfo($"Loaded and cached custom texture: {textureName} ({texture.width}x{texture.height}) from {Path.GetExtension(filePath)}");
+            }
+            
+            return texture;
+        }
+        catch (System.Exception ex)
+        {
+            Plugin.Log.LogError($"Error loading texture {textureName}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Replace an existing Texture2D's pixel data in-place from a custom image file
+    /// This preserves all references (Materials, ParticleSystems, etc.) to the original texture
+    /// Uses Texture2D.LoadImage() to overwrite pixel data while keeping the same object reference
+    /// </summary>
+    /// <param name="originalTexture">The existing texture to replace</param>
+    /// <param name="textureName">Name to look up in texture index</param>
+    /// <returns>True if replacement was successful</returns>
+    private static bool ReplaceTextureInPlace(Texture2D originalTexture, string textureName)
+    {
+        if (originalTexture == null)
+            return false;
+
+        // Look up full path from index
+        if (!texturePathIndex.TryGetValue(textureName, out string filePath))
+            return false;
+
+        try
+        {
+            // Load image file
+            byte[] fileData = File.ReadAllBytes(filePath);
+            
+            // CRITICAL: LoadImage() replaces the pixel data and resizes the texture automatically
+            // This keeps the original reference intact, so all sprites/materials update immediately
+            if (!UnityEngine.ImageConversion.LoadImage(originalTexture, fileData))
+            {
+                Plugin.Log.LogError($"Failed to load image data into texture: {filePath}");
+                return false;
+            }
+
+            // Apply texture settings for quality
+            originalTexture.filterMode = FilterMode.Bilinear;
+            originalTexture.wrapMode = TextureWrapMode.Clamp;
+            originalTexture.anisoLevel = 4;
+            
+            // Apply with mipmaps enabled and keep readable
+            originalTexture.Apply(true, false);
+            
+            // Prevent Unity from unloading the texture
+            UnityEngine.Object.DontDestroyOnLoad(originalTexture);
+            
+            // Log success (skip for sactx and character textures to reduce spam)
+            bool shouldSkipLog = textureName.StartsWith("sactx") || filePath.ToLower().Contains("characters");
+            if (!shouldSkipLog && Plugin.Config.DetailedTextureLog.Value)
+            {
+                Plugin.Log.LogInfo($"Replaced raw texture in-place: {textureName} ({originalTexture.width}x{originalTexture.height})");
+            }
+            
+            return true;
+        }
+        catch (System.Exception ex)
+        {
+            // Log "not readable" errors for summon effect textures to help diagnose issues
+            if (ex.Message.Contains("not readable"))
+            {
+                if (textureName.StartsWith("Eff_tex_Summon"))
+                {
+                    Plugin.Log.LogWarning($"Texture '{textureName}' is not readable - cannot replace in-place. This is expected for some particle textures.");
+                }
+                // Suppress for other textures - these are expected
+            }
+            else
+            {
+                Plugin.Log.LogError($"Error replacing texture {textureName} in-place: {ex.Message}");
+            }
+            return false;
+        }
+    }
+
+
+    /// <summary>
+    /// Build index of all texture files (supports subfolders)
+    /// </summary>
+    private static void BuildTextureIndex()
+    {
+        texturePathIndex.Clear();
+        
+        if (!Directory.Exists(customTexturesPath))
+            return;
+
+        // Try to load from manifest cache first (Fast Boot)
+        if (TryLoadManifestIndex())
+            return;
+
+        // Supported image extensions
+        string[] extensions = { "*.png", "*.jpg", "*.jpeg", "*.tga" };
+        
+        // PRIORITY SYSTEM:
+        // 1. Scan all folders EXCEPT 00-Mods first (base textures)
+        // 2. Scan 00-Mods folder LAST (override textures - highest priority)
+        
+        string modsFolder = Path.Combine(customTexturesPath, "00-Mods");
+        bool hasModsFolder = Directory.Exists(modsFolder);
+        
+        // Phase 1: Scan base textures (all folders except 00-Mods)
+        foreach (string extension in extensions)
+        {
+            string[] files = Directory.GetFiles(customTexturesPath, extension, SearchOption.AllDirectories);
+            
+            foreach (string filePath in files)
+            {
+                // Skip files in 00-Mods folder for now (will process later)
+                if (hasModsFolder && filePath.StartsWith(modsFolder, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                
+                // Skip textures based on category filters
+                if (!TextureOptions.ShouldLoadTexture(filePath))
+                    continue;
+                
+                string textureName = Path.GetFileNameWithoutExtension(filePath);
+                
+                // Check for duplicate texture names
+                if (texturePathIndex.ContainsKey(textureName))
+                {
+                    string existingPath = texturePathIndex[textureName];
+                    string existingRelative = existingPath.Replace(customTexturesPath, "").TrimStart('\\', '/');
+                    string newRelative = filePath.Replace(customTexturesPath, "").TrimStart('\\', '/');
+                    
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogWarning($"Duplicate texture name '{textureName}':");
+                        Plugin.Log.LogWarning($"  Using: {existingRelative}");
+                        Plugin.Log.LogWarning($"  Ignoring: {newRelative}");
+                    }
+                }
+                else
+                {
+                    texturePathIndex[textureName] = filePath;
+                }
+            }
+        }
+        
+        // Phase 2: Scan 00-Mods folder LAST (overrides base textures)
+        if (hasModsFolder)
+        {
+            int overrideCount = 0;
+            
+            foreach (string extension in extensions)
+            {
+                string[] modFiles = Directory.GetFiles(modsFolder, extension, SearchOption.AllDirectories);
+                
+                foreach (string filePath in modFiles)
+                {
+                    // Skip textures based on category filters
+                    if (!TextureOptions.ShouldLoadTexture(filePath))
+                        continue;
+                    
+                    string textureName = Path.GetFileNameWithoutExtension(filePath);
+                    string modRelative = filePath.Replace(customTexturesPath, "").TrimStart('\\', '/');
+                    
+                    // Check if this overrides an existing texture
+                    if (texturePathIndex.ContainsKey(textureName))
+                    {
+                        string existingPath = texturePathIndex[textureName];
+                        string existingRelative = existingPath.Replace(customTexturesPath, "").TrimStart('\\', '/');
+                        
+                        // OVERRIDE: Replace with mod version
+                        texturePathIndex[textureName] = filePath;
+                        overrideCount++;
+                        
+                        if (Plugin.Config.DetailedTextureLog.Value)
+                        {
+                            Plugin.Log.LogInfo($"[Override] '{textureName}':");
+                            Plugin.Log.LogInfo($"  Base: {existingRelative}");
+                            Plugin.Log.LogInfo($"  Mod:  {modRelative}");
+                        }
+                    }
+                    else
+                    {
+                        // New texture from mods folder
+                        texturePathIndex[textureName] = filePath;
+                    }
+                }
+            }
+            
+            if (overrideCount > 0)
+            {
+                Plugin.Log.LogInfo($"Applied {overrideCount} texture override(s) from 00-Mods folder");
+            }
+        }
+        
+        // Save updated manifest for next boot
+        SaveManifestIndex();
+    }
+
+    /// <summary>
+    /// Preload bath_1 through bath_5 sprites for instant replacement
+    /// This bypasses all timing issues by having sprites ready before they're needed
+    /// </summary>
+    private static void PreloadBathSprites()
+    {
+        int preloaded = 0;
+
+        for (int i = 1; i <= 5; i++)
+        {
+            string bathName = $"bath_{i}";
+            
+            // Check if custom texture exists
+            if (texturePathIndex.ContainsKey(bathName))
+            {
+                // Load texture
+                Texture2D texture = LoadCustomTexture(bathName);
+                if (texture != null)
+                {
+                    // Create sprite with default properties (will be adjusted when actually used)
+                    Sprite sprite = Sprite.Create(
+                        texture,
+                        new Rect(0, 0, texture.width, texture.height),
+                        new Vector2(0.5f, 0.5f), // Center pivot
+                        1f, // Default ppu
+                        0,
+                        SpriteMeshType.FullRect
+                    );
+
+                    UnityEngine.Object.DontDestroyOnLoad(sprite);
+                    UnityEngine.Object.DontDestroyOnLoad(texture);
+
+                    preloadedBathSprites[bathName] = sprite;
+                    
+                    // Only log details if verbose logging enabled
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogInfo($"  Preloaded: {bathName} ({texture.width}x{texture.height})");
+                    }
+                    
+                    preloaded++;
+                }
+            }
+        }
+
+        if (preloaded > 0)
+        {
+            Plugin.Log.LogInfo($"Preloaded {preloaded} bath sprite(s) for instant replacement");
+        }
+    }
+
+    /// <summary>
+    /// Preload save point animation frames (t_obj_savePoint_ball_0 through _10)
+    /// This ensures all animation frames use the custom texture
+    /// </summary>
+    private static void PreloadSavePointSprites()
+    {
+        // Check if we have the atlas texture
+        string atlasName = "t_obj_savePoint_ball";
+        if (!texturePathIndex.ContainsKey(atlasName))
+            return;
+
+        Texture2D atlasTexture = LoadCustomTexture(atlasName);
+        if (atlasTexture == null)
+            return;
+
+        int preloaded = 0;
+        
+        // Atlas is 400x200 with 8 frames in a 4x2 grid (each frame is 100x100)
+        int frameWidth = 100;
+        int frameHeight = 100;
+        int columns = 4;
+        
+        // Preload frames 0-10 (11 frames total for the animation)
+        // Note: Atlas only has 8 unique frames, so some frames may repeat
+        for (int i = 0; i <= 10; i++)

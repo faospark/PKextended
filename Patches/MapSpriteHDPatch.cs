@@ -50,6 +50,36 @@ namespace PKCore.Patches
                     }
                 }
             }
+            
+            // Also check SpriteRenderer (for save points and other sprites)
+            var spriteRenderer = __instance.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null && spriteRenderer.sprite != null)
+            {
+                Sprite originalSprite = spriteRenderer.sprite;
+                string spriteName = originalSprite.name;
+                
+                // Log for diagnostics
+                if (Plugin.Config.DetailedTextureLog.Value)
+                {
+                    Plugin.Log.LogInfo($"[MapSpriteHD] Found SpriteRenderer with sprite: {spriteName}");
+                    if (originalSprite.texture != null)
+                    {
+                        Plugin.Log.LogInfo($"[MapSpriteHD]   Texture: {originalSprite.texture.name}");
+                    }
+                }
+                
+                // Try to load custom sprite
+                Sprite customSprite = LoadCustomSprite(spriteName, originalSprite);
+                if (customSprite != null)
+                {
+                    spriteRenderer.sprite = customSprite;
+                    
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogInfo($"Replaced MapSpriteHD sprite: {spriteName}");
+                    }
+                }
+            }
         }
     }
 }

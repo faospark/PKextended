@@ -53,7 +53,7 @@ public partial class CustomTexturePatch
     /// </summary>
     private static void InitializeCaching()
     {
-        cachePath = Path.Combine(BepInEx.Paths.PluginPath, "PKCore", "Cache");
+        cachePath = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore", "Cache");
         // Changing extension to .xml
         manifestPath = Path.Combine(cachePath, "texture_manifest.xml");
 
@@ -120,73 +120,6 @@ public partial class CustomTexturePatch
         catch (Exception ex)
         {
             Plugin.Log.LogError($"Failed to save manifest: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Try to load texture from binary cache (PNG format fallback for stability)
-    /// </summary>
-    private static Texture2D LoadFromBinaryCache(string textureName)
-    {
-        // Check if binary cache is enabled
-        if (!Plugin.Config.EnableBinaryTextureCache.Value)
-            return null;
-            
-        string binPath = Path.Combine(cachePath, $"{textureName}.bin");
-        
-        if (!File.Exists(binPath))
-            return null;
-
-        try
-        {
-            // Check if bin file is newer than source file
-            if (texturePathIndex.TryGetValue(textureName, out string sourcePath))
-            {
-                if (File.GetLastWriteTime(sourcePath) > File.GetLastWriteTime(binPath))
-                    return null; // Source is newer, rebuild cache
-            }
-
-            byte[] fileData = File.ReadAllBytes(binPath);
-            Texture2D texture = new Texture2D(2, 2); // Size replaces automatically
-            if (ImageConversion.LoadImage(texture, fileData))
-            {
-                texture.Apply(true, false);
-                return texture;
-            }
-            return null;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Save texture to binary cache (PNG format fallback for stability)
-    /// </summary>
-    private static void SaveToBinaryCache(string textureName, Texture2D texture)
-    {
-        // Check if binary cache is enabled
-        if (!Plugin.Config.EnableBinaryTextureCache.Value)
-            return;
-            
-        if (texture == null) return;
-
-        try
-        {
-            string binPath = Path.Combine(cachePath, $"{textureName}.bin");
-            
-            // Use EncodeToPNG instead of raw data for maximum compatibility
-            // This sacrifices some speed for stability in IL2CPP
-            byte[] pngData = ImageConversion.EncodeToPNG(texture);
-            if (pngData != null)
-            {
-                File.WriteAllBytes(binPath, pngData);
-            }
-        }
-        catch (Exception ex)
-        {
-            Plugin.Log.LogError($"Failed to save binary cache for {textureName}: {ex.Message}");
         }
     }
 }
