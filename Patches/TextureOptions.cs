@@ -36,4 +36,38 @@ public static class TextureOptions
 
         return true; // Load the texture
     }
+
+    /// <summary>
+    /// Get the texture name with variant suffix applied (e.g., color variants for save points)
+    /// Returns the variant name if it exists in the index, otherwise returns the original name
+    /// </summary>
+    public static string GetTextureNameWithVariant(string textureName)
+    {
+        // Save point color variants
+        if (textureName == "t_obj_savePoint_ball")
+        {
+            string colorSuffix = Plugin.Config.SavePointColor.Value.ToLower();
+            if (!string.IsNullOrEmpty(colorSuffix) && colorSuffix != "default")
+            {
+                string colorVariant = $"{textureName}_{colorSuffix}";
+                // Check if color variant exists in index
+                if (CustomTexturePatch.texturePathIndex.ContainsKey(colorVariant))
+                {
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogInfo($"[SavePoint Color] Using color variant: {colorVariant}");
+                    }
+                    return colorVariant;
+                }
+                else if (Plugin.Config.DetailedTextureLog.Value)
+                {
+                    Plugin.Log.LogWarning($"[SavePoint Color] Color variant '{colorVariant}' not found, using default");
+                }
+            }
+        }
+
+        // Add more variant types here as needed
+        
+        return textureName; // Return original name if no variant
+    }
 }

@@ -36,6 +36,10 @@ public sealed class ModConfiguration
     // NPC Portrait Settings
     public ConfigEntry<bool> EnableNPCPortraits { get; private set; }
     
+    // Save Point Settings
+    public ConfigEntry<string> SavePointColor { get; private set; }
+    public ConfigEntry<bool> DisableSavePointGlow { get; private set; }
+    
     // Diagnostic Settings
     public ConfigEntry<bool> EnableParticleSystemDiagnostics { get; private set; }
     public ConfigEntry<bool> EnableBinaryTextureCache { get; private set; }
@@ -171,6 +175,20 @@ public sealed class ModConfiguration
             "EnableNPCPortraits",
             true,
             "Enable custom NPC portrait injection. Place PNG files in BepInEx/plugins/PKCore/NPCPortraits/ named after the NPC (e.g., Viktor.png, Flik.png). Case-insensitive."
+        );
+
+        SavePointColor = _config.Bind(
+            "Custom Textures",
+            "SavePointColor",
+            "pink",
+            "Save point orb color. Options: blue, red, yellow, pink, green, default. Place color variants in Textures/SavePoint/ folder as 't_obj_savePoint_ball_<color>.png'."
+        );
+
+        DisableSavePointGlow = _config.Bind(
+            "Custom Textures",
+            "DisableSavePointGlow",
+            true,
+            "Disable the glow effect on save point orbs. Set to false to keep the original glow."
         );
 
         EnableParticleSystemDiagnostics = _config.Bind(

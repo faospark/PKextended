@@ -35,7 +35,34 @@ public class SavePointSpriteMonitor : MonoBehaviour
                     {
                         Plugin.Log.LogInfo("[SavePoint Monitor] ✓ Successfully replaced texture in-place. Disabling monitor.");
                         enabled = false; // No need to monitor frames anymore!
-                        return;
+                    }
+                }
+            }
+            
+            // Disable glow effect if configured
+            if (Plugin.Config.DisableSavePointGlow.Value)
+            {
+                // Navigate up to find the save point root, then find Glow_add
+                Transform current = transform;
+                while (current != null && !current.name.Contains("savePoint"))
+                {
+                    current = current.parent;
+                }
+                
+                if (current != null)
+                {
+                    // Look for Glow_add in children
+                    Transform glowTransform = current.Find("Fire_add/Glow_add");
+                    if (glowTransform == null)
+                    {
+                        // Try alternate path
+                        glowTransform = current.Find("Particle_add/Glow_add");
+                    }
+                    
+                    if (glowTransform != null)
+                    {
+                        glowTransform.gameObject.SetActive(false);
+                        Plugin.Log.LogInfo("[SavePoint Monitor] ✓ Disabled save point glow effect");
                     }
                 }
             }

@@ -25,6 +25,7 @@ public partial class CustomTexturePatch
     public class TextureManifest
     {
         public long LastModified;
+        public string ConfigHash; // Hash of texture-related config settings
         public List<ManifestEntry> Entries = new List<ManifestEntry>();
         
         public void FromDictionary(Dictionary<string, string> dict)
@@ -64,6 +65,22 @@ public partial class CustomTexturePatch
     }
 
     /// <summary>
+    /// Compute hash of texture-related config settings
+    /// If any of these change, the manifest should be invalidated
+    /// </summary>
+    private static string ComputeConfigHash()
+    {
+        // Combine all texture-related config values into a string
+        string configString = $"{Plugin.Config.LoadLauncherUITextures.Value}|" +
+                            $"{Plugin.Config.LoadBattleEffectTextures.Value}|" +
+                            $"{Plugin.Config.LoadCharacterTextures.Value}|" +
+                            $"{Plugin.Config.SavePointColor.Value}";
+        
+        // Simple hash (GetHashCode is sufficient for cache invalidation)
+        return configString.GetHashCode().ToString();
+    }
+
+    /// <summary>
     /// Try to load texture index from manifest (XML)
     /// </summary>
     private static bool TryLoadManifestIndex()
@@ -81,11 +98,22 @@ public partial class CustomTexturePatch
             {
                 TextureManifest manifest = (TextureManifest)serializer.Deserialize(stream);
 
-                if (manifest != null && manifest.LastModified == currentModified && manifest.Entries != null && manifest.Entries.Count > 0)
+                // Check if config has changed since manifest was created
+                string currentConfigHash = ComputeConfigHash();
+                
+                if (manifest != null && 
+                    manifest.LastModified == currentModified && 
+                    manifest.ConfigHash == currentConfigHash &&
+                    manifest.Entries != null && 
+                    manifest.Entries.Count > 0)
                 {
                     texturePathIndex = manifest.ToDictionary();
                     Plugin.Log.LogInfo($"Loaded texture index from manifest ({texturePathIndex.Count} textures)");
                     return true;
+                }
+                else if (manifest != null && manifest.ConfigHash != currentConfigHash)
+                {
+                    Plugin.Log.LogInfo("Config changed - rebuilding texture index");
                 }
             }
         }
@@ -106,7 +134,8 @@ public partial class CustomTexturePatch
         {
             TextureManifest manifest = new TextureManifest
             {
-                LastModified = Directory.GetLastWriteTime(customTexturesPath).Ticks
+                LastModified = Directory.GetLastWriteTime(customTexturesPath).Ticks,
+                ConfigHash = ComputeConfigHash()
             };
             manifest.FromDictionary(texturePathIndex);
 

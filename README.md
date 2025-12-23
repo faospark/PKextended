@@ -1,7 +1,7 @@
 # PKCore - Project Kyaro Core
 
 **By faospark**  
-**Current Version: 1.6.0**
+**Current Version: 2.0.0**
 
 The **core DLL component** for **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)** that provides sprite smoothing, anti-aliasing, texture replacement, and visual enhancements for **Suikoden I & II HD Remaster**.
 
@@ -67,8 +67,13 @@ ControllerPromptType = PlayStation  # PlayStation/PlayStation5/Xbox
 
 [Custom Textures]
 EnableCustomTextures = false
-LogReplaceableTextures = false    # Discovery mode
-DetailedTextureLog = false        # Verbose logging
+LoadLauncherUITextures = true     # Load custom launcher UI
+LoadBattleEffectTextures = true   # Load custom battle effects
+LoadCharacterTextures = true      # Load custom character graphics
+SavePointColor = pink              # blue/red/yellow/pink/green/default
+DisableSavePointGlow = true        # Remove glow effect from save points
+LogReplaceableTextures = false     # Discovery mode
+DetailedTextureLog = false         # Verbose logging
 ```
 
 **Quick Presets:**
@@ -100,11 +105,10 @@ Fullscreen = -1
 
 See **[CHANGELOG.md](CHANGELOG.md)** for detailed version history and technical implementation details.
 
-**Latest (v1.6.0):**
-- Project rebranding: PKextended → PKCore
-- Reduced log spam for texture replacements
-- Added `DetailedTextureLog` config option
-- Priority override system with `00-Mods/` folder
+**Latest (v2.0.0):**
+- **Save Point Customization**: Choose from 5 color variants (blue/red/yellow/pink/green) and disable glow effect
+- **Config-Aware Manifest Cache**: Texture index automatically rebuilds when config settings change
+- **Texture Variant System**: Centralized texture variant handling in TextureOptions.cs
 
 ## Migration Guide (PKextended → PKCore)
 

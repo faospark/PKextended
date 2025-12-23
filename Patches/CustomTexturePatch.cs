@@ -337,8 +337,11 @@ public partial class CustomTexturePatch
                 customTextureCache.Remove(textureName);
         }
 
+        // Check for texture variants (e.g., save point colors)
+        string lookupName = TextureOptions.GetTextureNameWithVariant(textureName);
+
         // Look up full path
-        if (!texturePathIndex.TryGetValue(textureName, out string filePath))
+        if (!texturePathIndex.TryGetValue(lookupName, out string filePath))
             return null;
 
         try

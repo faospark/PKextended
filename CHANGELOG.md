@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.0.0] - 2025-12-23
+
+### Added - Save Point Customization
+
+#### Save Point Color Variants
+Choose from 5 color options for save point orbs:
+- **Available Colors**: blue, red, yellow, pink, green, default
+- **Configuration**: `SavePointColor = pink` in `[Custom Textures]` section
+- **Implementation**: Texture variant system in `TextureOptions.cs`
+- **Usage**: Place color variants in `Textures/SavePoint/` folder as `t_obj_savePoint_ball_<color>.png`
+- **Automatic Fallback**: If selected color variant not found, uses default texture
+
+#### Save Point Glow Disable
+Remove the glow effect from save point orbs:
+- **Configuration**: `DisableSavePointGlow = true` (default: enabled)
+- **Implementation**: `SavePointMonitor.cs` disables `Glow_add` GameObject
+- **Benefit**: Cleaner appearance for custom save point textures
+
+### Improved - Manifest Cache System
+
+#### Config-Aware Cache Invalidation
+Texture manifest cache now tracks configuration changes:
+- **Tracked Settings**: `LoadLauncherUITextures`, `LoadBattleEffectTextures`, `LoadCharacterTextures`, `SavePointColor`
+- **Automatic Rebuild**: Texture index rebuilds when any tracked config setting changes
+- **User Experience**: No more manual cache deletion when changing texture settings
+- **Implementation**: `ConfigHash` field in `TextureManifest` class
+- **Logging**: Shows "Config changed - rebuilding texture index" when settings change
+
+### Added - Texture Variant System
+
+#### Centralized Variant Handling
+New `TextureOptions.GetTextureNameWithVariant()` method:
+- **Purpose**: Handle texture variants (like save point colors) in one place
+- **Extensible**: Easy to add new texture variant types
+- **Organization**: All texture-related options visible at a glance in `TextureOptions.cs`
+
+---
+
 ## [1.6.0] - 2025-12-20
 
 ### Changed - Project Rebranding
