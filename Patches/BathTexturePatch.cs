@@ -158,4 +158,35 @@ public partial class CustomTexturePatch
             Plugin.Log.LogInfo($"Preloaded {preloaded} bath sprite(s) for instant replacement");
         }
     }
+
+    /// <summary>
+    /// Intercept GameObject.SetActive to detect when BathBG objects are activated
+    /// This handles bath background activation during scene transitions
+    /// </summary>
+    [HarmonyPatch(typeof(GameObject), nameof(GameObject.SetActive))]
+    [HarmonyPostfix]
+    public static void GameObject_SetActive_BathBG_Postfix(GameObject __instance, bool value)
+    {
+        // Only scan when activating
+        if (!value || !Plugin.Config.EnableCustomTextures.Value)
+            return;
+
+        // Check if this is a BathBG object
+        string objectPath = GetGameObjectPath(__instance);
+        if (!objectPath.Contains("BathBG"))
+            return;
+
+        if (Plugin.Config.DetailedTextureLog.Value)
+        {
+            Plugin.Log.LogInfo($"BathBG activated: {objectPath}");
+        }
+        
+        // Try to replace bath sprites
+        int replaced = TryReplaceBathSprites();
+        if (replaced > 0 && Plugin.Config.DetailedTextureLog.Value)
+        {
+            Plugin.Log.LogInfo($"Replaced {replaced} bath sprite(s) on activation");
+        }
+    }
 }
+

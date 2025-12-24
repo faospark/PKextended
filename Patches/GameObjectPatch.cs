@@ -26,8 +26,7 @@ public partial class CustomTexturePatch
         // Get the full path of the activated object
         string objectPath = GetGameObjectPath(__instance);
         
-        // Check if this is a bath background or bgManagerHD object
-        bool isBathBackground = objectPath.Contains("BathBG");
+        // Check if this is a bgManagerHD object
         bool isBgManager = objectPath.Contains("bgManagerHD");
 
         // Check if this is HDEffect or one of its children - trigger particle scan
@@ -47,22 +46,6 @@ public partial class CustomTexturePatch
             ScanAndReplaceParticleEffectTextures();
         }
         
-        // Handle bath background activation
-        if (isBathBackground)
-        {
-            if (Plugin.Config.DetailedTextureLog.Value)
-            {
-                Plugin.Log.LogInfo($"BathBG activated: {objectPath}");
-            }
-            
-            // Try to replace bath sprites
-            int replaced = TryReplaceBathSprites();
-            if (replaced > 0 && Plugin.Config.DetailedTextureLog.Value)
-            {
-                Plugin.Log.LogInfo($"Replaced {replaced} bath sprite(s) on activation");
-            }
-        }
-        
         // Handle bgManagerHD activation - scan for sprites to replace
         if (isBgManager)
         {
@@ -71,7 +54,7 @@ public partial class CustomTexturePatch
                 Plugin.Log.LogInfo($"bgManagerHD activated: {objectPath}");
             }
             
-            // Scan for SpriteRenderers and replace sprites
+            // Scan for SpriteRenderers and replace sprites (excluding save points, handled in SavePointPatch.cs)
             var spriteRenderers = __instance.GetComponentsInChildren<SpriteRenderer>(true);
             foreach (var sr in spriteRenderers)
             {
@@ -79,54 +62,15 @@ public partial class CustomTexturePatch
                 {
                     string spriteName = sr.sprite.name;
                     
-                    // DIAGNOSTIC: Always log save point sprites
-                    bool isSavePoint = spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase);
-                    if (isSavePoint)
-                    {
-                        Plugin.Log.LogInfo($"[SavePoint GameObject] Found sprite: {spriteName} in {objectPath}");
-                    }
+                    // Skip save point sprites - they're handled in SavePointPatch.cs
+                    if (spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase))
+                        continue;
                     
                     Sprite customSprite = LoadCustomSprite(spriteName, sr.sprite);
                     if (customSprite != null)
                     {
                         sr.sprite = customSprite;
-                        
-                        if (isSavePoint)
-                        {
-                            Plugin.Log.LogInfo($"[SavePoint GameObject] ✓ SET custom sprite: {spriteName}");
-                            
-                            // Add monitor component for animated save point ball
-                            // Note: SavePointSpriteMonitor must be registered in Plugin.cs for IL2CPP
-                            // We attach it even if currently inactive, so it catches it when it wakes up
-                            if (spriteName.StartsWith("t_obj_savePoint_ball_"))
-                            {
-                                try
-                                {
-                                    // Use standard AddComponent, duplicate check handled by Unity or try/catch
-                                    if (sr.GetComponent<SavePointSpriteMonitor>() == null) // This generic might still fail if not fully registered, but we registered it!
-                                    {
-                                        sr.gameObject.AddComponent<SavePointSpriteMonitor>();
-                                        Plugin.Log.LogInfo($"[SavePoint Monitor] Added monitor to: {sr.gameObject.name}");
-                                    }
-                                }
-                                catch (System.Exception ex)
-                                {
-                                    // Fallback: try non-generic or just log
-                                    if (!ex.Message.Contains("already has"))
-                                    {
-                                        Plugin.Log.LogWarning($"[SavePoint Monitor] Note: {ex.Message}");
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
-                        }
-                    }
-                    else if (isSavePoint)
-                    {
-                        Plugin.Log.LogWarning($"[SavePoint GameObject] ✗ LoadCustomSprite returned null for: {spriteName}");
+                        Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
                     }
                 }
             }

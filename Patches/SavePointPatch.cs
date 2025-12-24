@@ -142,4 +142,71 @@ public partial class CustomTexturePatch
             Plugin.Log.LogInfo($"Preloaded {preloaded} save point animation frame(s) for instant replacement");
         }
     }
+
+    /// <summary>
+    /// Intercept GameObject.SetActive to replace save point sprites when bgManagerHD activates
+    /// This handles the initial sprite replacement when save point objects are first activated
+    /// </summary>
+    [HarmonyPatch(typeof(GameObject), nameof(GameObject.SetActive))]
+    [HarmonyPostfix]
+    public static void GameObject_SetActive_SavePoint_Postfix(GameObject __instance, bool value)
+    {
+        // Only scan when activating
+        if (!value || !Plugin.Config.EnableCustomTextures.Value)
+            return;
+
+        // Check if this is a bgManagerHD object (save points are children of this)
+        string objectPath = GetGameObjectPath(__instance);
+        if (!objectPath.Contains("bgManagerHD"))
+            return;
+
+        // Scan for save point sprites in this object's children
+        var spriteRenderers = __instance.GetComponentsInChildren<SpriteRenderer>(true);
+        foreach (var sr in spriteRenderers)
+        {
+            if (sr.sprite != null)
+            {
+                string spriteName = sr.sprite.name;
+                
+                // Only process save point sprites
+                bool isSavePoint = spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase);
+                if (!isSavePoint)
+                    continue;
+
+                Plugin.Log.LogInfo($"[SavePoint GameObject] Found sprite: {spriteName} in {objectPath}");
+                
+                Sprite customSprite = LoadCustomSprite(spriteName, sr.sprite);
+                if (customSprite != null)
+                {
+                    sr.sprite = customSprite;
+                    Plugin.Log.LogInfo($"[SavePoint GameObject] ✓ SET custom sprite: {spriteName}");
+                    
+                    // Add monitor component for animated save point ball
+                    if (spriteName.StartsWith("t_obj_savePoint_ball_"))
+                    {
+                        try
+                        {
+                            if (sr.GetComponent<SavePointSpriteMonitor>() == null)
+                            {
+                                sr.gameObject.AddComponent<SavePointSpriteMonitor>();
+                                Plugin.Log.LogInfo($"[SavePoint Monitor] Added monitor to: {sr.gameObject.name}");
+                            }
+                        }
+                        catch (System.Exception ex)
+                        {
+                            if (!ex.Message.Contains("already has"))
+                            {
+                                Plugin.Log.LogWarning($"[SavePoint Monitor] Note: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Plugin.Log.LogWarning($"[SavePoint GameObject] ✗ LoadCustomSprite returned null for: {spriteName}");
+                }
+            }
+        }
+    }
 }
+
