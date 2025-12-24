@@ -75,37 +75,6 @@ public class DisableSpritePostProcessingPatch
     public static void Initialize()
     {
         _isEnabled = Plugin.Config.DisableSpritePostProcessing.Value;
-
-        if (_isEnabled)
-        {
-            Plugin.Log.LogInfo("Sprite post-processing exclusion enabled");
-
-            // Find all existing sprite renderers and update them
-            var spriteRenderers = Object.FindObjectsOfType<GRSpriteRenderer>();
-            Plugin.Log.LogInfo($"Updating {spriteRenderers.Length} existing sprite renderers...");
-            
-            foreach (var renderer in spriteRenderers)
-            {
-                if (renderer != null && renderer.gameObject != null)
-                {
-                    renderer.gameObject.layer = 31;
-                }
-                
-                if (renderer != null && renderer._mat != null)
-                {
-                    DisablePostProcessOnMaterial(renderer);
-                }
-            }
-
-            // Update existing post-process layers
-            var postProcessLayers = Object.FindObjectsOfType<PostProcessLayer>();
-            foreach (var layer in postProcessLayers)
-            {
-                if (layer != null)
-                {
-                    layer.volumeLayer &= ~SpriteLayerMask;
-                }
-            }
-        }
+        // Harmony patches will handle sprites as they're created during gameplay
     }
 }

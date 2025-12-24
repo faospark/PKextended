@@ -159,7 +159,10 @@ public partial class CustomTexturePatch
                 string frameNumStr = spriteName.Substring("t_obj_savePoint_ball_".Length);
                 if (int.TryParse(frameNumStr, out int frameNum))
                 {
-                    Plugin.Log.LogInfo($"[SavePoint] Creating sprite from atlas for: {spriteName} (frame {frameNum})");
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogInfo($"[SavePoint] Creating sprite from atlas for: {spriteName} (frame {frameNum})");
+                    }
                     
                     // Load the atlas texture
                     Texture2D atlasTexture = LoadCustomTexture(atlasName);
@@ -191,7 +194,10 @@ public partial class CustomTexturePatch
                             customPPU = originalSprite.pixelsPerUnit * scaleRatio;
                         }
 
-                        Plugin.Log.LogInfo($"[SavePoint] Creating sprite: rect=({x},{y},{frameWidth},{frameHeight}) from atlas {atlasTexture.width}x{atlasTexture.height} PPU:{customPPU} Pivot:{customPivot}");
+                        if (Plugin.Config.DetailedTextureLog.Value)
+                        {
+                            Plugin.Log.LogInfo($"[SavePoint] Creating sprite: rect=({x},{y},{frameWidth},{frameHeight}) from atlas {atlasTexture.width}x{atlasTexture.height} PPU:{customPPU} Pivot:{customPivot}");
+                        }
                         
                         Sprite customSprite = Sprite.Create(
                             atlasTexture,
@@ -210,7 +216,10 @@ public partial class CustomTexturePatch
                             // Cache it for future use
                             customSpriteCache[spriteName] = customSprite;
                             
-                            Plugin.Log.LogInfo($"[SavePoint] ✓ Created and cached sprite: {spriteName}");
+                            if (Plugin.Config.DetailedTextureLog.Value)
+                            {
+                                Plugin.Log.LogInfo($"[SavePoint] ✓ Created and cached sprite: {spriteName}");
+                            }
                             return customSprite;
                         }
                         else
