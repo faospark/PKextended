@@ -81,26 +81,6 @@ public partial class CustomTexturePatch
                 }
                 
                 __result = customTexture;
-                
-                // SPECIAL CASE: If this is a gate summon atlas, trigger particle texture scan
-                // Gate summon effects use particle systems with textures from these atlases
-                if (textureName.Contains("Eff_tex_Summon_", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Mark this atlas as processed to prevent duplicate scans
-                    if (!processedAtlases.Contains(textureName))
-                    {
-                        processedAtlases.Add(textureName);
-                        
-                        if (Plugin.Config.DetailedTextureLog.Value)
-                        {
-                            Plugin.Log.LogInfo($"Gate summon atlas detected: {textureName} - will scan for particle textures");
-                        }
-                        
-                        // Trigger a scan for particle effect textures
-                        // This will replace any particle textures that were already set
-                        ScanAndReplaceParticleEffectTextures();
-                    }
-                }
             }
         }
     }

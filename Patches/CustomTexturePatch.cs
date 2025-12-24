@@ -137,50 +137,6 @@ public partial class CustomTexturePatch
         return replaced;
     }
     
-    /// <summary>
-    /// Scan and replace particle effect textures in HDeffects GameObject
-    /// </summary>
-    internal static void ScanAndReplaceParticleEffectTextures()
-    {
-        if (!Plugin.Config.EnableCustomTextures.Value)
-            return;
-
-        var hdEffects = GameObject.Find("AppRoot/Field/Character/HDEffect");
-        if (hdEffects == null)
-            return;
-
-        var renderers = hdEffects.GetComponentsInChildren<Renderer>(true);
-
-        foreach (var renderer in renderers)
-        {
-            if (renderer == null || renderer.material == null)
-                continue;
-
-            Material mat = renderer.material;
-            Texture mainTex = mat.mainTexture;
-            
-            if (mainTex == null)
-                continue;
-
-            Texture2D texture2D = mainTex as Texture2D;
-            if (texture2D == null)
-                continue;
-
-            string textureName = texture2D.name;
-
-            if (texturePathIndex.ContainsKey(textureName))
-            {
-                int textureId = texture2D.GetInstanceID();
-                
-                if (!processedTextureIds.Contains(textureId))
-                {
-                    processedTextureIds.Add(textureId);
-                    ReplaceTextureInPlace(texture2D, textureName);
-                }
-            }
-        }
-    }
-    
     #endregion
     
     #region Core Texture/Sprite Loading

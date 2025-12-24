@@ -26,25 +26,9 @@ public partial class CustomTexturePatch
         // Get the full path of the activated object
         string objectPath = GetGameObjectPath(__instance);
         
+        
         // Check if this is a bgManagerHD object
         bool isBgManager = objectPath.Contains("bgManagerHD");
-
-        // Check if this is HDEffect or one of its children - trigger particle scan
-        // Also check for M_GATE summon effect objects
-        bool isHDEffect = __instance.name == "HDEffect" || __instance.transform.parent?.name == "HDEffect";
-        bool isSummonEffect = __instance.name.StartsWith("M_GATE");
-        
-        if (isHDEffect || isSummonEffect)
-        {
-            // Trigger force replacement for known summon effect textures
-            if (Plugin.Config.DetailedTextureLog.Value)
-            {
-                Plugin.Log.LogInfo($"HDEffect or summon effect activated: {objectPath}");
-            }
-            
-            // Scan and replace particle effect textures
-            ScanAndReplaceParticleEffectTextures();
-        }
         
         // Handle bgManagerHD activation - scan for sprites to replace
         if (isBgManager)
