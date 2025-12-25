@@ -37,10 +37,12 @@ public class Plugin : BasePlugin
         {
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SavePointSpriteMonitor>();
             Log.LogInfo("Registered SavePointSpriteMonitor in IL2CPP domain.");
+
+            // SuikozuMonitor removed (replaced by Harmony Patch)
         }
         catch (System.Exception ex)
         {
-            Log.LogError($"Failed to register SavePointSpriteMonitor: {ex.Message}");
+            Log.LogError($"Failed to register custom monitors: {ex.Message}");
         }
         
         ApplyPatches();
@@ -114,13 +116,14 @@ public class Plugin : BasePlugin
             harmony.PatchAll(typeof(GRSpriteRendererPatch));
             GRSpriteRendererPatch.Initialize();
             
-            // Apply Suikozu texture brute-force replacement
-            // DISABLED: Using targeted Renderer.sharedMaterial patch instead (see HwMeshTexturePatch)
-            // SuikozuTexturePatch.Initialize(Config.EnableCustomTextures.Value, harmony);
-            
-            // Apply Renderer.sharedMaterial patch for suikozu textures
-            harmony.PatchAll(typeof(HwMeshTexturePatch));
-            HwMeshTexturePatch.Initialize();
+            // Register lazy loader component
+            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SuikozuTextureEnforcer>();
+            Log.LogInfo("Registered SuikozuTextureEnforcer in IL2CPP domain.");
+
+            // Apply Suikozu Internal Patch (Reactive instead of polling)
+            Log.LogInfo("Applying Suikozu Internal Patch...");
+            harmony.PatchAll(typeof(SuikozuInternalPatch));
+
         }
 
         // NPC Portrait Injection

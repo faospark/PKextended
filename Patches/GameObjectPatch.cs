@@ -10,6 +10,7 @@ namespace PKCore.Patches;
 /// </summary>
 public partial class CustomTexturePatch
 {
+    private static System.Collections.Generic.HashSet<string> _loggedSpriteReplacements = new System.Collections.Generic.HashSet<string>();
     /// <summary>
     /// Intercept GameObject.SetActive to catch sprites when objects are activated
     /// This catches sprites in objects that are instantiated/activated after scene load
@@ -54,7 +55,30 @@ public partial class CustomTexturePatch
                     if (customSprite != null)
                     {
                         sr.sprite = customSprite;
-                        Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
+                        
+                        // Only log once per sprite name to prevent spam
+                        if (!_loggedSpriteReplacements.Contains(spriteName))
+                        {
+                            _loggedSpriteReplacements.Add(spriteName);
+                            Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
+                        }
+                    }
+                }
+            }
+
+            // Check for SuikozuObj and replace its MeshRenderer texture
+            if (__instance.name.Contains("Suikozu", StringComparison.OrdinalIgnoreCase))
+            {
+                var meshRenderer = __instance.GetComponent<MeshRenderer>();
+                if (meshRenderer != null && meshRenderer.material != null && meshRenderer.material.mainTexture is Texture2D texture)
+                {
+                    string textureName = texture.name;
+                    if (textureName != null && textureName.StartsWith("suikozu_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (ReplaceTextureInPlace(texture, textureName))
+                        {
+                            Plugin.Log.LogInfo($"[Suikozu] ✓ Replaced texture on activation: {textureName}");
+                        }
                     }
                 }
             }
