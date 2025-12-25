@@ -42,7 +42,11 @@ public sealed class ModConfiguration
     
     // Diagnostic Settings
     public ConfigEntry<bool> EnableParticleSystemDiagnostics { get; private set; }
+    public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
     public ConfigEntry<bool> EnableBinaryTextureCache { get; private set; }
+    
+    // Custom Object Insertion
+    public ConfigEntry<bool> EnableCustomObjects { get; private set; }
 
 
 
@@ -198,11 +202,25 @@ public sealed class ModConfiguration
             "Enable diagnostic logging for ParticleSystem texture usage. Logs how summon effects and particle systems access textures. For development/debugging only."
         );
 
+        EnableObjectDiagnostics = _config.Bind(
+            "Diagnostics",
+            "EnableObjectDiagnostics",
+            false,
+            "Enable diagnostic logging for MapBGManagerHD objects. Logs all objects in field scenes (event objects, sprites, animations) to help understand scene structure. For development/debugging only."
+        );
+
         EnableBinaryTextureCache = _config.Bind(
             "Performance",
             "EnableBinaryTextureCache",
             false,
             "Cache loaded textures as PNG files for faster loading. Disable if experiencing slowdowns in large areas with many textures. Manifest cache will still be used."
+        );
+
+        EnableCustomObjects = _config.Bind(
+            "Experimental",
+            "EnableCustomObjects",
+            false,
+            "[EXPERIMENTAL] Enable custom object insertion. Adds a test object to scenes to verify the system works. This is a proof-of-concept feature."
         );
     }
 }

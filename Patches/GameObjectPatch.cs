@@ -58,6 +58,12 @@ public partial class CustomTexturePatch
                     }
                 }
             }
+
+            // Create custom objects when the scene clone is activated (e.g., vk07_01(Clone))
+            if (objectPath.Contains("(Clone)") && Plugin.Config.EnableCustomObjects.Value)
+            {
+                PKCore.Patches.CustomObjectInsertion.TryCreateCustomObjects(__instance);
+            }
         }
     }
 }
