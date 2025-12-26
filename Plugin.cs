@@ -127,6 +127,10 @@ public class Plugin : BasePlugin
             Log.LogInfo("Applying Suikozu Internal Patch...");
             harmony.PatchAll(typeof(SuikozuInternalPatch));
 
+            // Apply BGManagerHD.Load patch for bath sprite preloading
+            Log.LogInfo("Applying BGManagerHD.Load patch for bath sprite preloading...");
+            CustomTexturePatch.BGManagerHD_Load_Patch.Initialize(harmony);
+
         }
 
         // NPC Portrait Injection

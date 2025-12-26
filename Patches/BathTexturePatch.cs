@@ -1,6 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PKCore.Patches;
 
@@ -159,9 +160,14 @@ public partial class CustomTexturePatch
     /// <summary>
     /// Preload bath sprites (bath_1 through bath_5) for instant replacement
     /// This ensures bath backgrounds are replaced immediately when the bath scene loads
+    /// Only preloads if in GSD2 scene
     /// </summary>
-    private static void PreloadBathSprites()
+    public static void PreloadBathSprites()
     {
+        // Only preload for Suikoden 2 (GSD2)
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "GSD2")
+            return;
+            
         int preloaded = 0;
         
         // Preload bath_1 through bath_5
@@ -231,6 +237,125 @@ public partial class CustomTexturePatch
         if (replaced > 0 && Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"Replaced {replaced} bath sprite(s) on activation");
+        }
+    }
+    
+    /// <summary>
+    /// Patch BGManagerHD.Load to detect when entering areas near the bath
+    /// Preload bath sprites for performance when entering these areas (in close proximity to bath):
+    /// - vk06_01: Area near bath (triggers preload)
+    /// - vk06_00: Area near bath (triggers preload)
+    /// - vk02_00: Area near bath (triggers preload)
+    /// This ensures sprites are ready when player actually enters the bath
+    /// </summary>
+    [HarmonyPatch]
+    public static class BGManagerHD_Load_Patch
+    {
+        private static bool _patched = false;
+        private static System.Reflection.MethodInfo _targetMethod;
+        
+        /// <summary>
+        /// Dynamically find and patch BGManagerHD.Load method
+        /// </summary>
+        public static void Initialize(Harmony harmony)
+        {
+            if (_patched)
+                return;
+                
+            try
+            {
+                // Find BGManagerHD type
+                var bgManagerType = FindBGManagerType();
+                if (bgManagerType == null)
+                {
+                    Plugin.Log.LogWarning("[BathTexturePatch] Could not find BGManagerHD type for bath preloading");
+                    return;
+                }
+                
+                // Find Load method
+                _targetMethod = bgManagerType.GetMethod("Load", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                if (_targetMethod == null)
+                {
+                    Plugin.Log.LogWarning("[BathTexturePatch] Could not find BGManagerHD.Load method");
+                    return;
+                }
+                
+                // Patch it
+                var postfix = typeof(BGManagerHD_Load_Patch).GetMethod(nameof(Load_Postfix), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                harmony.Patch(_targetMethod, postfix: new HarmonyMethod(postfix));
+                
+                _patched = true;
+                Plugin.Log.LogInfo("[BathTexturePatch] ✓ Patched BGManagerHD.Load for bath sprite preloading");
+            }
+            catch (System.Exception ex)
+            {
+                Plugin.Log.LogWarning($"[BathTexturePatch] Failed to patch BGManagerHD.Load: {ex.Message}");
+            }
+        }
+        
+        private static System.Type FindBGManagerType()
+        {
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    var assemblyName = assembly.GetName().Name;
+                    if (assemblyName == "GSD2")
+                    {
+                        var types = assembly.GetTypes();
+                        var bgManagerType = types.FirstOrDefault(t => 
+                            t.Name == "MapBGManagerHD" || 
+                            t.Name == "bgManagerHD" ||
+                            t.Name.Contains("MapBGManager")
+                        );
+                        
+                        if (bgManagerType != null)
+                            return bgManagerType;
+                    }
+                }
+                catch { }
+            }
+            return null;
+        }
+        
+        public static System.Collections.IEnumerator Load_Postfix(System.Collections.IEnumerator __result, object __instance)
+        {
+            // Let original Load complete
+            while (__result.MoveNext())
+            {
+                yield return __result.Current;
+            }
+            
+            // Check if we're in a bath-related area
+            if (!Plugin.Config.EnableCustomTextures.Value)
+                yield break;
+                
+            try
+            {
+                var managerType = __instance.GetType();
+                var assetProp = managerType.GetProperty("asset");
+                var asset = assetProp?.GetValue(__instance) as GameObject;
+                
+                if (asset != null)
+                {
+                    string areaName = asset.name;
+                    
+                    // Check if this is an area near the bath (preload for performance)
+                    if (areaName == "vk06_01" || areaName == "vk06_00" || areaName == "vk02_00")
+                    {
+                        if (Plugin.Config.DetailedTextureLog.Value)
+                        {
+                            Plugin.Log.LogInfo($"[BathTexturePatch] Entering area near bath: {areaName}, preloading bath sprites...");
+                        }
+                        
+                        PreloadBathSprites();
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Plugin.Log.LogWarning($"[BathTexturePatch] Error in BGManagerHD.Load postfix: {ex.Message}");
+            }
         }
     }
 }
