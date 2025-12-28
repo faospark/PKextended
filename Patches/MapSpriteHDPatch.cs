@@ -85,9 +85,12 @@ namespace PKCore.Patches
                         if (spriteRenderer.GetComponent<SavePointSpriteMonitor>() == null)
                         {
                             spriteRenderer.gameObject.AddComponent<SavePointSpriteMonitor>();
-                            Plugin.Log.LogInfo($"[MapSpriteHD] Added SavePointSpriteMonitor to: {spriteRenderer.gameObject.name}");
+                        Plugin.Log.LogInfo($"[MapSpriteHD] Added SavePointSpriteMonitor to: {spriteRenderer.gameObject.name}");
                         }
                     }
+                    
+                    // Attach cow monitor if applicable
+                    CowTexturePatch.CheckAndAttachMonitor(spriteRenderer.gameObject);
                 }
             }
         }

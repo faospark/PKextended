@@ -173,5 +173,12 @@ public class Plugin : BasePlugin
             Log.LogInfo("Applying Dragon Sprite patches...");
             DragonPatch.Initialize();
         }
+
+        // Cow Texture Patch (Similar to Dragon Patch)
+        if (Config.EnableCustomTextures.Value)
+        {
+             Log.LogInfo("Applying Cow texture patches...");
+             CowTexturePatch.Initialize();
+        }
     }
 }

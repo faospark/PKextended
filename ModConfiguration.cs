@@ -39,6 +39,7 @@ public sealed class ModConfiguration
     
     // Save Point Settings
     public ConfigEntry<string> SavePointColor { get; private set; }
+    public ConfigEntry<string> TirRunTexture { get; private set; }
     public ConfigEntry<bool> DisableSavePointGlow { get; private set; }
     
     // Suikoden 2 Classic UI Settings
@@ -177,6 +178,13 @@ public sealed class ModConfiguration
             "SavePointColor",
             "pink",
             "Save point orb color. Options: blue, red, yellow, pink, green, cyan, white, alt, default. Place color variants in Textures/SavePoint/ folder as 't_obj_savePoint_ball_<color>.png'."
+        );
+
+        TirRunTexture = _config.Bind(
+            "Custom Textures",
+            "TirRunTexture",
+            "default",
+            "Texture variant for Tir running animation (shu_field_01_atlas). Options: default, alt. 'alt' will look for '..._alt.png'."
         );
 
         DisableSavePointGlow = _config.Bind(

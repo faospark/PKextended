@@ -71,6 +71,9 @@ public partial class CustomTexturePatch
                     
                     // Attach dragon monitor if applicable
                     DragonPatch.CheckAndAttachMonitor(sr.gameObject);
+
+                    // Attach cow monitor if applicable
+                    CowTexturePatch.CheckAndAttachMonitor(sr.gameObject);
                 }
             }
 

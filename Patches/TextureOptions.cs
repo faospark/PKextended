@@ -43,20 +43,17 @@ public static class TextureOptions
     /// </summary>
     public static string GetTextureNameWithVariant(string textureName)
     {
-        // Save point orb color variants
+        // Save Point Orb colors
         if (textureName == "t_obj_savePoint_ball")
         {
             string colorSuffix = Plugin.Config.SavePointColor.Value.ToLower();
             if (!string.IsNullOrEmpty(colorSuffix) && colorSuffix != "default")
             {
                 string colorVariant = $"{textureName}_{colorSuffix}";
-                // Check if color variant exists in index
                 if (CustomTexturePatch.texturePathIndex.ContainsKey(colorVariant))
                 {
                     if (Plugin.Config.DetailedTextureLog.Value)
-                    {
                         Plugin.Log.LogInfo($"[SavePoint Color] Using color variant: {colorVariant}");
-                    }
                     return colorVariant;
                 }
                 else if (Plugin.Config.DetailedTextureLog.Value)
@@ -64,6 +61,27 @@ public static class TextureOptions
                     Plugin.Log.LogWarning($"[SavePoint Color] Color variant '{colorVariant}' not found, using default");
                 }
             }
+        }
+
+        // Tir Run Animation (shu_field_01_atlas)
+        if (textureName == "sactx-0-256x256-Uncompressed-shu_field_01_atlas-959a6bf2")
+        {
+             // Check if user wants the alt version
+             string tirVariant = Plugin.Config.TirRunTexture.Value.ToLower();
+             if (tirVariant == "alt")
+             {
+                 string altName = $"{textureName}_alt";
+                 if (CustomTexturePatch.texturePathIndex.ContainsKey(altName))
+                 {
+                     if (Plugin.Config.DetailedTextureLog.Value)
+                         Plugin.Log.LogInfo($"[TirRun] Using alt variant: {altName}");
+                     return altName;
+                 }
+                 else if (Plugin.Config.DetailedTextureLog.Value)
+                 {
+                     Plugin.Log.LogWarning($"[TirRun] Alt variant '{altName}' not found, using default");
+                 }
+             }
         }
 
         // Add more variant types here as needed
