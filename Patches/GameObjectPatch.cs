@@ -52,8 +52,19 @@ public partial class CustomTexturePatch
                     // Attach dragon monitor if applicable
                     DragonPatch.CheckAndAttachMonitor(sr.gameObject);
 
-                    // Skip save point sprites - they're handled in SavePointPatch.cs
-                    if (spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase))
+                    // Attach save point monitor if applicable (Handles both S1 and S2)
+                    SavePointPatch.CheckAndAttachMonitor(sr.gameObject);
+
+                    // Skip processing if we already handled it as a specialized type
+                    // Actually, let's allow it to fall through to generic replacement if not handled?
+                    // But typically monitors handle their own replacement.
+                    
+                    // For now, removing the "continue" that skipped save points allows generic replacement 
+                    // to happen IN ADDITION to the monitor if the monitor finds it. 
+                    // However, SavePointPatch logic is robust enough to handle it.
+                    // But to be safe and avoid fighting, let's utilize the monitor exclusively if it attaches.
+                    
+                    if (sr.GetComponent<SavePointSpriteMonitor>() != null)
                         continue;
                     
                     Sprite customSprite = LoadCustomSprite(spriteName, sr.sprite);
@@ -69,10 +80,7 @@ public partial class CustomTexturePatch
                         }
                     }
                     
-                    // Attach dragon monitor if applicable
-                    DragonPatch.CheckAndAttachMonitor(sr.gameObject);
-
-                    // Attach cow monitor if applicable
+            // Attach cow monitor if applicable
                     CowTexturePatch.CheckAndAttachMonitor(sr.gameObject);
                 }
             }
