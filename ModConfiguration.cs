@@ -46,7 +46,7 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> S2ClassicSaveWindow { get; private set; }
     
     // Diagnostic Settings
-    public ConfigEntry<bool> EnableParticleSystemDiagnostics { get; private set; }
+
     public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
     
@@ -237,12 +237,6 @@ public sealed class ModConfiguration
             "Enable detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation (only errors will be logged)."
         );
 
-        EnableParticleSystemDiagnostics = _config.Bind(
-            "Diagnostics",
-            "EnableParticleSystemDiagnostics",
-            false,
-            "Enable diagnostic logging for ParticleSystem texture usage. Logs how summon effects and particle systems access textures. For development/debugging only."
-        );
 
         EnableObjectDiagnostics = _config.Bind(
             "Diagnostics",

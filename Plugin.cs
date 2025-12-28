@@ -145,13 +145,7 @@ public class Plugin : BasePlugin
             NPCPortraitPatch.Initialize();
         }
 
-        // ParticleSystem Diagnostics (Research)
-        if (Config.EnableParticleSystemDiagnostics.Value)
-        {
-            Log.LogInfo("Applying ParticleSystem diagnostic patches...");
-            harmony.PatchAll(typeof(ParticleSystemResearch));
-            ParticleSystemResearch.Initialize(Config.EnableParticleSystemDiagnostics.Value);
-        }
+
 
         // MapBGManagerHD Object Diagnostics (Research)
         if (Config.EnableObjectDiagnostics.Value)
