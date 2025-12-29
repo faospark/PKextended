@@ -31,7 +31,8 @@ public partial class CustomTexturePatch
         // Check if this is a background manager object
         // Suikoden 2: bgManagerHD
         // Suikoden 1: MapBackGround
-        bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround");
+        // Also scan 3D objects (contains FieldObject MeshRenderers)
+        bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround") || objectPath.Contains("3D");
         
         // Handle background manager activation - scan for sprites to replace
         if (isBgManager)
@@ -84,7 +85,28 @@ public partial class CustomTexturePatch
                     CowTexturePatch.CheckAndAttachMonitor(sr.gameObject);
                 }
             }
-
+            
+            // Check for MeshRenderers and replace their textures
+            var meshRenderers = __instance.GetComponentsInChildren<MeshRenderer>(true);
+            foreach (var mr in meshRenderers)
+            {
+                if (mr.material != null && mr.material.mainTexture is Texture2D texture)
+                {
+                    string textureName = texture.name;
+                    if (!string.IsNullOrEmpty(textureName))
+                    {
+                        if (ReplaceTextureInPlace(texture, textureName))
+                        {
+                            if (!_loggedSpriteReplacements.Contains(textureName))
+                            {
+                                _loggedSpriteReplacements.Add(textureName);
+                                Plugin.Log.LogInfo($"Replaced MeshRenderer texture on activation: {textureName} (from {objectPath})");
+                            }
+                        }
+                    }
+                }
+            }
+            
             // Check for SuikozuObj and replace its MeshRenderer texture
             if (__instance.name.Contains("Suikozu", StringComparison.OrdinalIgnoreCase))
             {
