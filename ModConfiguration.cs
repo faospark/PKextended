@@ -44,6 +44,7 @@ public sealed class ModConfiguration
     
     // Suikoden 2 Classic UI Settings
     public ConfigEntry<bool> S2ClassicSaveWindow { get; private set; }
+    public ConfigEntry<string> MercFortFence { get; private set; }
     
     // Diagnostic Settings
 
@@ -52,6 +53,8 @@ public sealed class ModConfiguration
     
     // Custom Object Insertion
     public ConfigEntry<bool> EnableCustomObjects { get; private set; }
+    public ConfigEntry<bool> DebugCustomObjects { get; private set; }
+    public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
 
 
 
@@ -200,6 +203,13 @@ public sealed class ModConfiguration
             "Mimics the feel of the PSX version of Save/Load window for Suikoden 2. Replaces the HD Remaster's ornate frame with a simple fullscreen background."
         );
 
+        MercFortFence = _config.Bind(
+            "Suikoden 2",
+            "MercFortFence",
+            "default",
+            "Mercenary Fortress Fence texture variant. Enter any suffix (e.g. 'bamboo', 'green', 'custom'). Looks for suffix '_<value>'."
+        );
+
         EnableTextureManifestCache = _config.Bind(
             "Performance",
             "EnableTextureManifestCache",
@@ -210,8 +220,22 @@ public sealed class ModConfiguration
         EnableCustomObjects = _config.Bind(
             "Experimental",
             "EnableCustomObjects",
+            true,
+            "[EXPERIMENTAL] Enable custom object insertion. Allows you to add custom static objects to game scenes via objects.json configuration."
+        );
+
+        DebugCustomObjects = _config.Bind(
+            "Experimental",
+            "DebugCustomObjects",
+            true,
+            "Show magenta debug sprites for custom objects when their texture files are missing. Useful for testing object placement and visibility."
+        );
+
+        LogExistingMapObjects = _config.Bind(
+            "Experimental",
+            "LogExistingMapObjects",
             false,
-            "[EXPERIMENTAL] Enable custom object insertion. Adds a test object to scenes to verify the system works. This is a proof-of-concept feature."
+            "Log all existing map objects to ExistingMapObjects.json. This creates a reference file you can copy from when creating custom objects. Disable after collecting the data you need."
         );
 
         // Diagnostics section - all logging and debugging settings at the bottom

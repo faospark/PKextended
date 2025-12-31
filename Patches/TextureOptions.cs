@@ -92,6 +92,32 @@ public static class TextureOptions
              }
         }
 
+        // Mercenary Fortress Fence
+        if (textureName == "t_vb02_00_obj_fence01" ||
+            textureName == "t_vb02_00_obj_fence00" ||
+            textureName == "t_vb02_00_obj_fence03" ||
+            textureName == "t_vb02_00_obj_fence04")
+        {
+             // Check if user wants a variant
+             string fenceVariant = Plugin.Config.MercFortFence.Value.ToLower();
+             
+             if (fenceVariant == "default" || string.IsNullOrEmpty(fenceVariant))
+                 return textureName;
+
+             // Try to use the configured value as a suffix
+             string variantName = $"{textureName}_{fenceVariant}";
+             if (CustomTexturePatch.texturePathIndex.ContainsKey(variantName))
+             {
+                 if (Plugin.Config.DetailedTextureLog.Value)
+                     Plugin.Log.LogInfo($"[MercFortFence] Using variant: {variantName}");
+                 return variantName;
+             }
+             else if (Plugin.Config.DetailedTextureLog.Value)
+             {
+                 Plugin.Log.LogWarning($"[MercFortFence] Variant '{variantName}' not found, using default");
+             }
+        }
+
         // Add more variant types here as needed
         
         return textureName; // Return original name if no variant

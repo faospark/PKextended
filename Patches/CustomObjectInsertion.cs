@@ -111,9 +111,9 @@ public class CustomObjectInsertion
         // Create GameObject
         GameObject customObj = new GameObject("custom_test_object");
         customObj.transform.SetParent(objectFolder);
-        customObj.transform.localPosition = new Vector3(0, 0, 0); // Dead center
+        customObj.transform.localPosition = new Vector3(960, 540, 0); // Center of 1920x1080 screen
         customObj.transform.localRotation = Quaternion.identity;
-        customObj.transform.localScale = new Vector3(5, 5, 1); // Reasonable size - 5x normal
+        customObj.transform.localScale = new Vector3(20, 20, 1); // HUGE - 20x normal (2000x2000 pixels)
 
         Plugin.Log.LogInfo($"[Custom Objects] Created GameObject at position: {customObj.transform.position} with scale: {customObj.transform.localScale}");
 
@@ -122,8 +122,8 @@ public class CustomObjectInsertion
         spriteRenderer.color = Color.white;
         
         // Set sorting to render on top of everything
-        spriteRenderer.sortingOrder = 31;
-        Plugin.Log.LogInfo("[Custom Objects] Set sorting order to 31 (render on top)");
+        spriteRenderer.sortingOrder = 9999;
+        Plugin.Log.LogInfo("[Custom Objects] Set sorting order to 9999 (render on top of EVERYTHING)");
 
         // Try to load custom texture
         Sprite customSprite = LoadCustomSprite("custom_object_test");
@@ -134,16 +134,10 @@ public class CustomObjectInsertion
         }
         else
         {
-            // Fallback: use save point base texture (we know this exists and works)
-            Sprite savePointSprite = LoadCustomSprite("t_obj_savePoint_base");
-            if (savePointSprite != null)
+            // Only create magenta debug sprite if debug mode is enabled
+            if (Plugin.Config.DebugCustomObjects.Value)
             {
-                spriteRenderer.sprite = savePointSprite;
-                Plugin.Log.LogInfo("[Custom Objects] Using save point base as fallback sprite");
-            }
-            else
-            {
-                // Last resort: create a magenta sprite
+                // Fallback: create a magenta debug sprite
                 Texture2D fallbackTexture = new Texture2D(100, 100);
                 Color[] pixels = new Color[100 * 100];
                 for (int i = 0; i < pixels.Length; i++)
@@ -161,7 +155,11 @@ public class CustomObjectInsertion
                 );
 
                 spriteRenderer.sprite = fallbackSprite;
-                Plugin.Log.LogWarning("[Custom Objects] Using magenta fallback sprite");
+                Plugin.Log.LogWarning("[Custom Objects] Using magenta debug sprite (custom_object_test.png not found)");
+            }
+            else
+            {
+                Plugin.Log.LogWarning("[Custom Objects] Texture not found and debug mode disabled, object will be invisible");
             }
         }
 
@@ -192,6 +190,26 @@ public class CustomObjectInsertion
             Plugin.Log.LogError($"[Custom Objects] Error adding MapSpriteHD: {ex.Message}");
         }
 
+        // Explicitly activate the object
+        customObj.SetActive(true);
+        
+        // Check parent hierarchy and log it
+        Plugin.Log.LogInfo("[Custom Objects] Checking parent hierarchy:");
+        Transform current = customObj.transform;
+        int depth = 0;
+        while (current != null && depth < 10)
+        {
+            Plugin.Log.LogInfo($"[Custom Objects]   [{depth}] {current.name} - Active: {current.gameObject.activeSelf}");
+            current = current.parent;
+            depth++;
+        }
+        
+        // Log final state for debugging
+        Plugin.Log.LogInfo($"[Custom Objects] Final state - Active: {customObj.activeSelf}, ActiveInHierarchy: {customObj.activeInHierarchy}");
+        Plugin.Log.LogInfo($"[Custom Objects] Parent: {customObj.transform.parent.name}, Parent Active: {customObj.transform.parent.gameObject.activeSelf}");
+        Plugin.Log.LogInfo($"[Custom Objects] SpriteRenderer enabled: {spriteRenderer.enabled}, Sprite: {spriteRenderer.sprite?.name ?? "null"}");
+        Plugin.Log.LogInfo($"[Custom Objects] Layer: {customObj.layer}, Tag: {customObj.tag}");
+        
         Plugin.Log.LogInfo("[Custom Objects] ✓ Custom object created successfully!");
     }
 

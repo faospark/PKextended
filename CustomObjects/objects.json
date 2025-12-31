@@ -1,0 +1,42 @@
+{
+    "Maps": {
+        "vk08_00": {
+            "Objects": [
+                {
+                    "Name": "hotel_test_object",
+                    "Texture": "t_obj_savePoint_base",
+                    "Position": {
+                        "X": 1569.499,
+                        "Y": -1978.2,
+                        "Z": 99
+                    },
+                    "Scale": {
+                        "X": 99,
+                        "Y": 99,
+                        "Z": 1
+                    },
+                    "SortingOrder": 1,
+                    "Rotation": 0
+                }
+            ]
+        },
+        "vk02_00": {
+            "Objects": [
+                {
+                    "Name": "another_test_object",
+                    "Texture": "custom_texture_name",
+                    "Position": {
+                        "X": 10,
+                        "Y": 5,
+                        "Z": 0
+                    },
+                    "Scale": {
+                        "X": 1,
+                        "Y": 1,
+                        "Z": 1
+                    }
+                }
+            ]
+        }
+    }
+}

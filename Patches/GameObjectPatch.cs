@@ -32,7 +32,7 @@ public partial class CustomTexturePatch
         // Suikoden 2: bgManagerHD
         // Suikoden 1: MapBackGround
         // Also scan 3D objects (contains FieldObject MeshRenderers) HDEffect
-        bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround") || objectPath.Contains("3D") || objectPath.Contains("HDEffect");
+        bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround") || objectPath.Contains("3D") || objectPath.Contains("HDEffect") || objectPath.Contains("HDFishingBG");
         
         // Handle background manager activation - scan for sprites to replace
         if (isBgManager)
@@ -90,7 +90,7 @@ public partial class CustomTexturePatch
             var meshRenderers = __instance.GetComponentsInChildren<MeshRenderer>(true);
             foreach (var mr in meshRenderers)
             {
-                if (mr.material != null && mr.material.mainTexture is Texture2D texture)
+                if (mr.material != null && mr.material.HasProperty("_MainTex") && mr.material.mainTexture is Texture2D texture)
                 {
                     string textureName = texture.name;
                     if (!string.IsNullOrEmpty(textureName))
@@ -124,10 +124,43 @@ public partial class CustomTexturePatch
                 }
             }
 
-            // Create custom objects when the scene clone is activated (e.g., vk07_01(Clone))
-            if (objectPath.Contains("(Clone)") && Plugin.Config.EnableCustomObjects.Value)
+            // Create custom objects when the scene clone is activated or found in children
+            if (Plugin.Config.EnableCustomObjects.Value)
             {
-                PKCore.Patches.CustomObjectInsertion.TryCreateCustomObjects(__instance);
+                // Skip our own custom objects to prevent recursion
+                if (objectPath.Contains("custom_test_object"))
+                {
+                    return;
+                }
+                
+                if (objectPath.Contains("(Clone)"))
+                {
+                    PKCore.Patches.CustomObjectInsertion.TryCreateCustomObjects(__instance);
+                    
+                    // Discover existing objects if logging is enabled
+                    if (Plugin.Config.LogExistingMapObjects.Value)
+                    {
+                        PKCore.Utils.ObjectDiscovery.DiscoverObjectsInScene(__instance);
+                    }
+                }
+                else if (objectPath.EndsWith("bgManagerHD"))
+                {
+                    // If bgManagerHD is activated, look for the Clone child
+                    foreach (Transform child in __instance.transform)
+                    {
+                        if (child.name.EndsWith("(Clone)"))
+                        {
+                            PKCore.Patches.CustomObjectInsertion.TryCreateCustomObjects(child.gameObject);
+                            
+                            // Discover existing objects if logging is enabled
+                            if (Plugin.Config.LogExistingMapObjects.Value)
+                            {
+                                PKCore.Utils.ObjectDiscovery.DiscoverObjectsInScene(child.gameObject);
+                            }
+                            break; // Assume only one map clone active
+                        }
+                    }
+                }
             }
         }
     }

@@ -1,0 +1,84 @@
+{
+    "Maps": {
+        "vk08_00": {
+            "Objects": [
+                {
+                    "Name": "debug_center_marker",
+                    "Texture": "custom_marker",
+                    "Position": {
+                        "X": 960,
+                        "Y": 540,
+                        "Z": 0
+                    },
+                    "Scale": {
+                        "X": 2,
+                        "Y": 2,
+                        "Z": 1
+                    },
+                    "SortingOrder": 100,
+                    "Rotation": 0
+                },
+                {
+                    "Name": "wall_decoration",
+                    "Texture": "custom_wall_art",
+                    "Position": {
+                        "X": 500,
+                        "Y": 300,
+                        "Z": 0
+                    },
+                    "Scale": {
+                        "X": 3,
+                        "Y": 3,
+                        "Z": 1
+                    },
+                    "SortingOrder": 10,
+                    "Rotation": 0
+                }
+            ]
+        },
+        "vk07_01": {
+            "Objects": [
+                {
+                    "Name": "mercenary_fort_sign",
+                    "Texture": "custom_sign_01",
+                    "Position": {
+                        "X": 100,
+                        "Y": 50,
+                        "Z": 0
+                    },
+                    "Scale": {
+                        "X": 1.5,
+                        "Y": 1.5,
+                        "Z": 1
+                    },
+                    "Rotation": 0,
+                    "SortingOrder": 31
+                },
+                {
+                    "Name": "training_dummy",
+                    "Texture": "training_dummy_sprite",
+                    "Position": {
+                        "X": 200,
+                        "Y": 100,
+                        "Z": 0
+                    },
+                    "Scale": {
+                        "X": 2,
+                        "Y": 2,
+                        "Z": 1
+                    },
+                    "SortingOrder": 15,
+                    "HasCollision": true,
+                    "ColliderSize": {
+                        "X": 32,
+                        "Y": 48
+                    },
+                    "ColliderOffset": {
+                        "X": 0,
+                        "Y": 0
+                    }
+                }
+            ]
+        }
+    }
+}

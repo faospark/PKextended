@@ -22,11 +22,32 @@ namespace PKCore.Patches
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "GSD2")
                 return;
 
-            // Check if this is the first save/load set (indicates save menu opened)
-            if (__instance.name == "UI_System_SaveLoad_Set00")
+            // Check if this is a save/load set (UI_System_SaveLoad_Set00, Set01, etc.)
+            if (__instance.name.StartsWith("UI_System_SaveLoad_"))
             {
-                Plugin.Log.LogInfo($"[SaveWindowPatch] Save menu opened, searching for UI_System_SaveLoad2");
+                // Apply scaling as requested (0.9, 0.9, 1)
+                __instance.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
                 
+                // Find Img_BG child and make it black with 75% transparency (25% opacity)
+                // Find Img_Frame first
+                Transform imgFrame = __instance.transform.Find("Img_Frame");
+                if (imgFrame != null)
+                {
+                    // Then find Img_BG as a child of Img_Frame
+                    Transform imgBgChild = imgFrame.Find("Img_BG");
+                    if (imgBgChild != null)
+                    {
+                        Image bgImage = imgBgChild.GetComponent<Image>();
+                        if (bgImage != null)
+                        {
+                            bgImage.color = new Color(0f, 0f, 0f, 0.8f); // Black with 50% opacity
+                        }
+                    }
+                }
+
+                Plugin.Log.LogInfo($"[SaveWindowPatch] Processed {__instance.name}");
+                
+                // Continue with searching for the main window to insert background
                 // Find UI_System_SaveLoad2 - traverse up the hierarchy
                 Transform current = __instance.transform;
                 Transform uiSystemSaveLoad2 = null;
@@ -44,7 +65,7 @@ namespace PKCore.Patches
                             if (sibling.name.StartsWith("UI_System_SaveLoad2"))
                             {
                                 uiSystemSaveLoad2 = sibling;
-                                Plugin.Log.LogInfo($"[SaveWindowPatch] ✓ Found UI_System_SaveLoad2");
+                                // Plugin.Log.LogInfo($"[SaveWindowPatch] ✓ Found UI_System_SaveLoad2");
                                 break;
                             }
                         }
@@ -58,8 +79,19 @@ namespace PKCore.Patches
                     Transform window01 = uiSystemSaveLoad2.Find("Window01");
                     if (window01 != null)
                     {
-                        Plugin.Log.LogInfo($"[SaveWindowPatch] Found Window01, inserting fullscreen background there");
+                        // Plugin.Log.LogInfo($"[SaveWindowPatch] Found Window01, inserting fullscreen background there");
                         TryInsertBackground(window01.gameObject);
+
+                        // Adjust Scrollbar Vertical
+                        // Path: Window01/Panel/Panel/Scrollbar Vertical
+                        Transform scrollbar = window01.Find("Panel/Panel/Scrollbar Vertical");
+                        if (scrollbar != null)
+                        {
+            
+                            scrollbar.localPosition = new Vector3(720.1979f, 368.3988f, 0f);
+                            scrollbar.localScale = new Vector3(1.8f, 0.9f, 1f);
+                            // Plugin.Log.LogInfo("[SaveWindowPatch] Adjusted Scrollbar Vertical transform");
+                        }
                     }
                     else
                     {
@@ -69,11 +101,11 @@ namespace PKCore.Patches
                 }
                 else
                 {
-                    Plugin.Log.LogWarning("[SaveWindowPatch] Could not find UI_System_SaveLoad2, using parent of Set00 as fallback");
+                    // Plugin.Log.LogWarning("[SaveWindowPatch] Could not find UI_System_SaveLoad2, using parent of Set00 as fallback");
                     // Fallback: use the parent of UI_System_SaveLoad_Set00
                     if (__instance.transform.parent != null)
                     {
-                        Plugin.Log.LogInfo($"[SaveWindowPatch] Using parent: {__instance.transform.parent.name}");
+                        // Plugin.Log.LogInfo($"[SaveWindowPatch] Using parent: {__instance.transform.parent.name}");
                         TryInsertBackground(__instance.transform.parent.gameObject);
                     }
                 }
@@ -96,12 +128,8 @@ namespace PKCore.Patches
             Transform imgBg = saveLoadWindow.transform.Find("Img_bg");
             if (imgBg != null)
             {
-                Image imgBgImage = imgBg.GetComponent<Image>();
-                if (imgBgImage != null)
-                {
-                    imgBgImage.color = new Color(0f, 0f, 0f, 0.2f); // Black with 20% opacity
-                    Plugin.Log.LogInfo("[SaveWindowPatch] Set Img_bg color to black with 20% alpha");
-                }
+                imgBg.gameObject.SetActive(false);
+                Plugin.Log.LogInfo("[SaveWindowPatch] Disabled Img_bg");
             }
             
             Transform imgFlame = saveLoadWindow.transform.Find("Img_Flame");
