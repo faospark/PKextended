@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using UnityEngine;
 using PKCore.Models;
@@ -116,6 +117,30 @@ public static class ObjectDiscovery
                         interactableType = typeName;
                 }
                 
+                // Check if component has OpenMessageWindow method (indicates dialog/NPC)
+                if (!isInteractable)
+                {
+                    try
+                    {
+                        var methods = component.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        foreach (var method in methods)
+                        {
+                            if (method.Name.Contains("OpenMessageWindow", StringComparison.OrdinalIgnoreCase) ||
+                                method.Name.Contains("ShowDialog", StringComparison.OrdinalIgnoreCase) ||
+                                method.Name.Contains("Talk", StringComparison.OrdinalIgnoreCase))
+                            {
+                                isInteractable = true;
+                                interactableType = $"{typeName} (has {method.Name})";
+                                break;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore reflection errors
+                    }
+                }
+                
                 // Try to find dialog/text content
                 if (dialogText == null)
                 {
@@ -124,18 +149,38 @@ public static class ObjectDiscovery
                         var type = component.GetType();
                         
                         // Look for common text/dialog field names
-                        var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                         foreach (var field in fields)
                         {
                             string fieldName = field.Name.ToLower();
+                            
+                            // Check for text/dialog/message fields
                             if (fieldName.Contains("text") || fieldName.Contains("dialog") || 
-                                fieldName.Contains("message") || fieldName.Contains("remark"))
+                                fieldName.Contains("message") || fieldName.Contains("remark") ||
+                                fieldName.Contains("messageid") || fieldName.Contains("msg"))
                             {
                                 var value = field.GetValue(component);
-                                if (value != null && value is string textValue && !string.IsNullOrEmpty(textValue))
+                                if (value != null)
                                 {
-                                    dialogText = textValue;
-                                    break;
+                                    // Handle string values
+                                    if (value is string textValue && !string.IsNullOrEmpty(textValue))
+                                    {
+                                        dialogText = textValue;
+                                        break;
+                                    }
+                                    // Handle int message IDs
+                                    else if (value is int intValue && intValue > 0)
+                                    {
+                                        dialogText = $"[MessageID: {intValue}]";
+                                        break;
+                                    }
+                                    // Handle arrays of strings
+                                    else if (value is string[] stringArray && stringArray.Length > 0)
+                                    {
+                                        dialogText = string.Join(" | ", stringArray.Where(s => !string.IsNullOrEmpty(s)));
+                                        if (!string.IsNullOrEmpty(dialogText))
+                                            break;
+                                    }
                                 }
                             }
                         }
@@ -148,15 +193,24 @@ public static class ObjectDiscovery
                             {
                                 string propName = prop.Name.ToLower();
                                 if (propName.Contains("text") || propName.Contains("dialog") || 
-                                    propName.Contains("message") || propName.Contains("remark"))
+                                    propName.Contains("message") || propName.Contains("remark") ||
+                                    propName.Contains("messageid") || propName.Contains("msg"))
                                 {
                                     if (prop.CanRead)
                                     {
                                         var value = prop.GetValue(component);
-                                        if (value != null && value is string textValue && !string.IsNullOrEmpty(textValue))
+                                        if (value != null)
                                         {
-                                            dialogText = textValue;
-                                            break;
+                                            if (value is string textValue && !string.IsNullOrEmpty(textValue))
+                                            {
+                                                dialogText = textValue;
+                                                break;
+                                            }
+                                            else if (value is int intValue && intValue > 0)
+                                            {
+                                                dialogText = $"[MessageID: {intValue}]";
+                                                break;
+                                            }
                                         }
                                     }
                                 }
