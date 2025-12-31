@@ -145,9 +145,10 @@ public partial class CustomTexturePatch
                 }
                 else if (objectPath.EndsWith("bgManagerHD"))
                 {
-                    // If bgManagerHD is activated, look for the Clone child
-                    foreach (Transform child in __instance.transform)
+                    // If bgManagerHD is activated, look for the Clone child (use GetChild for IL2CPP)
+                    for (int i = 0; i < __instance.transform.childCount; i++)
                     {
+                        Transform child = __instance.transform.GetChild(i);
                         if (child.name.EndsWith("(Clone)"))
                         {
                             PKCore.Patches.CustomObjectInsertion.TryCreateCustomObjects(child.gameObject);

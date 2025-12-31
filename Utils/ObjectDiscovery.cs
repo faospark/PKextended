@@ -228,9 +228,15 @@ public static class ObjectDiscovery
     {
         try
         {
-            // Save to game root PKCore folder (not BepInEx plugins folder)
-            string gameRoot = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(Paths.PluginPath)));
-            string outputPath = Path.Combine(gameRoot, "PKCore", "CustomObjects", "ExistingMapObjects.json");
+            // Save to game root PKCore folder
+            string outputPath = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore", "CustomObjects", "ExistingMapObjects.json");
+            
+            // Ensure directory exists
+            string directory = Path.GetDirectoryName(outputPath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
             
             var options = new JsonSerializerOptions
             {
