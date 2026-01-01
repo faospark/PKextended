@@ -159,11 +159,11 @@ public class Plugin : BasePlugin
         // }
 
         // ARCHIVED: Custom Object Insertion (moved to ObjectReserve folder)
-        // if (Config.EnableCustomObjects.Value)
-        // {
-        //     Log.LogInfo("Applying Custom Object Insertion patches...");
-        //     CustomObjectInsertion.Initialize(Config.EnableCustomObjects.Value, harmony);
-        // }
+        if (Config.EnableCustomObjects.Value)
+        {
+            Log.LogInfo("Applying Custom Object Insertion patches...");
+            CustomObjectInsertion.Initialize(Config.EnableCustomObjects.Value, harmony);
+        }
 
         // Dragon Sprite Patch
         if (Config.EnableCustomTextures.Value)

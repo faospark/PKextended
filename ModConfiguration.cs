@@ -49,13 +49,13 @@ public sealed class ModConfiguration
     // Diagnostic Settings
 
     // ARCHIVED: MapBGManagerHD Object Diagnostics (moved to ObjectReserve folder)
-    // public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
+    public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
     
     // ARCHIVED: Custom Object Insertion (moved to ObjectReserve folder)
-    // public ConfigEntry<bool> EnableCustomObjects { get; private set; }
-    // public ConfigEntry<bool> DebugCustomObjects { get; private set; }
-    // public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
+    public ConfigEntry<bool> EnableCustomObjects { get; private set; }
+    public ConfigEntry<bool> DebugCustomObjects { get; private set; }
+    public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
 
 
 
@@ -219,26 +219,26 @@ public sealed class ModConfiguration
         );
 
         // EXPERIMENTAL FEATURES - Hidden for current release, will revisit in future
-        // EnableCustomObjects = _config.Bind(
-        //     "Experimental",
-        //     "EnableCustomObjects",
-        //     true,
-        //     "[EXPERIMENTAL] Enable custom object insertion. Allows you to add custom static objects to game scenes via objects.json configuration."
-        // );
+        EnableCustomObjects = _config.Bind(
+            "Experimental",
+            "EnableCustomObjects",
+            true,
+            "[EXPERIMENTAL] Enable custom object insertion. Allows you to add custom static objects to game scenes via objects.json configuration."
+        );
 
-        // DebugCustomObjects = _config.Bind(
-        //     "Experimental",
-        //     "DebugCustomObjects",
-        //     true,
-        //     "Show magenta debug sprites for custom objects when their texture files are missing. Useful for testing object placement and visibility."
-        // );
+        DebugCustomObjects = _config.Bind(
+            "Experimental",
+            "DebugCustomObjects",
+            true,
+            "Show magenta debug sprites for custom objects when their texture files are missing. Useful for testing object placement and visibility."
+        );
 
-        // LogExistingMapObjects = _config.Bind(
-        //     "Experimental",
-        //     "LogExistingMapObjects",
-        //     false,
-        //     "Log all existing map objects to ExistingMapObjects.json. This creates a reference file you can copy from when creating custom objects. Disable after collecting the data you need."
-        // );
+        LogExistingMapObjects = _config.Bind(
+            "Experimental",
+            "LogExistingMapObjects",
+            false,
+            "Log all existing map objects to ExistingMapObjects.json. This creates reference file you can copy from when creating custom objects. Disable after collecting the data you need."
+        );
 
         // Diagnostics section - all logging and debugging settings at the bottom
         LogReplaceableTextures = _config.Bind(
@@ -262,11 +262,11 @@ public sealed class ModConfiguration
             "Enable detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation (only errors will be logged)."
         );
 
-        // EnableObjectDiagnostics = _config.Bind(
-        //     "Diagnostics",
-        //     "EnableObjectDiagnostics",
-        //     false,
-        //     "Enable diagnostic logging for MapBGManagerHD objects. Logs all objects in field scenes (event objects, sprites, animations) to help understand scene structure. For development/debugging only."
-        // );
+        EnableObjectDiagnostics = _config.Bind(
+            "Diagnostics",
+            "EnableObjectDiagnostics",
+            false,
+            "Enable diagnostic logging for MapBGManagerHD objects. Logs all objects in field scenes (event objects, sprites, animations) to help understand scene structure. For development/debugging only."
+        );
     }
 }
