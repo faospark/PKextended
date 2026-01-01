@@ -151,19 +151,19 @@ public class Plugin : BasePlugin
 
 
 
-        // MapBGManagerHD Object Diagnostics (Research)
-        if (Config.EnableObjectDiagnostics.Value)
-        {
-            Log.LogInfo("Applying MapBGManagerHD diagnostic patches...");
-            MapBGManagerHDDiagnostics.Initialize(Config.EnableObjectDiagnostics.Value, harmony);
-        }
+        // ARCHIVED: MapBGManagerHD Object Diagnostics (moved to ObjectReserve folder)
+        // if (Config.EnableObjectDiagnostics.Value)
+        // {
+        //     Log.LogInfo("Applying MapBGManagerHD diagnostic patches...");
+        //     MapBGManagerHDDiagnostics.Initialize(Config.EnableObjectDiagnostics.Value, harmony);
+        // }
 
-        // Custom Object Insertion (Proof of Concept)
-        if (Config.EnableCustomObjects.Value)
-        {
-            Log.LogInfo("Applying Custom Object Insertion patches...");
-            CustomObjectInsertion.Initialize(Config.EnableCustomObjects.Value, harmony);
-        }
+        // ARCHIVED: Custom Object Insertion (moved to ObjectReserve folder)
+        // if (Config.EnableCustomObjects.Value)
+        // {
+        //     Log.LogInfo("Applying Custom Object Insertion patches...");
+        //     CustomObjectInsertion.Initialize(Config.EnableCustomObjects.Value, harmony);
+        // }
 
         // Dragon Sprite Patch
         if (Config.EnableCustomTextures.Value)
