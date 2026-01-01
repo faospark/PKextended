@@ -17,6 +17,24 @@ public class UnitySpriteRendererPatch
         if (value == null)
             return;
 
+        // CRITICAL: Skip custom objects created by CustomObjectInsertion
+        // They handle their own texture loading and we don't want to interfere
+        // Build path inline to check if this is a custom object
+        string path = "";
+        Transform current = __instance.gameObject.transform;
+        while (current != null)
+        {
+            path = "/" + current.name + path;
+            current = current.parent;
+        }
+        
+        bool isCustomObject = path.Contains("/object/") && (path.Contains("bgManagerHD") || path.Contains("MapBackGround"));
+        if (isCustomObject)
+        {
+            // Let custom objects handle their own sprites (silent skip)
+            return;
+        }
+
         string spriteName = value.name;
         
         // DIAGNOSTIC: Log dragon sprites specifically

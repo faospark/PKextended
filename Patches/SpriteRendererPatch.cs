@@ -37,14 +37,10 @@ public partial class CustomTexturePatch
         
         // CRITICAL: Skip custom objects created by CustomObjectInsertion
         // They handle their own texture loading and we don't want to interfere
-        if (objectPath.Contains("/object/") && 
-            (__instance.gameObject.name == "Bush" || 
-             __instance.gameObject.name == "xzon" ||
-             __instance.gameObject.name.StartsWith("TEST_") ||
-             __instance.gameObject.name.Contains("custom_") ||
-             __instance.gameObject.name.Contains("hotel_test")))
+        // Check if this is under the "object" folder in bgManagerHD hierarchy
+        if (objectPath.Contains("/object/") && isBgManager)
         {
-            // Let custom objects handle their own sprites
+            // Let custom objects handle their own sprites (silent skip to reduce log spam)
             return;
         }
         

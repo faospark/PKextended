@@ -1,5 +1,6 @@
 using HarmonyLib;
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -21,6 +22,9 @@ public class CustomObjectInsertion
     private static HashSet<int> _processedScenes = new HashSet<int>();
     private static Dictionary<string, List<DiscoveredObject>> _loadedObjects = new Dictionary<string, List<DiscoveredObject>>();
     private static bool _configLoaded = false;
+    
+    // Cache for the current MapBGManagerHD instance
+    private static object _currentMapBGManager = null;
     
     // Path to the JSON file - trying multiple locations
     private static string GetConfigPath()
@@ -54,8 +58,15 @@ public class CustomObjectInsertion
         
         Plugin.Log.LogInfo($"[Custom Objects] Objects will be created when scenes are activated");
         
-        // Apply RefleshObject patch
+        // Apply patches
         harmony.PatchAll(typeof(RefleshObjectPatch));
+        harmony.PatchAll(typeof(MapBGManagerHDCachePatch));
+    }
+    
+    // Called by MapBGManagerHDCachePatch to cache the instance
+    internal static void SetMapBGManagerInstance(object instance)
+    {
+        _currentMapBGManager = instance;
     }
 
     private static void LoadConfiguration()
@@ -145,6 +156,17 @@ public class CustomObjectInsertion
 
             Plugin.Log.LogInfo($"[Custom Objects] Attempting to create objects in: {sceneRoot.name} ({mapId})");
 
+            // Use cached MapBGManagerHD instance (captured by MapBGManagerHDCachePatch)
+            object mapBGManager = _currentMapBGManager;
+            if (mapBGManager == null)
+            {
+                Plugin.Log.LogWarning("[Custom Objects] MapBGManagerHD instance not yet cached - objects will not be registered");
+            }
+            else
+            {
+                Plugin.Log.LogInfo($"[Custom Objects] Using cached MapBGManagerHD instance");
+            }
+
             // Find the "object" folder
             Transform objectFolder = FindObjectFolderInScene(sceneRoot.transform);
             if (objectFolder == null)
@@ -154,7 +176,7 @@ public class CustomObjectInsertion
             }
 
             // Create the custom objects
-            CreateCustomObjectsForMap(mapId, objectFolder);
+            CreateCustomObjectsForMap(mapId, objectFolder, mapBGManager);
 
             _processedScenes.Add(sceneRoot.GetInstanceID());
         }
@@ -198,7 +220,7 @@ public class CustomObjectInsertion
         return null;
     }
 
-    private static void CreateCustomObjectsForMap(string mapId, Transform objectFolder)
+    private static void CreateCustomObjectsForMap(string mapId, Transform objectFolder, object mapBGManager)
     {
         List<DiscoveredObject> objects = _loadedObjects[mapId];
         Plugin.Log.LogInfo($"[Custom Objects] Creating {objects.Count} custom objects for {mapId}...");
@@ -213,8 +235,54 @@ public class CustomObjectInsertion
             
             try
             {
-                CreateSingleObject(objData, objectFolder);
-                successCount++;
+                var (obj, sprite) = CreateSingleObject(objData, objectFolder);
+                if (obj != null)
+                {
+                    successCount++;
+                    
+                    // Diagnostic logging for visibility debugging
+                    if (Plugin.Config.DebugCustomObjects.Value)
+                    {
+                        Plugin.Log.LogInfo($"[Custom Objects] Object '{obj.name}' state:");
+                        Plugin.Log.LogInfo($"  - Active: {obj.activeSelf}");
+                        Plugin.Log.LogInfo($"  - Position: {obj.transform.position}");
+                        Plugin.Log.LogInfo($"  - Local Position: {obj.transform.localPosition}");
+                        Plugin.Log.LogInfo($"  - Parent: {obj.transform.parent?.name ?? "null"}");
+                        
+                        var sr = obj.GetComponent<SpriteRenderer>();
+                        if (sr != null)
+                        {
+                            Plugin.Log.LogInfo($"  - SpriteRenderer enabled: {sr.enabled}");
+                            Plugin.Log.LogInfo($"  - Sprite BEFORE re-assignment: {sr.sprite?.name ?? "null"}");
+                            Plugin.Log.LogInfo($"  - Sorting Layer: {sr.sortingLayerName} ({sr.sortingLayerID})");
+                            Plugin.Log.LogInfo($"  - Sorting Order: {sr.sortingOrder}");
+                            Plugin.Log.LogInfo($"  - Color: {sr.color}");
+                        }
+                    }
+                    
+                    // Register with MapBGManagerHD if available
+                    if (mapBGManager != null)
+                    {
+                        RegisterWithMapBGManager(obj, mapBGManager);
+                    }
+                    
+                    // RE-ASSIGN SPRITE AFTER ALL INITIALIZATION
+                    // This is the final fix - sprite gets cleared somewhere, so we re-assign it last
+                    if (sprite != null)
+                    {
+                        var sr = obj.GetComponent<SpriteRenderer>();
+                        if (sr != null)
+                        {
+                            sr.sprite = sprite;
+                            Plugin.Log.LogInfo($"[Custom Objects] ✓✓ FINAL sprite re-assignment for {obj.name}: {sprite.name}");
+                            
+                            if (Plugin.Config.DebugCustomObjects.Value)
+                            {
+                                Plugin.Log.LogInfo($"  - Sprite AFTER final re-assignment: {sr.sprite?.name ?? "null"}");
+                            }
+                        }
+                    }
+                }
             }
             catch (System.Exception ex)
             {
@@ -225,22 +293,29 @@ public class CustomObjectInsertion
         Plugin.Log.LogInfo($"[Custom Objects] Successfully created {successCount}/{objects.Count} objects");
     }
 
-    private static void CreateSingleObject(DiscoveredObject data, Transform parent)
+    private static (GameObject obj, Sprite sprite) CreateSingleObject(DiscoveredObject data, Transform parent)
     {
         // Create GameObject
         GameObject customObj = new GameObject(data.Name);
         customObj.transform.SetParent(parent);
         
         // Transform
-        if (data.Position != null)
-            customObj.transform.localPosition = data.Position.ToVector3();
-            
-        if (data.Scale != null)
-            customObj.transform.localScale = data.Scale.ToVector3();
-        else
-            customObj.transform.localScale = Vector3.one;
-            
-        customObj.transform.localRotation = Quaternion.Euler(0, 0, data.Rotation);
+    if (data.Position != null)
+        customObj.transform.localPosition = data.Position.ToVector3();
+        
+    if (data.Scale != null)
+    {
+        var scale = data.Scale.ToVector3();
+        // Prevent zero scale (causes invisible objects)
+        if (scale.x == 0) scale.x = 1;
+        if (scale.y == 0) scale.y = 1;
+        if (scale.z == 0) scale.z = 1;
+        customObj.transform.localScale = scale;
+    }
+    else
+        customObj.transform.localScale = Vector3.one;
+        
+    customObj.transform.localRotation = Quaternion.Euler(0, 0, data.Rotation);
         
         // Sorting & Layer
         if (data.Layer != 0) customObj.layer = data.Layer;
@@ -251,12 +326,14 @@ public class CustomObjectInsertion
 
         // SpriteRenderer
         SpriteRenderer sr = null;
+        Sprite spriteToAssign = null; // Store sprite reference to assign AFTER MapSpriteHD component
+        
         if (data.HasSpriteRenderer || !string.IsNullOrEmpty(data.Texture))
         {
             sr = customObj.AddComponent<SpriteRenderer>();
             sr.sortingOrder = data.SortingOrder;
 
-            // Attempt to copy Sorting Layer from a sibling
+            // Attempt to copy Sorting Layer AND Material from a sibling
             // This is critical because the map might render on a specific layer (e.g. "Background")
             // preventing our object from being seen if it's on "Default"
             var siblingSr = parent.GetComponentInChildren<SpriteRenderer>();
@@ -264,10 +341,12 @@ public class CustomObjectInsertion
             {
                  sr.sortingLayerID = siblingSr.sortingLayerID;
                  
-                 // CRITICAL FIX: The Game's shader (copied from sibling) likely hides the sprite
-                 // because it expects specific Atlas UVs or properties we don't have.
-                 // We force the standard Default shader to ensure the texture is rendered as-is.
-                 sr.material = new Material(Shader.Find("Sprites/Default"));
+                 // Copy the material from the sibling to ensure compatibility
+                 if (siblingSr.material != null)
+                 {
+                     sr.material = siblingSr.material;
+                     Plugin.Log.LogInfo($"[Custom Objects] Copied material from {siblingSr.name}: {siblingSr.material.name} (shader: {siblingSr.material.shader.name})");
+                 }
 
                  Plugin.Log.LogInfo($"[Custom Objects] Copied Sorting Layer from {siblingSr.name}: {sr.sortingLayerName} ({sr.sortingLayerID})");
             }
@@ -282,15 +361,13 @@ public class CustomObjectInsertion
             customObj.transform.localPosition = new Vector3(pos.x, pos.y, -0.5f); // -0.5 instead of -5
 
             
-            // Handle texture
+            // Handle texture - Load sprite but don't assign yet (assign after activation)
             if (!string.IsNullOrEmpty(data.Texture) && data.Texture.ToLower() != "none" && data.Texture != "Native")
             {
-                Sprite sprite = LoadCustomSprite(data.Texture);
-                if (sprite != null)
+                spriteToAssign = LoadCustomSprite(data.Texture);
+                if (spriteToAssign != null)
                 {
-                    sr.sprite = sprite;
-                    // Removed debug prefix "SPRITE_" as requested
-                    Plugin.Log.LogInfo($"[Custom Objects] Assigned sprite '{sprite.name}' to {customObj.name}");
+                    Plugin.Log.LogInfo($"[Custom Objects] Loaded sprite '{spriteToAssign.name}' for {customObj.name}");
                 }
                 else
                 {
@@ -298,18 +375,18 @@ public class CustomObjectInsertion
                     // Only use debug sprite if enabled
                     if (Plugin.Config.DebugCustomObjects.Value)
                     {
-                        sr.sprite = CreateDebugSprite();
-                        sr.sprite.name = "DEBUG_TEXTURE_FAIL"; // Explicit name
-                        sr.color = Color.red; // Red = Error (Not Magenta)
+                        spriteToAssign = CreateDebugSprite();
+                        spriteToAssign.name = "DEBUG_TEXTURE_FAIL";
+                        sr.color = Color.red;
                     }
                 }
             }
             
             // Fallback for "none" texture
-            if (sr.sprite == null && Plugin.Config.DebugCustomObjects.Value)
+            if (spriteToAssign == null && Plugin.Config.DebugCustomObjects.Value)
             {
-                sr.sprite = CreateDebugSprite();
-                sr.sprite.name = "DEBUG_NO_TEXTURE";
+                spriteToAssign = CreateDebugSprite();
+                spriteToAssign.name = "DEBUG_NO_TEXTURE";
                 sr.color = new Color(0, 1, 1, 0.5f); // Cyan
             }
         }
@@ -321,8 +398,32 @@ public class CustomObjectInsertion
             AddMapSpriteHD(customObj, sr, data);
         }
 
-        // Active state
+        // Active state - activate BEFORE assigning sprite (activation may clear sprite)
         customObj.SetActive(data.Active);
+        
+        // NOW assign the sprite AFTER object is activated
+        if (sr != null && spriteToAssign != null)
+        {
+            sr.sprite = spriteToAssign;
+            Plugin.Log.LogInfo($"[Custom Objects] ✓ Assigned sprite '{spriteToAssign.name}' to {customObj.name} AFTER activation");
+            
+            // DIAGNOSTIC: Verify sprite immediately after assignment
+            Plugin.Log.LogInfo($"[Custom Objects] VERIFY: sr.sprite after final assignment: {(sr.sprite != null ? $"EXISTS (name='{sr.sprite.name}')" : "NULL")}");
+            if (sr.sprite != null)
+            {
+                Plugin.Log.LogInfo($"[Custom Objects]   - Sprite texture: {(sr.sprite.texture != null ? $"{sr.sprite.texture.name} ({sr.sprite.texture.width}x{sr.sprite.texture.height})" : "NULL")}");
+                Plugin.Log.LogInfo($"[Custom Objects]   - Sprite rect: {sr.sprite.rect}");
+                Plugin.Log.LogInfo($"[Custom Objects]   - Sprite bounds: {sr.sprite.bounds}");
+            }
+        }
+        else
+        {
+            if (spriteToAssign == null)
+                Plugin.Log.LogWarning($"[Custom Objects] No sprite to assign for {customObj.name}");
+        }
+        
+        // Return the created object AND the sprite for re-assignment
+        return (customObj, spriteToAssign);
     }
     
     private static void AddMapSpriteHD(GameObject obj, SpriteRenderer sr, DiscoveredObject data)
@@ -335,12 +436,18 @@ public class CustomObjectInsertion
                 var il2cppType = Il2CppType.From(mapSpriteHDType);
                 var mapSpriteComponent = obj.AddComponent(il2cppType);
                 
+                // Set all required properties for game integration
                 SetProperty(mapSpriteComponent, "hasSpriteRenderer", true);
                 SetProperty(mapSpriteComponent, "spriteRenderer", sr);
                 
                 // Set Size (approximating from scale/collider)
-                // Vector3 size = data.ColliderSize?.ToVector3() ?? new Vector3(100, 100, 0.2f);
                 SetProperty(mapSpriteComponent, "Size", new Vector3(100, 100, 0.2f)); 
+                
+                // Set gameObject and transform references (may be needed by game)
+                SetProperty(mapSpriteComponent, "gameObject", obj);
+                SetProperty(mapSpriteComponent, "transform", obj.transform);
+                
+                Plugin.Log.LogInfo($"[Custom Objects] Added MapSpriteHD component to {obj.name}");
             }
         }
         catch (System.Exception ex)
@@ -434,6 +541,253 @@ public class CustomObjectInsertion
         return null;
     }
 
+    private static System.Type FindMapBGManagerType()
+    {
+        foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == "GSD2" || assemblyName == "GSDShare" || assemblyName == "GSD1")
+            {
+                var type = assembly.GetType("MapBGManagerHD");
+                if (type != null) return type;
+            }
+        }
+        return null;
+    }
+
+    private static object FindMapBGManagerHD(GameObject sceneRoot)
+    {
+        try
+        {
+            // First, check if the PARENT is bgManagerHD (common structure: bgManagerHD/vk08_00(Clone))
+            if (sceneRoot.transform.parent != null && sceneRoot.transform.parent.name == "bgManagerHD")
+            {
+                var mapBGManagerType = FindMapBGManagerType();
+                if (mapBGManagerType != null)
+                {
+                    var il2cppType = Il2CppType.From(mapBGManagerType);
+                    // IMPORTANT: Return the component directly - it's already the IL2CPP wrapper
+                    var component = sceneRoot.transform.parent.gameObject.GetComponent(il2cppType);
+                    if (component != null)
+                    {
+                        Plugin.Log.LogInfo($"[Custom Objects] Found MapBGManagerHD instance (parent of scene)");
+                        return component;
+                    }
+                }
+            }
+            
+            // Fallback: Search for bgManagerHD as a child
+            Transform bgManager = sceneRoot.transform.Find("bgManagerHD");
+            if (bgManager == null)
+            {
+                // Try recursive search
+                bgManager = FindBgManagerRecursive(sceneRoot.transform);
+            }
+            
+            if (bgManager != null)
+            {
+                // Get the MapBGManagerHD component
+                var mapBGManagerType = FindMapBGManagerType();
+                if (mapBGManagerType != null)
+                {
+                    var il2cppType = Il2CppType.From(mapBGManagerType);
+                    var component = bgManager.gameObject.GetComponent(il2cppType);
+                    if (component != null)
+                    {
+                        Plugin.Log.LogInfo($"[Custom Objects] Found MapBGManagerHD instance (child of scene)");
+                        return component;
+                    }
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Plugin.Log.LogWarning($"[Custom Objects] Error finding MapBGManagerHD: {ex.Message}");
+        }
+        
+        return null;
+    }
+
+    private static Transform FindBgManagerRecursive(Transform parent)
+    {
+        if (parent.name == "bgManagerHD")
+        {
+            return parent;
+        }
+
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            var result = FindBgManagerRecursive(parent.GetChild(i));
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    private static void RegisterWithMapBGManager(GameObject customObj, object mapBGManager)
+    {
+        try
+        {
+            var managerType = mapBGManager.GetType();
+            Plugin.Log.LogInfo($"[Custom Objects] MapBGManager type: {managerType.FullName}");
+            
+            // Get the MapSpriteHD component from our custom object
+            var mapSpriteHDType = FindMapSpriteHDType();
+            if (mapSpriteHDType == null)
+            {
+                Plugin.Log.LogWarning($"[Custom Objects] Could not find MapSpriteHD type");
+                return;
+            }
+            
+            var il2cppType = Il2CppType.From(mapSpriteHDType);
+            var componentPtr = customObj.GetComponent(il2cppType);
+            
+            if (componentPtr == null)
+            {
+                Plugin.Log.LogWarning($"[Custom Objects] No MapSpriteHD component on {customObj.name}");
+                return;
+            }
+            
+            // Create a properly typed IL2CPP object from the component pointer
+            // The component is a Component type, but we need MapSpriteHD type
+            object mapSpriteHD;
+            try
+            {
+                // Use the IL2CPP pointer to create a properly typed instance
+                var ptrProperty = componentPtr.GetType().GetProperty("Pointer");
+                if (ptrProperty != null)
+                {
+                    var ptr = (IntPtr)ptrProperty.GetValue(componentPtr);
+                    // Create instance using the constructor that takes IntPtr
+                    mapSpriteHD = System.Activator.CreateInstance(mapSpriteHDType, ptr);
+                    Plugin.Log.LogInfo($"[Custom Objects] Created typed MapSpriteHD instance from pointer");
+                }
+                else
+                {
+                    Plugin.Log.LogError($"[Custom Objects] Could not get Pointer property from component");
+                    return;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Plugin.Log.LogError($"[Custom Objects] Failed to create typed MapSpriteHD: {ex.Message}");
+                return;
+            }
+            
+            // Try property first (IL2CPP wrapper exposes as property)
+            var spritesProp = managerType.GetProperty("sprites");
+            if (spritesProp != null)
+            {
+                Plugin.Log.LogInfo($"[Custom Objects] Found 'sprites' property");
+                var sprites = spritesProp.GetValue(mapBGManager);
+                
+                if (sprites == null)
+                {
+                    Plugin.Log.LogWarning($"[Custom Objects] 'sprites' list is null - initializing it ourselves");
+                    
+                    // The game hasn't initialized the list yet, so we'll create it
+                    // Use Il2CppSystem.Collections.Generic.List<MapSpriteHD>
+                    try
+                    {
+                        var listType = typeof(Il2CppSystem.Collections.Generic.List<>).MakeGenericType(mapSpriteHDType);
+                        sprites = System.Activator.CreateInstance(listType);
+                        
+                        spritesProp.SetValue(mapBGManager, sprites);
+                        
+                        Plugin.Log.LogInfo($"[Custom Objects] ✓ Created new sprites list");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Plugin.Log.LogError($"[Custom Objects] Failed to create sprites list: {ex.Message}");
+                        return;
+                    }
+                }
+                
+                if (sprites != null)
+                {
+                    // Don't cast to IList - IL2CPP types don't implement .NET interfaces
+                    // Use reflection to call Add method directly
+                    try
+                    {
+                        var addMethod = sprites.GetType().GetMethod("Add");
+                        if (addMethod != null)
+                        {
+                            var countProp = sprites.GetType().GetProperty("Count");
+                            var currentCount = countProp?.GetValue(sprites) ?? 0;
+                            
+                            Plugin.Log.LogInfo($"[Custom Objects] About to add to sprites list (current count: {currentCount})");
+                            
+                            // The mapSpriteHD is a Component, but we need to pass it as the IL2CPP object
+                            // Don't wrap it - just pass the object directly since it's already an IL2CPP object
+                            Plugin.Log.LogInfo($"[Custom Objects] mapSpriteHD type: {mapSpriteHD.GetType().FullName}");
+                            addMethod.Invoke(sprites, new object[] { mapSpriteHD });
+                            
+                            var newCount = countProp?.GetValue(sprites) ?? 0;
+                            Plugin.Log.LogInfo($"[Custom Objects] ✓ Registered {customObj.name} with MapBGManagerHD (sprites list, total: {newCount})");
+                        }
+                        else
+                        {
+                            Plugin.Log.LogError($"[Custom Objects] Could not find Add method on sprites list");
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Plugin.Log.LogError($"[Custom Objects] Failed to add to sprites list: {ex.Message}");
+                        Plugin.Log.LogError($"[Custom Objects] Stack trace: {ex.StackTrace}");
+                    }
+                }
+                else
+                {
+                    Plugin.Log.LogError($"[Custom Objects] sprites is STILL NULL after creation attempt!");
+                }
+                
+                return;
+            }
+            
+            // Try field as fallback
+            var spritesField = managerType.GetField("sprites", BindingFlags.Public | BindingFlags.Instance);
+            if (spritesField != null)
+            {
+                Plugin.Log.LogInfo($"[Custom Objects] Found 'sprites' field");
+                var sprites = spritesField.GetValue(mapBGManager) as System.Collections.IList;
+                
+                if (sprites == null)
+                {
+                    Plugin.Log.LogWarning($"[Custom Objects] 'sprites' field returned null");
+                    return;
+                }
+                
+                sprites.Add(mapSpriteHD);
+                Plugin.Log.LogInfo($"[Custom Objects] ✓ Registered {customObj.name} with MapBGManagerHD (sprites list, total: {sprites.Count})");
+                return;
+            }
+            
+            // Diagnostic: List all available members
+            Plugin.Log.LogWarning($"[Custom Objects] 'sprites' not found as property or field!");
+            Plugin.Log.LogInfo($"[Custom Objects] Available properties:");
+            foreach (var prop in managerType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                Plugin.Log.LogInfo($"  - Property: {prop.Name} ({prop.PropertyType.Name})");
+            }
+            Plugin.Log.LogInfo($"[Custom Objects] Available fields:");
+            foreach (var field in managerType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                Plugin.Log.LogInfo($"  - Field: {field.Name} ({field.FieldType.Name})");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Plugin.Log.LogError($"[Custom Objects] Failed to register {customObj.name}: {ex.Message}");
+            if (Plugin.Config.DetailedTextureLog.Value)
+            {
+                Plugin.Log.LogError($"[Custom Objects] Stack trace: {ex.StackTrace}");
+            }
+        }
+    }
+
     private static void SetProperty(object obj, string propertyName, object value)
     {
         var property = obj.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
@@ -456,5 +810,18 @@ public static class RefleshObjectPatch
               // Uncomment for debugging
               // Plugin.Log.LogInfo($"[RefleshObject Hook] ID={id}, Pos={pos}...");
         }
+    }
+}
+
+// Patch to capture the MapBGManagerHD instance after scene load completes
+[HarmonyPatch(typeof(MapBGManagerHD), "Load")]
+public static class MapBGManagerHDCachePatch
+{
+    [HarmonyPostfix]
+    public static void Postfix(object __instance)
+    {
+        // Cache the MapBGManagerHD instance AFTER Load() completes - sprites list should be initialized
+        CustomObjectInsertion.SetMapBGManagerInstance(__instance);
+        Plugin.Log.LogInfo($"[Custom Objects] Cached MapBGManagerHD instance from Load() Postfix");
     }
 }
