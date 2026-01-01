@@ -48,13 +48,14 @@ public sealed class ModConfiguration
     
     // Diagnostic Settings
 
-    public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
+    // ARCHIVED: MapBGManagerHD Object Diagnostics (moved to ObjectReserve folder)
+    // public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
     
-    // Custom Object Insertion
-    public ConfigEntry<bool> EnableCustomObjects { get; private set; }
-    public ConfigEntry<bool> DebugCustomObjects { get; private set; }
-    public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
+    // ARCHIVED: Custom Object Insertion (moved to ObjectReserve folder)
+    // public ConfigEntry<bool> EnableCustomObjects { get; private set; }
+    // public ConfigEntry<bool> DebugCustomObjects { get; private set; }
+    // public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
 
 
 
@@ -179,7 +180,7 @@ public sealed class ModConfiguration
             "Custom Textures",
             "SavePointColor",
             "default",
-            "Save point orb color. Options: blue, red, yellow, pink, green, cyan, white, alt, default. Place color variants in Textures/SavePoint/ folder as 't_obj_savePoint_ball_<color>.png'."
+            "Save point orb color. Options: blue, red, yellow, pink, green, cyan, white, dark, purple, navy, default. Place color variants in Textures/SavePoint/ folder as 't_obj_savePoint_ball_<color>.png'."
         );
 
         TirRunTexture = _config.Bind(
@@ -261,11 +262,11 @@ public sealed class ModConfiguration
             "Enable detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation (only errors will be logged)."
         );
 
-        EnableObjectDiagnostics = _config.Bind(
-            "Diagnostics",
-            "EnableObjectDiagnostics",
-            false,
-            "Enable diagnostic logging for MapBGManagerHD objects. Logs all objects in field scenes (event objects, sprites, animations) to help understand scene structure. For development/debugging only."
-        );
+        // EnableObjectDiagnostics = _config.Bind(
+        //     "Diagnostics",
+        //     "EnableObjectDiagnostics",
+        //     false,
+        //     "Enable diagnostic logging for MapBGManagerHD objects. Logs all objects in field scenes (event objects, sprites, animations) to help understand scene structure. For development/debugging only."
+        // );
     }
 }
