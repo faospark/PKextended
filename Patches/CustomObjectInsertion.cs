@@ -235,7 +235,7 @@ public class CustomObjectInsertion
             
             try
             {
-                var (obj, sprite) = CreateSingleObject(objData, objectFolder);
+                var (obj, sprite, position, scale, rotation) = CreateSingleObject(objData, objectFolder);
                 if (obj != null)
                 {
                     successCount++;
@@ -282,6 +282,16 @@ public class CustomObjectInsertion
                             }
                         }
                     }
+                    
+                    // RE-APPLY TRANSFORM AFTER ALL INITIALIZATION
+                    // MapSpriteHD or native code may reset the transform, so we force it back
+                    obj.transform.localPosition = position;
+                    obj.transform.localScale = scale;
+                    obj.transform.localRotation = rotation;
+                    Plugin.Log.LogInfo($"[Custom Objects] ✓✓ FINAL transform re-application for {obj.name}:");
+                    Plugin.Log.LogInfo($"  - Position: {position}");
+                    Plugin.Log.LogInfo($"  - Scale: {scale}");
+                    Plugin.Log.LogInfo($"  - Rotation: {rotation.eulerAngles}");
                 }
             }
             catch (System.Exception ex)
@@ -293,15 +303,22 @@ public class CustomObjectInsertion
         Plugin.Log.LogInfo($"[Custom Objects] Successfully created {successCount}/{objects.Count} objects");
     }
 
-    private static (GameObject obj, Sprite sprite) CreateSingleObject(DiscoveredObject data, Transform parent)
+    private static (GameObject obj, Sprite sprite, Vector3 position, Vector3 scale, Quaternion rotation) CreateSingleObject(DiscoveredObject data, Transform parent)
     {
         // Create GameObject
         GameObject customObj = new GameObject(data.Name);
         customObj.transform.SetParent(parent);
         
+        // Store desired transform values to re-apply later (after MapSpriteHD interference)
+        Vector3 desiredPosition;
+        Vector3 desiredScale;
+        Quaternion desiredRotation;
+        
         // Transform
     if (data.Position != null)
-        customObj.transform.localPosition = data.Position.ToVector3();
+        desiredPosition = data.Position.ToVector3();
+    else
+        desiredPosition = Vector3.zero;
         
     if (data.Scale != null)
     {
@@ -310,12 +327,17 @@ public class CustomObjectInsertion
         if (scale.x == 0) scale.x = 1;
         if (scale.y == 0) scale.y = 1;
         if (scale.z == 0) scale.z = 1;
-        customObj.transform.localScale = scale;
+        desiredScale = scale;
     }
     else
-        customObj.transform.localScale = Vector3.one;
+        desiredScale = Vector3.one;
         
-    customObj.transform.localRotation = Quaternion.Euler(0, 0, data.Rotation);
+    desiredRotation = Quaternion.Euler(0, 0, data.Rotation);
+    
+    // Apply transform initially (will be re-applied later)
+    customObj.transform.localPosition = desiredPosition;
+    customObj.transform.localScale = desiredScale;
+    customObj.transform.localRotation = desiredRotation;
         
         // Sorting & Layer
         if (data.Layer != 0) customObj.layer = data.Layer;
@@ -339,6 +361,14 @@ public class CustomObjectInsertion
             var siblingSr = parent.GetComponentInChildren<SpriteRenderer>();
             if (siblingSr != null)
             {
+                 // Copy the GameObject Layer (Physics/Rendering Layer) from sibling
+                 // This is CRITICAL if the camera Culling Mask excludes "Default" (Layer 0)
+                 if (customObj.layer == 0) // Only override if not set in JSON
+                 {
+                     customObj.layer = siblingSr.gameObject.layer;
+                     Plugin.Log.LogInfo($"[Custom Objects] Copied GameObject Layer from {siblingSr.name}: {LayerMask.LayerToName(customObj.layer)} ({customObj.layer})");
+                 }
+
                  sr.sortingLayerID = siblingSr.sortingLayerID;
                  
                  // Copy the material from the sibling to ensure compatibility
@@ -347,18 +377,31 @@ public class CustomObjectInsertion
                      sr.material = siblingSr.material;
                      Plugin.Log.LogInfo($"[Custom Objects] Copied material from {siblingSr.name}: {siblingSr.material.name} (shader: {siblingSr.material.shader.name})");
                  }
+                 else
+                 {
+                     // Fallback if sibling has no material
+                     sr.material = new Material(Shader.Find("Sprites/Default"));
+                     Plugin.Log.LogInfo($"[Custom Objects] Sibling has no material, using Sprites/Default");
+                 }
 
                  Plugin.Log.LogInfo($"[Custom Objects] Copied Sorting Layer from {siblingSr.name}: {sr.sortingLayerName} ({sr.sortingLayerID})");
             }
+            else
+            {
+                 // No sibling found, force standard shader
+                 sr.material = new Material(Shader.Find("Sprites/Default"));
+                 Plugin.Log.LogInfo($"[Custom Objects] No sibling found, using Sprites/Default");
+            }
             
-            // DEBUG: Force positive sorting order because -480 puts us behind the background
-            // even if the original object used it (likely on a different layer or with different Z).
-            sr.sortingOrder = 100;
+            // DEBUG: Extreme Sorting Order to force on top of EVERYTHING
+            sr.sortingOrder = 20000;
 
             
-            // Force Z-offset to be in front but not too close to camera
+            // DEBUG: Extreme Z-offset to bring it WAY close to camera (but not behind it)
+            // If camera is at Z=-10, this puts us at -9 relative to parent?
+            // Actually, let's try Z = -5 first.
             var pos = customObj.transform.localPosition;
-            customObj.transform.localPosition = new Vector3(pos.x, pos.y, -0.5f); // -0.5 instead of -5
+            customObj.transform.localPosition = new Vector3(pos.x, pos.y, -5.0f);
 
             
             // Handle texture - Load sprite but don't assign yet (assign after activation)
@@ -398,6 +441,7 @@ public class CustomObjectInsertion
             AddMapSpriteHD(customObj, sr, data);
         }
 
+
         // Active state - activate BEFORE assigning sprite (activation may clear sprite)
         customObj.SetActive(data.Active);
         
@@ -422,8 +466,8 @@ public class CustomObjectInsertion
                 Plugin.Log.LogWarning($"[Custom Objects] No sprite to assign for {customObj.name}");
         }
         
-        // Return the created object AND the sprite for re-assignment
-        return (customObj, spriteToAssign);
+        // Return the created object, sprite, AND transform data for re-assignment
+        return (customObj, spriteToAssign, desiredPosition, desiredScale, desiredRotation);
     }
     
     private static void AddMapSpriteHD(GameObject obj, SpriteRenderer sr, DiscoveredObject data)

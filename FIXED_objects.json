@@ -1,0 +1,27 @@
+{
+    "Maps": {
+        "vk07_01": {
+            "Objects": [
+                {
+                    "Name": "UI_Menu_arrow_1",
+                    "Position": {
+                        "X": 0,
+                        "Y": 0,
+                        "Z": -0.5
+                    },
+                    "Scale": {
+                        "X": 500,
+                        "Y": 500,
+                        "Z": 1
+                    },
+                    "Rotation": 0,
+                    "Texture": "UI_Menu_arrow_1",
+                    "HasSpriteRenderer": true,
+                    "SortingOrder": 1000,
+                    "Active": true,
+                    "NativeID": -1
+                }
+            ]
+        }
+    }
+}

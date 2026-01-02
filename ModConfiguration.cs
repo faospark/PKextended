@@ -46,13 +46,11 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> S2ClassicSaveWindow { get; private set; }
     public ConfigEntry<string> MercFortFence { get; private set; }
     
-    // Diagnostic Settings
-
-    // ARCHIVED: MapBGManagerHD Object Diagnostics (moved to ObjectReserve folder)
-    public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
+    // Performance Settings
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
     
-    // ARCHIVED: Custom Object Insertion (moved to ObjectReserve folder)
+    // EXPERIMENTAL FEATURES (at end of config file)
+    public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
     public ConfigEntry<bool> EnableCustomObjects { get; private set; }
     public ConfigEntry<bool> DebugCustomObjects { get; private set; }
     public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
@@ -218,29 +216,7 @@ public sealed class ModConfiguration
             "Enable texture manifest caching for faster startup. Caches the texture index to skip re-scanning the Textures folder on every launch. Disable if you're actively adding/removing textures and want changes detected immediately."
         );
 
-        // EXPERIMENTAL FEATURES - Hidden for current release, will revisit in future
-        EnableCustomObjects = _config.Bind(
-            "Experimental",
-            "EnableCustomObjects",
-            true,
-            "[EXPERIMENTAL] Enable custom object insertion. Allows you to add custom static objects to game scenes via objects.json configuration."
-        );
-
-        DebugCustomObjects = _config.Bind(
-            "Experimental",
-            "DebugCustomObjects",
-            true,
-            "Show magenta debug sprites for custom objects when their texture files are missing. Useful for testing object placement and visibility."
-        );
-
-        LogExistingMapObjects = _config.Bind(
-            "Experimental",
-            "LogExistingMapObjects",
-            false,
-            "Log all existing map objects to ExistingMapObjects.json. This creates reference file you can copy from when creating custom objects. Disable after collecting the data you need."
-        );
-
-        // Diagnostics section - all logging and debugging settings at the bottom
+        // Diagnostics section - all logging and debugging settings
         LogReplaceableTextures = _config.Bind(
             "Diagnostics",
             "LogReplaceableTextures",
@@ -262,11 +238,38 @@ public sealed class ModConfiguration
             "Enable detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation (only errors will be logged)."
         );
 
+        // ========================================
+        // EXPERIMENTAL FEATURES
+        // ========================================
+        // These features are work-in-progress and may not function correctly.
+        // Enable at your own risk for testing purposes.
+        
         EnableObjectDiagnostics = _config.Bind(
-            "Diagnostics",
+            "Experimental",
             "EnableObjectDiagnostics",
             false,
-            "Enable diagnostic logging for MapBGManagerHD objects. Logs all objects in field scenes (event objects, sprites, animations) to help understand scene structure. For development/debugging only."
+            "[EXPERIMENTAL] Enable diagnostic logging for MapBGManagerHD objects. Logs all objects in field scenes to help understand scene structure. For development/debugging only."
+        );
+
+        EnableCustomObjects = _config.Bind(
+            "Experimental",
+            "EnableCustomObjects",
+            false,
+            "[EXPERIMENTAL - NOT WORKING] Enable custom object insertion. Objects are created but invisible due to MapSpriteHD interference. Allows you to add custom static objects to game scenes via objects.json configuration."
+        );
+
+        DebugCustomObjects = _config.Bind(
+            "Experimental",
+            "DebugCustomObjects",
+            false,
+            "[EXPERIMENTAL] Show magenta debug sprites for custom objects when their texture files are missing. Useful for testing object placement and visibility."
+        );
+
+        LogExistingMapObjects = _config.Bind(
+            "Experimental",
+            "LogExistingMapObjects",
+            false,
+            "[EXPERIMENTAL] Log all existing map objects to ExistingMapObjects.json. This creates a reference file you can copy from when creating custom objects. Disable after collecting the data you need."
         );
     }
 }

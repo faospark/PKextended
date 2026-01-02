@@ -158,7 +158,9 @@ public class Plugin : BasePlugin
         //     MapBGManagerHDDiagnostics.Initialize(Config.EnableObjectDiagnostics.Value, harmony);
         // }
 
-        // ARCHIVED: Custom Object Insertion (moved to ObjectReserve folder)
+        // EXPERIMENTAL: Custom Object Insertion
+        // Note: Feature is functional but objects are invisible due to MapSpriteHD interference
+        // Enable at your own risk for testing/development
         if (Config.EnableCustomObjects.Value)
         {
             Log.LogInfo("Applying Custom Object Insertion patches...");
