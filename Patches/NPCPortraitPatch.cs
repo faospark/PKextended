@@ -156,6 +156,9 @@ public class NPCPortraitPatch
                 
                 if (ImageConversion.LoadImage(customTexture, fileData))
                 {
+                    // Compress texture to BC3 (DXT5) for GPU efficiency
+                    TextureCompression.CompressTexture(customTexture, $"portrait_{portraitName}");
+                    
                     // Store the texture (not a sprite) for later swapping
                     portraitCache.Add(new PortraitEntry(portraitName.ToLower(), null));
                     // We'll create the sprite dynamically by swapping fp_219's texture
@@ -194,6 +197,9 @@ public class NPCPortraitPatch
             
             if (ImageConversion.LoadImage(texture, fileData))
             {
+                // Compress texture to BC3 (DXT5) for GPU efficiency
+                TextureCompression.CompressTexture(texture, npcName);
+                
                 // Set filter mode to prevent white outline on transparent images
                 texture.filterMode = FilterMode.Bilinear;
                 texture.wrapMode = TextureWrapMode.Clamp;

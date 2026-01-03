@@ -530,6 +530,9 @@ public class CustomObjectInsertion
                 // Use ImageConversion for IL2CPP compatibility
                 if (UnityEngine.ImageConversion.LoadImage(texture, fileData))
                 {
+                    // Compress texture to BC3 (DXT5) for GPU efficiency
+                    TextureCompression.CompressTexture(texture, textureName);
+                    
                     texture.name = textureName;
                     texture.filterMode = FilterMode.Bilinear;
                     texture.wrapMode = TextureWrapMode.Clamp;

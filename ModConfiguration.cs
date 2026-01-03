@@ -48,6 +48,10 @@ public sealed class ModConfiguration
     
     // Performance Settings
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
+    public ConfigEntry<bool> EnableTextureCompression { get; private set; }
+    public ConfigEntry<string> TextureCompressionQuality { get; private set; }
+    public ConfigEntry<string> TextureCompressionFormat { get; private set; }
+    public ConfigEntry<bool> EnableDDSTextures { get; private set; }
     
     // EXPERIMENTAL FEATURES (at end of config file)
     public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
@@ -214,6 +218,34 @@ public sealed class ModConfiguration
             "EnableTextureManifestCache",
             true,
             "Enable texture manifest caching for faster startup. Caches the texture index to skip re-scanning the Textures folder on every launch. Disable if you're actively adding/removing textures and want changes detected immediately."
+        );
+
+        EnableTextureCompression = _config.Bind(
+            "Performance",
+            "EnableTextureCompression",
+            true,
+            "Compress custom textures using BC3 (DXT5) format to reduce VRAM usage by 4-6x. Improves GPU performance with minimal quality loss. Recommended for high-resolution texture packs."
+        );
+
+        TextureCompressionQuality = _config.Bind(
+            "Performance",
+            "TextureCompressionQuality",
+            "High",
+            "Texture compression quality. Options: High (slower compression, better quality), Normal (faster compression, good quality). Only applies when EnableTextureCompression is true."
+        );
+
+        TextureCompressionFormat = _config.Bind(
+            "Performance",
+            "TextureCompressionFormat",
+            "Auto",
+            "Texture compression format. Options: Auto (BC1 for RGB, BC3 for RGBA - recommended), BC1 (DXT1, 8:1 compression, RGB only), BC3 (DXT5, 6:1 compression, RGBA), BC7 (highest quality, RGBA). Auto is recommended."
+        );
+
+        EnableDDSTextures = _config.Bind(
+            "Performance",
+            "EnableDDSTextures",
+            true,
+            "Load pre-compressed DDS files when available (e.g., texture.dds instead of texture.png). DDS files have zero compression cost and load faster. Highly recommended for large texture packs."
         );
 
         // Diagnostics section - all logging and debugging settings

@@ -72,6 +72,10 @@ namespace PKCore.Patches
                     byte[] fileData = File.ReadAllBytes(filePath);
                     Texture2D texture = new Texture2D(2, 2);
                     ImageConversion.LoadImage(texture, fileData);
+                    
+                    // Compress texture to BC3 (DXT5) for GPU efficiency
+                    TextureCompression.CompressTexture(texture, materialName);
+                    
                     texture.name = materialName + "_Custom";
                     texture.filterMode = FilterMode.Point; // Keep pixel art sharp? Or Bilinear? Defaulting to Point for now. 
                     // If the user wants smooth textures, they might need a config. But Suikoden is pixel art mostly.
