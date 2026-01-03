@@ -45,6 +45,7 @@ public sealed class ModConfiguration
     // Suikoden 2 Classic UI Settings
     public ConfigEntry<bool> S2ClassicSaveWindow { get; private set; }
     public ConfigEntry<string> MercFortFence { get; private set; }
+    public ConfigEntry<bool> ColoredIntroAndFlashbacks { get; private set; }
     
     // Performance Settings
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
@@ -211,6 +212,13 @@ public sealed class ModConfiguration
             "MercFortFence",
             "default",
             "Mercenary Fortress Fence texture variant. Enter any suffix (e.g. 'bamboo', 'green', 'custom'). Looks for suffix '_<value>'."
+        );
+
+        ColoredIntroAndFlashbacks = _config.Bind(
+            "Suikoden 2",
+            "ColoredIntroAndFlashbacks",
+            false,
+            "Enable colored intro and flashback sequences for Suikoden 2. When enabled, disables the CustomPostEffect component to restore color to these scenes."
         );
 
         EnableTextureManifestCache = _config.Bind(

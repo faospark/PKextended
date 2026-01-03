@@ -177,5 +177,12 @@ public class Plugin : BasePlugin
              Log.LogInfo("Applying Cow texture patches...");
              CowTexturePatch.Initialize();
         }
+
+        // Disable CustomPostEffect for colored intro/flashbacks (Suikoden 2)
+        if (Config.ColoredIntroAndFlashbacks.Value)
+        {
+            Log.LogInfo("Applying DisableCustomPostEffect patch for colored intro/flashbacks...");
+            DisableCustomPostEffectPatch.Initialize(harmony);
+        }
     }
 }
