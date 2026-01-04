@@ -68,6 +68,46 @@ public class UnitySpriteRendererPatch
                 }
             }
         }
+        // If no custom sprite, check if the sprite's atlas texture has a custom replacement
+        else if (value.texture != null)
+        {
+            string atlasTextureName = value.texture.name;
+            
+            // Skip if texture name is empty
+            if (!string.IsNullOrWhiteSpace(atlasTextureName))
+            {
+                if (Plugin.Config.DetailedTextureLog.Value)
+                {
+                    Plugin.Log.LogInfo($"[UnitySpriteRenderer] No custom sprite for '{spriteName}', checking atlas texture: {atlasTextureName}");
+                }
+                
+                Texture2D customAtlasTexture = CustomTexturePatch.LoadCustomTexture(atlasTextureName);
+                
+                if (customAtlasTexture != null)
+                {
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogInfo($"[UnitySpriteRenderer] Found custom atlas texture, replacing in-place...");
+                    }
+                    
+                    // Replace the atlas texture in-place
+                    bool replaced = CustomTexturePatch.ReplaceTextureInPlace(value.texture, atlasTextureName);
+                    
+                    if (replaced)
+                    {
+                        Plugin.Log.LogInfo($"[UnitySpriteRenderer] ✓ Replaced atlas texture for sprite '{spriteName}': {atlasTextureName}");
+                    }
+                    else
+                    {
+                        Plugin.Log.LogWarning($"[UnitySpriteRenderer] ✗ Failed to replace atlas texture: {atlasTextureName}");
+                    }
+                }
+                else if (Plugin.Config.DetailedTextureLog.Value)
+                {
+                    Plugin.Log.LogInfo($"[UnitySpriteRenderer] No custom atlas texture found for: {atlasTextureName}");
+                }
+            }
+        }
         else if (isSavePoint || isDragon)
         {
             Plugin.Log.LogWarning($"[UnitySpriteRenderer] ✗ No custom sprite found for: {spriteName}");

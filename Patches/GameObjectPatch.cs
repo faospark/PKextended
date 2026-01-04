@@ -26,25 +26,41 @@ public partial class CustomTexturePatch
         // Get the full path of the activated object
         string objectPath = GetGameObjectPath(__instance);
         
+        // DEBUG: Log all activations to see what we're missing
+        if (__instance.name.Contains("dragon", StringComparison.OrdinalIgnoreCase) || 
+            __instance.name.Contains("ushi", StringComparison.OrdinalIgnoreCase) ||
+            __instance.name.Contains("MapBackGround", StringComparison.OrdinalIgnoreCase))
+        {
+            Plugin.Log.LogInfo($"[DEBUG] GameObject activated: {objectPath}");
+        }
         
-        // Check if this is a bgManagerHD object
-        bool isBgManager = objectPath.Contains("bgManagerHD");
+        // Check if this is a background manager object
+        // Suikoden 2: bgManagerHD
+        // Suikoden 1: MapBackGround
+        // Also scan 3D objects (contains FieldObject MeshRenderers) HDEffect
+        bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround") || objectPath.Contains("3D") || objectPath.Contains("HDEffect") || objectPath.Contains("HDFishingBG");
         
-        // Handle bgManagerHD activation - scan for sprites to replace
+        // Handle background manager activation - scan for sprites to replace
         if (isBgManager)
         {
             if (Plugin.Config.DetailedTextureLog.Value)
             {
-                Plugin.Log.LogInfo($"bgManagerHD activated: {objectPath}");
+                Plugin.Log.LogInfo($"Background manager activated: {objectPath}");
             }
             
-            // Scan for SpriteRenderers and replace sprites (excluding save points, handled in SavePointPatch.cs)
+            // Scan for SpriteRenderers (Unity standard)
             var spriteRenderers = __instance.GetComponentsInChildren<SpriteRenderer>(true);
             foreach (var sr in spriteRenderers)
             {
                 if (sr.sprite != null)
                 {
                     string spriteName = sr.sprite.name;
+                    
+                    // Check and attach Dragon monitor if applicable
+                    DragonPatch.CheckAndAttachMonitor(sr.gameObject);
+                    
+                    // Check and attach Cow monitor if applicable
+                    CowTexturePatch.CheckAndAttachMonitor(sr.gameObject);
                     
                     // Skip save point sprites - they're handled in SavePointPatch.cs
                     if (spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase))
@@ -56,6 +72,24 @@ public partial class CustomTexturePatch
                         sr.sprite = customSprite;
                         Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
                     }
+                }
+            }
+            
+            // Scan for GRSpriteRenderers (game's custom renderer - used in S1)
+            var grSpriteRenderers = __instance.GetComponentsInChildren<GRSpriteRenderer>(true);
+            foreach (var gr in grSpriteRenderers)
+            {
+                if (gr.sprite != null)
+                {
+                    string spriteName = gr.sprite.name;
+                    
+                    Plugin.Log.LogInfo($"[DEBUG] Found GRSpriteRenderer: {spriteName} on {gr.gameObject.name}");
+                    
+                    // Check and attach Dragon monitor if applicable
+                    DragonPatch.CheckAndAttachMonitor(gr.gameObject);
+                    
+                    // Check and attach Cow monitor if applicable
+                    CowTexturePatch.CheckAndAttachMonitor(gr.gameObject);
                 }
             }
         }
