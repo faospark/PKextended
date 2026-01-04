@@ -26,19 +26,11 @@ public partial class CustomTexturePatch
         // Get the full path of the activated object
         string objectPath = GetGameObjectPath(__instance);
         
-        // DEBUG: Log all activations to see what we're missing
-        if (__instance.name.Contains("dragon", StringComparison.OrdinalIgnoreCase) || 
-            __instance.name.Contains("ushi", StringComparison.OrdinalIgnoreCase) ||
-            __instance.name.Contains("MapBackGround", StringComparison.OrdinalIgnoreCase))
-        {
-            Plugin.Log.LogInfo($"[DEBUG] GameObject activated: {objectPath}");
-        }
-        
         // Check if this is a background manager object
         // Suikoden 2: bgManagerHD
         // Suikoden 1: MapBackGround
         // Also scan 3D objects (contains FieldObject MeshRenderers) HDEffect
-        bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround") || objectPath.Contains("3D") || objectPath.Contains("HDEffect") || objectPath.Contains("HDFishingBG");
+        bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround") || objectPath.Contains("3D") || objectPath.Contains("HDEffect") || objectPath.Contains("HDFishingBG") || objectPath.Contains("M_GATE");
         
         // Handle background manager activation - scan for sprites to replace
         if (isBgManager)
@@ -47,6 +39,32 @@ public partial class CustomTexturePatch
             {
                 Plugin.Log.LogInfo($"Background manager activated: {objectPath}");
             }
+            
+            // Check for MeshRenderers and replace their textures
+            var meshRenderers = __instance.GetComponentsInChildren<MeshRenderer>(true);
+            foreach (var mr in meshRenderers)
+            {
+                if (mr.material != null && mr.material.HasProperty("_MainTex") && mr.material.mainTexture is Texture2D texture)
+                {
+                    // Check and attach Suikozu monitor if applicable (for MeshRenderers too)
+                    SuikozuPatch.CheckAndAttachMonitor(mr.gameObject);
+                    
+                    // Check and attach Summon monitor if applicable (for MeshRenderers/HDEffects)
+                    SummonPatch.CheckAndAttachMonitor(mr.gameObject);
+
+                    string textureName = texture.name;
+                    if (!string.IsNullOrEmpty(textureName))
+                    {
+                        if (ReplaceTextureInPlace(texture, textureName))
+                        {
+                            Plugin.Log.LogInfo($"Replaced MeshRenderer texture on activation: {textureName} (from {objectPath})");
+                        }
+                    }
+                }
+            }
+            
+            // Check main instance for Suikozu
+            SuikozuPatch.CheckAndAttachMonitor(__instance);
             
             // Scan for SpriteRenderers (Unity standard)
             var spriteRenderers = __instance.GetComponentsInChildren<SpriteRenderer>(true);
@@ -61,6 +79,9 @@ public partial class CustomTexturePatch
                     
                     // Check and attach Cow monitor if applicable
                     CowTexturePatch.CheckAndAttachMonitor(sr.gameObject);
+
+                    // Check and attach Summon monitor if applicable
+                    SummonPatch.CheckAndAttachMonitor(sr.gameObject);
                     
                     // Skip save point sprites - they're handled in SavePointPatch.cs
                     if (spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase))
@@ -83,14 +104,23 @@ public partial class CustomTexturePatch
                 {
                     string spriteName = gr.sprite.name;
                     
-                    Plugin.Log.LogInfo($"[DEBUG] Found GRSpriteRenderer: {spriteName} on {gr.gameObject.name}");
-                    
                     // Check and attach Dragon monitor if applicable
                     DragonPatch.CheckAndAttachMonitor(gr.gameObject);
                     
                     // Check and attach Cow monitor if applicable
                     CowTexturePatch.CheckAndAttachMonitor(gr.gameObject);
+                    
+                    // Check and attach Summon monitor if applicable
+                    SummonPatch.CheckAndAttachMonitor(gr.gameObject);
                 }
+            }
+            
+            // Check for ParticleSystemRenderers (Summon effects often use this)
+            var particleRenderers = __instance.GetComponentsInChildren<ParticleSystemRenderer>(true);
+            foreach (var pr in particleRenderers)
+            {
+                 // Check and attach Summon monitor
+                 SummonPatch.CheckAndAttachMonitor(pr.gameObject);
             }
         }
     }

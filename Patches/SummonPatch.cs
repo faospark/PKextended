@@ -1,98 +1,194 @@
 using HarmonyLib;
 using UnityEngine;
+using System.Collections.Generic;
 using System;
+using PKCore;
 
 namespace PKCore.Patches;
 
 /// <summary>
-/// Patches for summon effect texture replacement
-/// Handles M_GATE summon objects and their particle effect textures
-/// Target textures: Eff_tex_Summon_01, Eff_tex_Summon_02_head_ren_01, Eff_tex_Summon_07, 
-///                  Eff_tex_Summon_10, Eff_tex_Summon_11, Eff_tex_Summon_12, Eff_tex_Summon_13
+/// Dedicated patch for handling Summon effect sprite replacements.
+/// Summons use Animator components which constantly reset the sprite,
+/// requiring a monitor component (LateUpdate) to enforce custom textures.
 /// </summary>
-public partial class CustomTexturePatch
+public class SummonPatch
 {
-    /// <summary>
-    /// Intercept GameObject.SetActive to detect when M_GATE summon objects are activated
-    /// User hierarchy: Field > Character > HDeffect > M_GATE... > ... > ParticleSystemRenderer
-    /// </summary>
-    [HarmonyPatch(typeof(GameObject), nameof(GameObject.SetActive))]
-    [HarmonyPostfix]
-    public static void GameObject_SetActive_Summon_Postfix(GameObject __instance, bool value)
+    private static bool _isRegistered = false;
+    
+    // Lazy registration - only register when first summon is encountered
+    private static void EnsureRegistered()
     {
-        // Only scan when activating
-        if (!value || !Plugin.Config.EnableCustomTextures.Value)
-            return;
-
-        // Check if this is an M_GATE summon object
-        if (!__instance.name.StartsWith("M_GATE"))
-            return;
-
-        if (Plugin.Config.DetailedTextureLog.Value)
+        if (_isRegistered) return;
+        
+        try 
         {
-            Plugin.Log.LogInfo($"[Summon] M_GATE object activated: {__instance.name}");
+            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SummonMonitor>();
+            Plugin.Log.LogInfo("[SummonPatch] Registered SummonMonitor type (lazy-loaded on first summon encounter)");
+            _isRegistered = true;
         }
-
-        // Scan this M_GATE object's children for renderers with summon textures
-        ScanAndReplaceSummonTextures(__instance);
+        catch (Exception ex)
+        {
+            Plugin.Log.LogError($"[SummonPatch] Failed to register SummonMonitor: {ex.Message}");
+        }
+    }
+    
+    public static void Initialize()
+    {
+        // Registration is deferred
     }
 
     /// <summary>
-    /// Scan a M_GATE GameObject hierarchy for particle system renderers with summon textures
-    /// Based on user hierarchy: M_GATE > ... > ParticleSystemRenderer > Material > mainTexture
+    /// Checks if an object is a known summon effect and attaches a monitor if needed
     /// </summary>
-    private static void ScanAndReplaceSummonTextures(GameObject mGateObject)
+    public static void CheckAndAttachMonitor(GameObject go)
     {
-        // Get all renderers in the M_GATE hierarchy
-        var renderers = mGateObject.GetComponentsInChildren<Renderer>(true);
-        
-        int replaced = 0;
-        foreach (var renderer in renderers)
+        if (go == null) return;
+
+        bool isSummon = false;
+
+        // Check 1: Name contains Summon
+        if (go.name.Contains("Summon", StringComparison.OrdinalIgnoreCase))
         {
-            if (renderer == null || renderer.sharedMaterial == null)
-                continue;
-
-            string matName = renderer.sharedMaterial.name;
-            
-            // Check if this is a summon material (contains M_GATE in the material name)
-            if (!matName.Contains("M_GATE"))
-                continue;
-
-            // Access the material instance
-            Material mat = renderer.material;
-            if (mat == null || mat.mainTexture == null)
-                continue;
-
-            Texture mainTex = mat.mainTexture;
-            string textureName = mainTex.name;
-
-            // Check if this is a Texture2D we can replace
-            if (mainTex is Texture2D tex2D)
+            isSummon = true;
+        }
+        // Check 2: Renderer (Sprite or Material) contains Summon
+        else
+        {
+            var renderer = go.GetComponent<Renderer>();
+            if (renderer != null)
             {
-                if (HasCustomTexture(textureName))
+                // Check Sprite
+                var sr = renderer as SpriteRenderer;
+                if (sr != null && sr.sprite != null && sr.sprite.name.Contains("Summon", StringComparison.OrdinalIgnoreCase))
                 {
-                    int textureId = tex2D.GetInstanceID();
-                    if (!processedTextureIds.Contains(textureId))
+                    isSummon = true;
+                }
+                // Check Material
+                else if (renderer.material != null && renderer.material.mainTexture != null)
+                {
+                    if (renderer.material.mainTexture.name.Contains("Summon", StringComparison.OrdinalIgnoreCase))
                     {
-                        processedTextureIds.Add(textureId);
-                        bool success = ReplaceTextureInPlace(tex2D, textureName);
-                        
-                        if (success)
-                        {
-                            replaced++;
-                            if (Plugin.Config.DetailedTextureLog.Value)
-                            {
-                                Plugin.Log.LogInfo($"[Summon] Replaced texture '{textureName}' on renderer '{renderer.name}' (Material: {matName})");
-                            }
-                        }
+                        isSummon = true;
                     }
                 }
             }
         }
+        
+        if (!isSummon) return;
 
-        if (replaced > 0)
+        // Ensure the type is registered
+        EnsureRegistered();
+
+        // Avoid adding multiple monitors
+        if (go.GetComponent<SummonMonitor>() != null) return;
+
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
-            Plugin.Log.LogInfo($"[Summon] Replaced {replaced} summon texture(s) in {mGateObject.name}");
+            Plugin.Log.LogInfo($"[SummonPatch] Attaching monitor to summon object: {go.name}");
+        }
+        go.AddComponent<SummonMonitor>();
+    }
+}
+
+/// <summary>
+/// Component that runs every frame to ensure summon sprites are replaced
+/// regardless of what the Animator does
+/// </summary>
+public class SummonMonitor : MonoBehaviour
+{
+    private Renderer _renderer;
+    private SpriteRenderer _spriteRenderer;
+    private string _lastSpriteName;
+    private string _targetTextureName;
+    private Sprite _customSprite;
+    private string _lastEnforcedLogName;
+
+    private void Awake()
+    {
+        _renderer = GetComponent<Renderer>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        
+        // Try to identify target texture from initial state
+        if (_spriteRenderer != null && _spriteRenderer.sprite != null)
+        {
+            _lastSpriteName = _spriteRenderer.sprite.name;
+        }
+        else if (_renderer != null && _renderer.material != null && _renderer.material.mainTexture != null)
+        {
+            _targetTextureName = _renderer.material.mainTexture.name;
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (_renderer == null) return;
+
+        // Path 1: SpriteRenderer (Dragon/Cow style)
+        if (_spriteRenderer != null)
+        {
+            if (_spriteRenderer.sprite == null) return;
+
+            string currentSpriteName = _spriteRenderer.sprite.name;
+            if (currentSpriteName.EndsWith("(Clone)"))
+                currentSpriteName = currentSpriteName.Substring(0, currentSpriteName.Length - 7);
+
+            if (_lastSpriteName != currentSpriteName)
+            {
+                _lastSpriteName = currentSpriteName;
+                Sprite replacement = CustomTexturePatch.LoadCustomSprite(currentSpriteName, _spriteRenderer.sprite);
+                
+                if (replacement != null)
+                {
+                    _customSprite = replacement;
+                    _spriteRenderer.sprite = replacement;
+                    LogEnforcement(currentSpriteName);
+                }
+                else
+                {
+                    _customSprite = null;
+                }
+            }
+            else if (_customSprite != null && _spriteRenderer.sprite != _customSprite)
+            {
+                _spriteRenderer.sprite = _customSprite;
+            }
+        }
+        // Path 2: Generic Renderer (Mesh/Particle) - Material Replacement
+        else if (!string.IsNullOrEmpty(_targetTextureName))
+        {
+            if (_renderer.material == null) return;
+
+            // Check if game reset the material texture
+            if (_renderer.material.mainTexture == null || _renderer.material.mainTexture.name != _targetTextureName)
+            {
+                // Re-apply custom texture
+                Sprite customSprite = CustomTexturePatch.LoadCustomSprite(_targetTextureName, null);
+                if (customSprite != null && customSprite.texture != null)
+                {
+                    _renderer.material.mainTexture = customSprite.texture;
+                    _renderer.material.mainTexture.name = _targetTextureName; // Maintain name for check
+                    // Ensure wrapping if needed (Summons usually Clamp, but let's see)
+                    // customSprite.texture.wrapMode = TextureWrapMode.Clamp; 
+                }
+            }
+        }
+        // Path 3: Auto-detect on generic renderer if target not set
+        else if (_renderer.material != null && _renderer.material.mainTexture != null)
+        {
+             string texName = _renderer.material.mainTexture.name;
+             if (texName.Contains("Summon", StringComparison.OrdinalIgnoreCase))
+             {
+                 _targetTextureName = texName;
+             }
+        }
+    }
+
+    private void LogEnforcement(string name)
+    {
+        if (Plugin.Config.DetailedTextureLog.Value && _lastEnforcedLogName != name)
+        {
+            Plugin.Log.LogInfo($"[SummonMonitor] Enforced sprite/texture: {name}");
+            _lastEnforcedLogName = name;
         }
     }
 }

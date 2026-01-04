@@ -92,6 +92,7 @@ public class Plugin : BasePlugin
         if (Config.ShowMouseCursor.Value)
         {
             MouseCursorPatch.Initialize(true);
+            harmony.PatchAll(typeof(MouseCursorPatch));
         }
 
         // Controller Prompt Override
@@ -130,7 +131,7 @@ public class Plugin : BasePlugin
             
             // Suikozu reactive patch (GSD2 world map)
             // IL2CPP registration is now lazy-loaded when first map is opened
-            harmony.PatchAll(typeof(SuikozuInternalPatch));
+            harmony.PatchAll(typeof(SuikozuPatch));
 
             // NOTE: BGManagerHD_Load_Patch is part of BathTexturePatch in this version
             // Log.LogInfo("Applying BGManagerHD.Load patch ...");

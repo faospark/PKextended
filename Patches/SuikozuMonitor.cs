@@ -9,7 +9,7 @@ namespace PKCore.Patches;
 /// Hooks into EventOverlayClass.OverlaySuikozu2 to intercept the creation of the map object.
 /// Distinguishes between the Map Object and the Player Dot to apply textures correctly.
 /// </summary>
-public class SuikozuInternalPatch
+public class SuikozuPatch
 {
     private static bool _isRegistered = false;
     
@@ -30,6 +30,36 @@ public class SuikozuInternalPatch
         }
     }
     
+    /// <summary>
+    /// Checks if an object is a Suikozu map object and attaches a monitor if needed
+    /// Called from GameObjectPatch/scanners
+    /// </summary>
+    public static void CheckAndAttachMonitor(GameObject go)
+    {
+        if (go == null) return;
+
+        bool isSuikozu = go.name.Contains("Suikozu", System.StringComparison.OrdinalIgnoreCase);
+
+        // Also check if the object has a Suikozu texture assigned
+        if (!isSuikozu)
+        {
+            var renderer = go.GetComponent<Renderer>();
+            if (renderer != null && renderer.material != null && renderer.material.mainTexture != null)
+            {
+                if (renderer.material.mainTexture.name.StartsWith("suikozu_", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    isSuikozu = true;
+                }
+            }
+        }
+
+        if (isSuikozu)
+        {
+            EnsureRegistered();
+            AttachTextureEnforcer(go, null);
+        }
+    }
+
     // Capture objects created and IMMEDIATELY attach the Smart Enforcer.
     // We attach to everything (Map and Dot) because the Smart Enforcer only activates 
     // if it detects a 'suikozu_' texture assignment.
