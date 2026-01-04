@@ -49,6 +49,9 @@ public sealed class ModConfiguration
     public ConfigEntry<string> MercFortFence { get; private set; }
     public ConfigEntry<bool> ColoredIntroAndFlashbacks { get; private set; }
     
+    // UI Settings
+    public ConfigEntry<bool> SmallerDialogBox { get; private set; }
+    
     // Performance Settings
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
     public ConfigEntry<bool> EnableTextureCompression { get; private set; }
@@ -228,6 +231,13 @@ public sealed class ModConfiguration
             "ColoredIntroAndFlashbacks",
             false,
             "Enable colored intro and flashback sequences for Suikoden 2. When enabled, disables the CustomPostEffect component to restore color to these scenes."
+        );
+
+        SmallerDialogBox = _config.Bind(
+            "UI",
+            "SmallerDialogBox",
+            false,
+            "Reduce the size of the dialog box and move it slightly. Useful for smaller screens or preference."
         );
 
         EnableTextureManifestCache = _config.Bind(
