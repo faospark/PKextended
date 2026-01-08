@@ -13,12 +13,15 @@ namespace PKCore.Patches
         [HarmonyPostfix]
         public static void OpenMessageWindow_Postfix(UIMessageWindow __instance)
         {
-            if (!Plugin.Config.SmallerDialogBox.Value)
+            float scale = GetScaleFromPreset(Plugin.Config.DialogBoxScale.Value);
+            
+            // Only apply if scale is not default (1.0)
+            if (scale >= 0.99f)
                 return;
 
             GameObject dialogWindow = __instance.gameObject;
-            ApplyTransform(dialogWindow);
-            Plugin.Log.LogInfo($"[DialogPatch] Applied dialog transform via OpenMessageWindow");
+            ApplyTransform(dialogWindow, scale);
+            Plugin.Log.LogInfo($"[DialogPatch] Applied dialog transform (scale: {scale}) via OpenMessageWindow");
         }
 
         // Hook into UIMessageWindow.SetCharacterFace
@@ -27,21 +30,48 @@ namespace PKCore.Patches
         [HarmonyPostfix]
         public static void SetCharacterFace_Postfix(UIMessageWindow __instance)
         {
-            if (!Plugin.Config.SmallerDialogBox.Value)
+            float scale = GetScaleFromPreset(Plugin.Config.DialogBoxScale.Value);
+            
+            // Only apply if scale is not default (1.0)
+            if (scale >= 0.99f)
                 return;
 
             GameObject dialogWindow = __instance.gameObject;
-            ApplyTransform(dialogWindow);
-            Plugin.Log.LogInfo($"[DialogPatch] Applied dialog transform via SetCharacterFace");
+            ApplyTransform(dialogWindow, scale);
+            Plugin.Log.LogInfo($"[DialogPatch] Applied dialog transform (scale: {scale}) via SetCharacterFace");
         }
 
-        private static void ApplyTransform(GameObject obj)
+        /// <summary>
+        /// Convert string preset to float scale value
+        /// </summary>
+        private static float GetScaleFromPreset(string preset)
         {
-            // Apply position offset (0, -84, 0)
-            obj.transform.localPosition = new Vector3(0f, -104f, 0f);
+            switch (preset.ToLower())
+            {
+                case "small":
+                    return 0.5f;
+                case "medium":
+                    return 0.8f;
+                case "large":
+                default:
+                    return 1.0f;
+            }
+        }
+
+        private static void ApplyTransform(GameObject obj, float scale)
+        {
+            // Calculate position offset based on scale
+            // At 0.5 scale: -208 offset (very compact)
+            // At 0.8 scale: -104 offset (smaller)
+            // At 1.0 scale: 0 offset (no change)
+            // Linear interpolation
+            float positionOffset = Mathf.Lerp(-208f, 0f, (scale - 0.5f) / 0.5f);
             
-            // Apply scale (0.8, 0.8, 1)
-            obj.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
+            // Apply position offset
+            obj.transform.localPosition = new Vector3(0f, positionOffset, 0f);
+            
+            // Apply scale (scale X and Y, keep Z at 1)
+            obj.transform.localScale = new Vector3(scale, scale, 1f);
         }
     }
 }

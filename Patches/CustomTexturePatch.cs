@@ -296,8 +296,36 @@ public partial class CustomTexturePatch
         // Check for texture variants (e.g., save point colors)
         string lookupName = TextureOptions.GetTextureNameWithVariant(textureName);
 
-        // Look up full path
-        if (!texturePathIndex.TryGetValue(lookupName, out string filePath))
+        // Try DDS first if enabled
+        if (Plugin.Config.EnableDDSTextures.Value)
+        {
+            // Look for .dds file
+            if (texturePathIndex.TryGetValue(lookupName, out string ddsPath) && ddsPath.EndsWith(".dds", System.StringComparison.OrdinalIgnoreCase))
+            {
+                Texture2D ddsTexture = DDSLoader.LoadDDS(ddsPath);
+                if (ddsTexture != null)
+                {
+                    ddsTexture.filterMode = FilterMode.Bilinear;
+                    ddsTexture.wrapMode = TextureWrapMode.Clamp;
+                    ddsTexture.anisoLevel = 4;
+                    
+                    UnityEngine.Object.DontDestroyOnLoad(ddsTexture);
+                    customTextureCache[textureName] = ddsTexture;
+                    
+                    bool shouldSkipLog = textureName.StartsWith("sactx");
+                    if (!shouldSkipLog && Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogInfo($"Loaded pre-compressed DDS: {textureName} ({ddsTexture.width}x{ddsTexture.height})");
+                    }
+                    
+                    return ddsTexture;
+                }
+            }
+        }
+
+        // Fall back to PNG/JPG loading with runtime compression
+        // Look up full path - skip if it's a DDS file (already tried above)
+        if (!texturePathIndex.TryGetValue(lookupName, out string filePath) || filePath.EndsWith(".dds", System.StringComparison.OrdinalIgnoreCase))
             return null;
 
         try
@@ -312,6 +340,9 @@ public partial class CustomTexturePatch
                 UnityEngine.Object.Destroy(texture);
                 return null;
             }
+
+            // Compress texture to BC1/BC3/BC7 for GPU efficiency
+            TextureCompression.CompressTexture(texture, textureName, filePath);
 
             texture.filterMode = FilterMode.Bilinear;
             texture.wrapMode = TextureWrapMode.Clamp;
@@ -404,7 +435,7 @@ public partial class CustomTexturePatch
         if (TryLoadManifestIndex())
             return;
 
-        string[] extensions = { "*.png", "*.jpg", "*.jpeg", "*.tga" };
+        string[] extensions = { "*.png", "*.jpg", "*.jpeg", "*.tga", "*.dds" };
         
         string modsFolder = Path.Combine(customTexturesPath, "00-Mods");
         bool hasModsFolder = Directory.Exists(modsFolder);

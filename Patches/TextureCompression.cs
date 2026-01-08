@@ -23,12 +23,19 @@ public static class TextureCompression
     /// </summary>
     /// <param name="texture">Texture to compress (must be RGBA32 format)</param>
     /// <param name="textureName">Optional name for logging purposes</param>
-    public static void CompressTexture(Texture2D texture, string textureName = null)
+    /// <param name="filePath">Optional file path to check for exclusions (e.g., launcher folder)</param>
+    public static void CompressTexture(Texture2D texture, string textureName = null, string filePath = null)
     {
         if (!Plugin.Config.EnableTextureCompression.Value)
             return;
 
         if (texture == null)
+            return;
+
+        // Skip compression for launcher textures (UI quality preservation)
+        // Matches folders like: \launcher\, \Launcher-Mod\, \00-Mods\Launcher-Mod\, etc.
+        if (!string.IsNullOrEmpty(filePath) && 
+            filePath.Contains("launcher", System.StringComparison.OrdinalIgnoreCase))
             return;
 
         try

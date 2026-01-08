@@ -198,10 +198,10 @@ public class Plugin : BasePlugin
             DisableCustomPostEffectPatch.Initialize(harmony);
         }
 
-        // Apply Dialog Patch (Smaller Dialog Box)
-        if (Config.SmallerDialogBox.Value)
+        // Apply Dialog Patch (Dialog Box Scaling)
+        if (!Config.DialogBoxScale.Value.Equals("Large", System.StringComparison.OrdinalIgnoreCase))
         {
-            Log.LogInfo("Applying Dialog patches...");
+            Log.LogInfo($"Applying Dialog patches (size: {Config.DialogBoxScale.Value})...");
             harmony.PatchAll(typeof(DialogPatch));
         }
 

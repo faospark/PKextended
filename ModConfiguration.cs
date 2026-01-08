@@ -49,7 +49,7 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> ColoredIntroAndFlashbacks { get; private set; }
     
     // UI Settings
-    public ConfigEntry<bool> SmallerDialogBox { get; private set; }
+    public ConfigEntry<string> DialogBoxScale { get; private set; }
     
     // Performance Settings
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
@@ -226,11 +226,11 @@ public sealed class ModConfiguration
             "Enable colored intro and flashback sequences for Suikoden 2. When enabled, disables the CustomPostEffect component to restore color to these scenes."
         );
 
-        SmallerDialogBox = _config.Bind(
+        DialogBoxScale = _config.Bind(
             "UI",
-            "SmallerDialogBox",
-            false,
-            "Reduce the size of the dialog box and move it slightly. Useful for smaller screens or preference."
+            "DialogBoxScale",
+            "Large",
+            "Dialog box size preset. Options: Large (full size, default), Medium (80% size), Small (50% size, very compact). Affects both size and position."
         );
 
         EnableTextureManifestCache = _config.Bind(
