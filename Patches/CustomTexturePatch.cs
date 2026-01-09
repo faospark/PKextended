@@ -296,6 +296,17 @@ public partial class CustomTexturePatch
         // Check for texture variants (e.g., save point colors)
         string lookupName = TextureOptions.GetTextureNameWithVariant(textureName);
 
+        // Try game-specific texture first (GSD1: or GSD2: prefix)
+        string currentGame = GameDetection.GetCurrentGame();
+        if (currentGame == "GSD1" || currentGame == "GSD2")
+        {
+            string gameSpecificKey = $"{currentGame}:{lookupName}";
+            if (texturePathIndex.ContainsKey(gameSpecificKey))
+            {
+                lookupName = gameSpecificKey; // Use game-specific version
+            }
+        }
+
         // Try DDS first if enabled
         if (Plugin.Config.EnableDDSTextures.Value)
         {
@@ -440,14 +451,25 @@ public partial class CustomTexturePatch
         string modsFolder = Path.Combine(customTexturesPath, "00-Mods");
         bool hasModsFolder = Directory.Exists(modsFolder);
         
-        // Phase 1: Scan base textures (all folders except 00-Mods)
+        string gsd1Folder = Path.Combine(customTexturesPath, "GSD1");
+        bool hasGSD1Folder = Directory.Exists(gsd1Folder);
+        
+        string gsd2Folder = Path.Combine(customTexturesPath, "GSD2");
+        bool hasGSD2Folder = Directory.Exists(gsd2Folder);
+        
+        // Phase 1: Scan base textures (all folders except 00-Mods, GSD1, GSD2)
         foreach (string extension in extensions)
         {
             string[] files = Directory.GetFiles(customTexturesPath, extension, SearchOption.AllDirectories);
             
             foreach (string filePath in files)
             {
+                // Skip special folders
                 if (hasModsFolder && filePath.StartsWith(modsFolder, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (hasGSD1Folder && filePath.StartsWith(gsd1Folder, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (hasGSD2Folder && filePath.StartsWith(gsd2Folder, StringComparison.OrdinalIgnoreCase))
                     continue;
                 
                 if (!TextureOptions.ShouldLoadTexture(filePath))
@@ -462,7 +484,58 @@ public partial class CustomTexturePatch
             }
         }
         
-        // Phase 2: Scan 00-Mods folder (overrides)
+        
+        // Phase 2: Scan game-specific folders (GSD1 and GSD2) - overrides base textures
+        // We scan BOTH folders during initialization since we don't know which game will be played yet
+        // The actual game-specific texture will be selected at runtime based on active scene
+        
+        if (hasGSD1Folder)
+        {
+            foreach (string extension in extensions)
+            {
+                string[] gsd1Files = Directory.GetFiles(gsd1Folder, extension, SearchOption.AllDirectories);
+                
+                foreach (string filePath in gsd1Files)
+                {
+                    if (!TextureOptions.ShouldLoadTexture(filePath))
+                        continue;
+                    
+                    string textureName = Path.GetFileNameWithoutExtension(filePath);
+                    
+                    // Store with GSD1 prefix to track game-specific textures
+                    string gsd1Key = $"GSD1:{textureName}";
+                    texturePathIndex[gsd1Key] = filePath;
+                    
+                    // Also store without prefix for fallback (will be overridden by GSD2 if it exists)
+                    texturePathIndex[textureName] = filePath;
+                }
+            }
+        }
+        
+        if (hasGSD2Folder)
+        {
+            foreach (string extension in extensions)
+            {
+                string[] gsd2Files = Directory.GetFiles(gsd2Folder, extension, SearchOption.AllDirectories);
+                
+                foreach (string filePath in gsd2Files)
+                {
+                    if (!TextureOptions.ShouldLoadTexture(filePath))
+                        continue;
+                    
+                    string textureName = Path.GetFileNameWithoutExtension(filePath);
+                    
+                    // Store with GSD2 prefix to track game-specific textures
+                    string gsd2Key = $"GSD2:{textureName}";
+                    texturePathIndex[gsd2Key] = filePath;
+                    
+                    // Also store without prefix (overrides GSD1 fallback)
+                    texturePathIndex[textureName] = filePath;
+                }
+            }
+        }
+        
+        // Phase 3: Scan 00-Mods folder (highest priority - overrides everything)
         if (hasModsFolder)
         {
             foreach (string extension in extensions)

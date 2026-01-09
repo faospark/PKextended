@@ -60,7 +60,10 @@ public partial class CustomTexturePatch
                     {
                         if (ReplaceTextureInPlace(texture, textureName))
                         {
-                            Plugin.Log.LogInfo($"Replaced MeshRenderer texture on activation: {textureName} (from {objectPath})");
+                            if (Plugin.Config.DetailedTextureLog.Value)
+                            {
+                                Plugin.Log.LogInfo($"Replaced MeshRenderer texture on activation: {textureName} (from {objectPath})");
+                            }
                         }
                     }
                 }
@@ -101,7 +104,11 @@ public partial class CustomTexturePatch
                     {
                         sr.sprite = customSprite;
                         _processedSpriteInstances.Add(instanceId);
-                        Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
+                        
+                        if (Plugin.Config.DetailedTextureLog.Value)
+                        {
+                            Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
+                        }
                     }
                 }
             }
