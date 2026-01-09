@@ -36,7 +36,7 @@ public partial class CustomTexturePatch
             Sprite customSprite = LoadCustomSprite(originalName, value);
             if (customSprite != null)
             {
-                Plugin.Log.LogInfo($"[SavePoint SETTER] ✓ Replacing {originalName} with custom sprite");
+                // Replacing save point sprite
                 value = customSprite;
                 return; // Early return - sprite replaced
             }

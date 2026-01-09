@@ -47,7 +47,7 @@ namespace PKCore.Patches
 
                 if (Plugin.Config.DetailedTextureLog.Value)
                 {
-                    Plugin.Log.LogInfo($"[SaveWindowPatch] Processed {__instance.name}");
+                    // Processed save window
                 }
                 
                 // Continue with searching for the main window to insert background
@@ -68,7 +68,7 @@ namespace PKCore.Patches
                             if (sibling.name.StartsWith("UI_System_SaveLoad2"))
                             {
                                 uiSystemSaveLoad2 = sibling;
-                                // Plugin.Log.LogInfo($"[SaveWindowPatch] ✓ Found UI_System_SaveLoad2");
+
                                 break;
                             }
                         }
@@ -82,7 +82,7 @@ namespace PKCore.Patches
                     Transform window01 = uiSystemSaveLoad2.Find("Window01");
                     if (window01 != null)
                     {
-                        // Plugin.Log.LogInfo($"[SaveWindowPatch] Found Window01, inserting fullscreen background there");
+
                         TryInsertBackground(window01.gameObject);
 
                         // Adjust Scrollbar Vertical
@@ -93,7 +93,7 @@ namespace PKCore.Patches
             
                             scrollbar.localPosition = new Vector3(720.1979f, 368.3988f, 0f);
                             scrollbar.localScale = new Vector3(1.8f, 0.9f, 1f);
-                            // Plugin.Log.LogInfo("[SaveWindowPatch] Adjusted Scrollbar Vertical transform");
+
                         }
                     }
                     else
@@ -104,11 +104,11 @@ namespace PKCore.Patches
                 }
                 else
                 {
-                    // Plugin.Log.LogWarning("[SaveWindowPatch] Could not find UI_System_SaveLoad2, using parent of Set00 as fallback");
+
                     // Fallback: use the parent of UI_System_SaveLoad_Set00
                     if (__instance.transform.parent != null)
                     {
-                        // Plugin.Log.LogInfo($"[SaveWindowPatch] Using parent: {__instance.transform.parent.name}");
+
                         TryInsertBackground(__instance.transform.parent.gameObject);
                     }
                 }
@@ -123,14 +123,14 @@ namespace PKCore.Patches
             {
                 if (Plugin.Config.DetailedTextureLog.Value)
                 {
-                    Plugin.Log.LogInfo("[SaveWindowPatch] ClassicSaveBackground already exists, skipping");
+                    // Background already exists
                 }
                 return;
             }
 
             if (Plugin.Config.DetailedTextureLog.Value)
             {
-                Plugin.Log.LogInfo($"[SaveWindowPatch] Creating custom background in {saveLoadWindow.name}");
+                // Creating custom background
             }
 
             // Modify the default HD Remaster Img_bg to black with 20% alpha
@@ -140,7 +140,7 @@ namespace PKCore.Patches
                 imgBg.gameObject.SetActive(false);
                 if (Plugin.Config.DetailedTextureLog.Value)
                 {
-                    Plugin.Log.LogInfo("[SaveWindowPatch] Disabled Img_bg");
+
                 }
             }
             
@@ -150,7 +150,7 @@ namespace PKCore.Patches
                 imgFlame.gameObject.SetActive(false);
                 if (Plugin.Config.DetailedTextureLog.Value)
                 {
-                    Plugin.Log.LogInfo("[SaveWindowPatch] Disabled Img_Flame");
+
                 }
             }
 
@@ -176,7 +176,7 @@ namespace PKCore.Patches
             rt.localPosition = new Vector3(0, 0, 100); // Z=100 to match other UI elements
             if (Plugin.Config.DetailedTextureLog.Value)
             {
-                Plugin.Log.LogInfo($"[SaveWindowPatch] RectTransform configured for fullscreen");
+
             }
 
             // Add Image component (this automatically adds CanvasRenderer)
@@ -185,7 +185,7 @@ namespace PKCore.Patches
             img.raycastTarget = false; // Don't block input
             if (Plugin.Config.DetailedTextureLog.Value)
             {
-                Plugin.Log.LogInfo($"[SaveWindowPatch] Image component added, color: {img.color}");
+
             }
             
             // Load texture

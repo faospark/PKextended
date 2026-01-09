@@ -70,8 +70,7 @@ public class UnitySpriteRendererPatch
         }
         else if (isSavePoint || isDragon)
         {
-            Plugin.Log.LogWarning($"[UnitySpriteRenderer] ✗ No custom sprite found for: {spriteName}");
-            Plugin.Log.LogWarning($"[UnitySpriteRenderer]   Checked in texture index: {CustomTexturePatch.texturePathIndex.ContainsKey(spriteName)}");
+            // No custom sprite found (expected for many sprites)
         }
     }
 

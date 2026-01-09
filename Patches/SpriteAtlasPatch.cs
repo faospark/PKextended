@@ -49,9 +49,7 @@ public partial class CustomTexturePatch
         bool isSavePointAtlas = textureName.Contains("savePoint", StringComparison.OrdinalIgnoreCase);
         if (isSavePointAtlas)
         {
-            Plugin.Log.LogInfo($"[SavePoint Atlas] Sprite.texture getter accessed: {textureName}");
-            Plugin.Log.LogInfo($"[SavePoint Atlas]   Texture size: {__result.width}x{__result.height}");
-            Plugin.Log.LogInfo($"[SavePoint Atlas]   Sprite name: {(__instance != null ? __instance.name : "null")}");
+            // Texture access logging removed for performance
         }
         
         LogReplaceableTexture(textureName, "Texture - Atlas");

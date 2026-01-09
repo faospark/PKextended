@@ -11,8 +11,6 @@ namespace PKCore.Patches;
 /// </summary>
 public class MenuScalePatch
 {
-    private static bool hasScaledThisSession = false;
-    
     /// <summary>
     /// Shared method to apply menu transformations
     /// </summary>
@@ -46,12 +44,6 @@ public class MenuScalePatch
         {
             Plugin.Log.LogWarning($"[MenuScale] Expected UI_Set parent for {menuObject.name}, got {uiSet?.name ?? "null"}");
             return;
-        }
-        
-        if (!hasScaledThisSession)
-        {
-            Plugin.Log.LogInfo($"[MenuScale] {menuType} opened, applying smooth transformations...");
-            hasScaledThisSession = true;
         }
         
         // TopMenu: Apply scale only (no position change)
