@@ -85,17 +85,13 @@ namespace PKCore.Patches
             try
             {
                 Logger.LogInfo("=== War Ability Patch Initializing ===");
-                Logger.LogInfo("This patch will modify character abilities in war battles.");
                 Logger.LogInfo($"Ability overrides configured: {Config?.CharacterAbilities?.Count ?? 0}");
                 Logger.LogInfo($"Global abilities enabled: {(Config?.GlobalAbilities?.Count > 0)}");
-                
-                // Disable Harmony debug to suppress assembly scanning warnings
-                Harmony.DEBUG = false;
                 
                 var harmony = new Harmony("faospark.pkcore.warability");
                 harmony.PatchAll(typeof(WarAbilityPatch));
                 isPatched = true;
-                Logger.LogInfo("War Ability Patch applied - will trigger when WarChapter starts");
+                Logger.LogInfo("War Ability Patch applied");
             }
             catch (Exception ex)
             {
