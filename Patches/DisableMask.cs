@@ -83,11 +83,13 @@ namespace PKCore.Patches
                 return;
             }
 
-            Plugin.Log.LogInfo($"[DisableMask] Searching in: {faceObject.name}");
+            if (Plugin.Config.LogReplaceableTextures.Value)
+                Plugin.Log.LogInfo($"[DisableMask] Searching in: {faceObject.name}");
 
             // Search all Image components
             var allImages = faceObject.GetComponentsInChildren<Image>(true);
-            Plugin.Log.LogInfo($"[DisableMask] Found {allImages.Length} Image components to check");
+            if (Plugin.Config.LogReplaceableTextures.Value)
+                Plugin.Log.LogInfo($"[DisableMask] Found {allImages.Length} Image components to check");
             
             foreach (var image in allImages)
             {
@@ -95,17 +97,20 @@ namespace PKCore.Patches
                 if (image.material != null)
                 {
                     string materialName = image.material.name;
-                    Plugin.Log.LogInfo($"[DisableMask] Image '{image.gameObject.name}' uses material: {materialName}");
+                    if (Plugin.Config.LogReplaceableTextures.Value)
+                        Plugin.Log.LogInfo($"[DisableMask] Image '{image.gameObject.name}' uses material: {materialName}");
                     
                     // Check if it's a face material or any material with mask properties
                     if (materialName.Contains("UI_Message_Face") || materialName.Contains("Face"))
                     {
-                        Plugin.Log.LogInfo($"[DisableMask] Found face material: {materialName}");
+                        if (Plugin.Config.LogReplaceableTextures.Value)
+                            Plugin.Log.LogInfo($"[DisableMask] Found face material: {materialName}");
                         
                         // Log all texture properties for debugging
                         var shader = image.material.shader;
                         int propertyCount = shader.GetPropertyCount();
-                        Plugin.Log.LogInfo($"[DisableMask] Material has {propertyCount} properties:");
+                        if (Plugin.Config.LogReplaceableTextures.Value)
+                            Plugin.Log.LogInfo($"[DisableMask] Material has {propertyCount} properties:");
                         
                         for (int i = 0; i < propertyCount; i++)
                         {
@@ -115,7 +120,8 @@ namespace PKCore.Patches
                                 string propName = shader.GetPropertyName(i);
                                 var tex = image.material.GetTexture(propName);
                                 string texName = tex != null ? tex.name : "null";
-                                Plugin.Log.LogInfo($"[DisableMask]   Texture property '{propName}': {texName}");
+                                if (Plugin.Config.LogReplaceableTextures.Value)
+                                    Plugin.Log.LogInfo($"[DisableMask]   Texture property '{propName}': {texName}");
                                 
                                 // If we find a mask texture
                                 if (tex != null && (tex.name.Contains("Face_Mask") || tex.name.Contains("_Mask") || propName == "_Mask_Map"))
@@ -125,7 +131,8 @@ namespace PKCore.Patches
                                     // Check if this mask is excluded
                                     if (_excludedMasks.Contains(maskTextureName))
                                     {
-                                        Plugin.Log.LogInfo($"[DisableMask] Skipping excluded mask: '{maskTextureName}'");
+                                        if (Plugin.Config.LogReplaceableTextures.Value)
+                                            Plugin.Log.LogInfo($"[DisableMask] Skipping excluded mask: '{maskTextureName}'");
                                         continue;
                                     }
                                     
@@ -139,7 +146,8 @@ namespace PKCore.Patches
                                     }
                                     else
                                     {
-                                        Plugin.Log.LogInfo($"[DisableMask] No replacement texture found for '{maskTextureName}'");
+                                        if (Plugin.Config.LogReplaceableTextures.Value)
+                                            Plugin.Log.LogInfo($"[DisableMask] No replacement texture found for '{maskTextureName}'");
                                     }
                                 }
                             }
@@ -171,7 +179,8 @@ namespace PKCore.Patches
         [HarmonyPostfix]
         public static void SetFaceImage_Postfix(UIMessage __instance)
         {
-            Plugin.Log.LogInfo("[DisableMask] SetFaceImage called");
+            if (Plugin.Config.LogReplaceableTextures.Value)
+                Plugin.Log.LogInfo("[DisableMask] SetFaceImage called");
             
             if (__instance.windowObject != null)
             {
@@ -186,7 +195,8 @@ namespace PKCore.Patches
         [HarmonyPostfix]
         public static void SetFaceImageClassic_Postfix(UIMessage __instance)
         {
-            Plugin.Log.LogInfo("[DisableMask] SetFaceImageClassic called");
+            if (Plugin.Config.LogReplaceableTextures.Value)
+                Plugin.Log.LogInfo("[DisableMask] SetFaceImageClassic called");
             
             if (__instance.windowObject != null)
             {
@@ -201,7 +211,8 @@ namespace PKCore.Patches
         [HarmonyPostfix]
         public static void PlayOpenAnimation_Postfix(UIMessage __instance)
         {
-            Plugin.Log.LogInfo("[DisableMask] PlayOpenAnimation called");
+            if (Plugin.Config.LogReplaceableTextures.Value)
+                Plugin.Log.LogInfo("[DisableMask] PlayOpenAnimation called");
             
             if (__instance.windowObject != null)
             {

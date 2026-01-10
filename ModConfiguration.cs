@@ -66,6 +66,8 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> DebugCustomObjects { get; private set; }
     public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
     public ConfigEntry<bool> EnableDebugMenu2 { get; private set; }
+    public ConfigEntry<bool> EnableWarAbilityMod { get; private set; }
+
     
 
 
@@ -347,5 +349,13 @@ public sealed class ModConfiguration
             false,
             "[EXPERIMENTAL] Enable the DebugMenu2 object which is normally disabled in the game. This may provide access to developer debug features."
         );
+
+        EnableWarAbilityMod = _config.Bind(
+            "zz - Experimental",
+            "EnableWarAbilityMod",
+            false,
+            "[EXPERIMENTAL] Enable war battle ability modification. Allows you to customize character abilities in Suikoden 2's war battles. Configure abilities in Patches/WarAbilityPatch.cs."
+        );
+
     }
 }

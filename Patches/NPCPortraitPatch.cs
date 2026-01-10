@@ -292,12 +292,14 @@ public class NPCPortraitPatch
     [HarmonyPrefix]
     public static void OpenMessageWindow_Prefix(ref Sprite faceImage, string name)
     {
-        Plugin.Log.LogInfo($"[NPCPortrait] OpenMessageWindow called - Name: '{name}', HasFaceImage: {faceImage != null}");
+        if (Plugin.Config.LogReplaceableTextures.Value)
+            Plugin.Log.LogInfo($"[NPCPortrait] OpenMessageWindow called - Name: '{name}', HasFaceImage: {faceImage != null}");
         
         // If there's an existing portrait, capture it for reuse!
         if (faceImage != null)
         {
-            Plugin.Log.LogInfo($"[NPCPortrait] Capturing portrait sprite: {faceImage.name}, texture: {faceImage.texture.name}");
+            if (Plugin.Config.LogReplaceableTextures.Value)
+                Plugin.Log.LogInfo($"[NPCPortrait] Capturing portrait sprite: {faceImage.name}, texture: {faceImage.texture.name}");
             cachedPortraitSprite = faceImage;
             return;
         }
@@ -376,7 +378,8 @@ public class NPCPortraitPatch
         // Only try to inject if there's no existing portrait
         if (faceImage != null)
         {
-            Plugin.Log.LogInfo($"[NPCPortrait] Postfix - '{name}' already has portrait, skipping");
+            if (Plugin.Config.LogReplaceableTextures.Value)
+                Plugin.Log.LogInfo($"[NPCPortrait] Postfix - '{name}' already has portrait, skipping");
             return;
         }
             

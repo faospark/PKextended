@@ -1,0 +1,96 @@
+{
+    "globalAbilities": [],
+    "characterAbilities": {},
+    "_readme": {
+        "_description": "War Ability Configuration for Suikoden 2",
+        "_instructions": [
+            "1. Set character abilities by adding entries to 'characterAbilities'",
+            "2. Key is the character name index (find in logs during war battles)",
+            "3. Value is an object with 'name' (optional) and 'abilities' array",
+            "4. Use ability names from '_availableAbilities' reference below",
+            "5. Save this file and restart the game (no rebuild needed!)"
+        ],
+        "_examples": {
+            "godMode": {
+                "characterAbilities": {
+                    "1": {
+                        "name": "Main Character",
+                        "abilities": [
+                            "SP_CRITICAL",
+                            "SP_HP_PLUS",
+                            "SP_CHARGE",
+                            "SP_FLYING"
+                        ]
+                    }
+                }
+            },
+            "mage": {
+                "characterAbilities": {
+                    "5": {
+                        "name": "Mage Character",
+                        "abilities": [
+                            "SP_MAGIC_FIRE1",
+                            "SP_MAGIC_THUNDER1",
+                            "SP_MAGIC_WIND1"
+                        ]
+                    }
+                }
+            },
+            "healer": {
+                "characterAbilities": {
+                    "10": {
+                        "name": "Healer",
+                        "abilities": [
+                            "SP_MEDICAL1",
+                            "SP_MEDICAL2",
+                            "SP_CHEAR_UP"
+                        ]
+                    }
+                }
+            },
+            "globalExample": {
+                "globalAbilities": [
+                    "SP_CRITICAL",
+                    "SP_HP_PLUS"
+                ]
+            }
+        }
+    },
+    "_availableAbilities": {
+        "combat": [
+            "SP_CRITICAL",
+            "SP_CHARGE",
+            "SP_HP_PLUS",
+            "SP_COUNTER",
+            "SP_BERSERK",
+            "SP_PROTECT",
+            "SP_ARCHERY"
+        ],
+        "magic": [
+            "SP_MAGIC_FIRE1",
+            "SP_MAGIC_FIRE2",
+            "SP_MAGIC_THUNDER1",
+            "SP_MAGIC_THUNDER2",
+            "SP_MAGIC_WIND1",
+            "SP_MAGIC_WIND2"
+        ],
+        "support": [
+            "SP_MEDICAL1",
+            "SP_MEDICAL2",
+            "SP_CHEAR_UP",
+            "SP_SCOUT",
+            "SP_FLYING",
+            "SP_SUPPLY",
+            "SP_CONFUSE"
+        ],
+        "special": [
+            "SP_NONE",
+            "SP_SPECIAL1",
+            "SP_SPECIAL2",
+            "SP_SPECIAL3",
+            "SP_SPECIAL4",
+            "SP_SPECIAL5",
+            "SP_SPECIAL6"
+        ]
+    }
+}

@@ -111,8 +111,8 @@ public partial class CustomTexturePatch
             Sprite customSprite = LoadCustomSprite(originalName, value);
             if (customSprite != null)
             {
-                // Skip logging for sactx and character sprites to reduce spam
-                bool shouldSkipReplacementLog = originalName.StartsWith("sactx");
+                // Skip logging for sactx, character sprites, and portraits to reduce spam
+                bool shouldSkipReplacementLog = originalName.StartsWith("sactx") || originalName.StartsWith("fp_");
                 if (!shouldSkipReplacementLog && texturePathIndex.TryGetValue(originalName, out string replacementTexPath))
                 {
                     shouldSkipReplacementLog = replacementTexPath.ToLower().Contains("characters");

@@ -22,10 +22,6 @@ public class Plugin : BasePlugin
         Log = base.Log;
 
         Log.LogInfo("Loading PKCore...");
-        
-        // Log build timestamp for symlink verification
-        var buildDate = System.IO.File.GetLastWriteTime(typeof(Plugin).Assembly.Location);
-        Log.LogInfo($"Build timestamp: {buildDate:yyyy-MM-dd HH:mm:ss}");
 
         Config = new ModConfiguration(base.Config);
         Config.Init();
@@ -239,5 +235,13 @@ public class Plugin : BasePlugin
             Log.LogInfo("Initializing EnableDebugMenu2...");
             EnableDebugMenu2.Initialize();
         }
+
+        // War Ability Modification (Experimental)
+        if (Config.EnableWarAbilityMod.Value)
+        {
+            Log.LogInfo("Initializing War Ability Modification...");
+            WarAbilityPatch.Initialize(Log);
+        }
+
     }
 }
