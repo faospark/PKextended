@@ -44,34 +44,44 @@ Complete list of all available war abilities you can use in `war_abilities.json`
 
 - `SP_NONE` - No ability (empty slot)
 
+## Configuration File Location
+
+The configuration file is located at `PKCore/Config/war_abilities.json`.
+
 ## Usage Example
 
 ```json
 {
   "globalAbilities": [],
-  "characterAbilities": [
-    {
-      "name": "Hero",
+  "characterAbilities": {
+    "3347": {
+      "name": "Hero (Leader)",
       "abilities": [
         "SP_CHARGE",
         "SP_CRITICAL",
         "SP_MAGIC_FIRE1"
-      ]
+      ],
+      "attack": 25,
+      "defense": 20
     },
-    {
+    "4": {
       "name": "Flik",
       "abilities": [
         "SP_CRITICAL",
         "SP_AIMING"
-      ]
+      ],
+      "attack": 18
     }
-  ]
+  }
 }
 ```
 
 ## Notes
 
-- Each character can have up to **3 abilities**
-- Each ability has **9 uses** per battle (configurable)
-- Use `"globalAbilities": []` to avoid applying abilities to all characters
-- Characters not listed will keep their default game abilities
+- **File Path**: `PKCore/Config/war_abilities.json`
+- **Character IDs**: Use character indices as keys (e.g., "3347" for Hero).
+- **Abilities**: Each character can have up to **3 abilities**.
+- **Stats**: Optional `attack` and `defense` fields (0-255).
+- **Uses**: Each ability typically has 9 uses per battle.
+- **Global**: Use `"globalAbilities": []` to avoid applying abilities to all characters.
+

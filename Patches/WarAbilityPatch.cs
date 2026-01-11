@@ -40,9 +40,36 @@ namespace PKCore.Patches
 
             try
             {
-                // Load configuration from JSON in the PKCore directory
+                // Load configuration from JSON in the PKCore/Config directory
                 var pkCoreDir = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore");
-                Config = WarAbilityConfigLoader.LoadConfig(pkCoreDir, Logger);
+                var configDir = Path.Combine(pkCoreDir, "Config");
+                var legacyConfigPath = Path.Combine(pkCoreDir, "war_abilities.json");
+                var newConfigPath = Path.Combine(configDir, "war_abilities.json");
+
+                // Create Config directory if it doesn't exist
+                if (!Directory.Exists(configDir))
+                {
+                    Directory.CreateDirectory(configDir);
+                }
+
+                // Migrate legacy config if it exists and new config doesn't
+                if (File.Exists(legacyConfigPath) && !File.Exists(newConfigPath))
+                {
+                    try 
+                    {
+                        Logger.LogInfo($"Migrating war_abilities.json to {configDir}...");
+                        File.Move(legacyConfigPath, newConfigPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError($"Failed to migrate war_abilities.json: {ex.Message}");
+                        // Fallback to legacy path if migration fails
+                        Config = WarAbilityConfigLoader.LoadConfig(pkCoreDir, Logger);
+                        return;
+                    }
+                }
+
+                Config = WarAbilityConfigLoader.LoadConfig(configDir, Logger);
                 
                 // Parse global abilities
                 GlobalAbilities = WarAbilityConfigLoader.ParseAbilities(Config.GlobalAbilities);
