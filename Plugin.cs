@@ -140,12 +140,9 @@ public class Plugin : BasePlugin
             Log.LogInfo("Applying Native Map Texture patches...");
             harmony.PatchAll(typeof(MapTexturePatch));
             
-            // Summon Texture Replacement (requires monitor component)
-            Log.LogInfo("Initializing Summon Texture patches...");
-            SummonPatch.Initialize();
             
             // GameObject activation patches are part of CustomTexturePatch (already applied above)
-            // This handles Dragon, Cow, Summon, and Suikozu monitor attachment
+            // This handles Dragon, Cow, and Suikozu monitor attachment
         }
 
         // NPC Portrait Injection

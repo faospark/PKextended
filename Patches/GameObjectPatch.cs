@@ -51,9 +51,6 @@ public partial class CustomTexturePatch
                 {
                     // Check and attach Suikozu monitor if applicable (for MeshRenderers too)
                     SuikozuPatch.CheckAndAttachMonitor(mr.gameObject);
-                    
-                    // Check and attach Summon monitor if applicable (for MeshRenderers/HDEffects)
-                    SummonPatch.CheckAndAttachMonitor(mr.gameObject);
 
                     string textureName = texture.name;
                     if (!string.IsNullOrEmpty(textureName))
@@ -91,9 +88,6 @@ public partial class CustomTexturePatch
                     
                     // Check and attach Cow monitor if applicable
                     CowTexturePatch.CheckAndAttachMonitor(sr.gameObject);
-
-                    // Check and attach Summon monitor if applicable
-                    SummonPatch.CheckAndAttachMonitor(sr.gameObject);
                     
                     // Skip save point sprites - they're handled in SavePointPatch.cs
                     if (spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase))
@@ -133,20 +127,10 @@ public partial class CustomTexturePatch
                     // Check and attach Cow monitor if applicable
                     CowTexturePatch.CheckAndAttachMonitor(gr.gameObject);
                     
-                    // Check and attach Summon monitor if applicable
-                    SummonPatch.CheckAndAttachMonitor(gr.gameObject);
-                    
                     _processedSpriteInstances.Add(instanceId);
                 }
             }
             
-            // Check for ParticleSystemRenderers (Summon effects often use this)
-            var particleRenderers = __instance.GetComponentsInChildren<ParticleSystemRenderer>(true);
-            foreach (var pr in particleRenderers)
-            {
-                 // Check and attach Summon monitor
-                 SummonPatch.CheckAndAttachMonitor(pr.gameObject);
-            }
         }
     }
 }
