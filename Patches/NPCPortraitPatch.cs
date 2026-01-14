@@ -163,10 +163,14 @@ public class NPCPortraitPatch
                             string idPart = key.Substring(0, lastColon);
                             string rangePart = key.Substring(lastColon + 1);
                             
-                            if (rangePart.Contains("-"))
+                            // Use Regex to handle negative numbers in ranges (e.g. -50--10)
+                            // Matches: (Start) - (End) where Start/End can be signed integers
+                            var rangeMatch = Regex.Match(rangePart, @"^(-?\d+)-(-?\d+)$");
+                            
+                            if (rangeMatch.Success)
                             {
-                                var parts = rangePart.Split('-');
-                                if (parts.Length == 2 && int.TryParse(parts[0], out int start) && int.TryParse(parts[1], out int end))
+                                if (int.TryParse(rangeMatch.Groups[1].Value, out int start) && 
+                                    int.TryParse(rangeMatch.Groups[2].Value, out int end))
                                 {
                                     if (start <= end)
                                     {
@@ -781,9 +785,103 @@ public class NPCPortraitPatch
             
             Plugin.Log.LogInfo($"[NPCPortrait] ✓✓✓ Successfully injected portrait into Img_Face for '{name}'!");
         }
+
         catch (System.Exception ex)
         {
             Plugin.Log.LogError($"[NPCPortrait] Error in postfix: {ex.Message}\n{ex.StackTrace}");
+        }
+    }
+
+    /// <summary>
+    /// Manually injects a portrait for a given NPC name into the specified parent transform.
+    /// This is used by SpeakerTagMonitor for non-standard UI elements.
+    /// </summary>
+    public static void InjectPortraitManual(Transform parent, string name)
+    {
+        if (parent == null || string.IsNullOrEmpty(name)) return;
+
+        try
+        {
+            // Try to find reasonable parent to attach to if "parent" is the text object itself
+            // Usually we want to go up to the container
+            Transform targetParent = parent;
+            
+            // Heuristic: If we are modifying a Text object, we probably want to attach to its parent panel
+            // But for safety, we can try to find an existing structure or create one relative to the text
+            
+            // For the Cooking Contest specifically, the text might be in a wrapper. 
+            // Let's create a dedicated "Portrait_Container" if it doesn't exist.
+            
+            Transform facePos = targetParent.Find("Face_Pos");
+            if (facePos == null)
+            {
+                // Create Face_Pos GameObject
+                GameObject facePosObj = new GameObject("Face_Pos");
+                facePosObj.transform.SetParent(targetParent, false);
+                
+                // Add RectTransform
+                RectTransform facePosRect = facePosObj.AddComponent<RectTransform>();
+                // Position it to the left of the text, assumed
+                facePosRect.anchorMin = new Vector2(0, 0); 
+                facePosRect.anchorMax = new Vector2(0, 1);
+                facePosRect.pivot = new Vector2(0, 0.5f);
+                facePosRect.anchoredPosition = new Vector2(-150, 0); // Offset to left
+                facePosRect.sizeDelta = new Vector2(100, 100);
+                
+                // Create Img_Face child
+                GameObject imgFaceObj = new GameObject("Img_Face");
+                imgFaceObj.transform.SetParent(facePosObj.transform, false);
+                
+                RectTransform imgFaceRect = imgFaceObj.AddComponent<RectTransform>();
+                imgFaceRect.anchorMin = Vector2.zero;
+                imgFaceRect.anchorMax = Vector2.one;
+                imgFaceRect.sizeDelta = Vector2.zero;
+                
+                var imgFaceComponent = imgFaceObj.AddComponent<UnityEngine.UI.Image>();
+                imgFaceComponent.raycastTarget = false;
+                
+                facePos = facePosObj.transform;
+            }
+            
+            var imgFace = facePos.Find("Img_Face")?.GetComponent<UnityEngine.UI.Image>();
+            if (imgFace == null) return;
+            
+            // Load portrait
+            string key = name.ToLower();
+            
+            // Get sprite dimensions - using default fallback as we don't have the nice cached sprite here usually
+            Vector2 spritePivot = new Vector2(0.5f, 0.5f);
+            float pixelsPerUnit = 100f;
+            
+            Texture2D customTexture = LoadPortraitTexture(key);
+            if (customTexture == null)
+            {
+                // Try fallback
+                customTexture = LoadPortraitTexture("fp_129");
+                if (customTexture == null) return;
+            }
+            
+            Sprite newSprite = Sprite.Create(
+                customTexture,
+                new Rect(0, 0, customTexture.width, customTexture.height),
+                spritePivot,
+                pixelsPerUnit,
+                0,
+                SpriteMeshType.FullRect
+            );
+            
+            UnityEngine.Object.DontDestroyOnLoad(newSprite);
+            UnityEngine.Object.DontDestroyOnLoad(customTexture);
+            
+            facePos.gameObject.SetActive(true);
+            imgFace.gameObject.SetActive(true);
+            imgFace.sprite = newSprite;
+            
+            Plugin.Log.LogInfo($"[NPCPortrait] Manual injection successful for: {name}");
+        }
+        catch (Exception ex)
+        {
+            Plugin.Log.LogError($"[NPCPortrait] Manual injection failed: {ex.Message}");
         }
     }
     
