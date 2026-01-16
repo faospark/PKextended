@@ -14,13 +14,13 @@ public static class CowTexturePatch
 {
     private const string COW_PREFIX = "t_gsd1_vaa_00_obj_ushi_";
     private static bool _isRegistered = false;
-    
+
     // Lazy registration - only register when first cow is encountered
     private static void EnsureRegistered()
     {
         if (_isRegistered) return;
-        
-        try 
+
+        try
         {
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<CowMonitor>();
             if (Plugin.Config.DetailedTextureLog.Value)
@@ -82,7 +82,7 @@ public class CowMonitor : MonoBehaviour
 {
     private SpriteRenderer _renderer;
 
-    
+
     // Cache for custom sprites to avoid repeated lookups
     private System.Collections.Generic.Dictionary<string, Sprite> _spriteCache = new System.Collections.Generic.Dictionary<string, Sprite>();
 
@@ -101,20 +101,20 @@ public class CowMonitor : MonoBehaviour
         // Optimization: If the sprite hasn't changed (by name) and we already replaced it, do nothing.
         // But if the animation system swapped the sprite, the name might be the original name again.
         // We check if it matches the pattern we expect to replace.
-        
+
         // The animation loops through textures like t_gsd1_vaa_00_obj_ushi_01, _02, _03
         if (currentSpriteName.StartsWith("t_gsd1_vaa_00_obj_ushi_", StringComparison.OrdinalIgnoreCase))
         {
             // Only try to replace if we haven't already replaced this specific sprite instance frame
             // or if the name indicates it's a new frame from the animation.
-            
+
             // Note: When we replace the sprite, the new sprite usually shares the same name if we set it up that way,
             // or we can rely on object reference equality if we want to be strict.
             // CustomTexturePatch.LoadCustomSprite returns a sprite that might have the same name.
-            
+
             // To properly detect if the game's animation system has put a standard sprite back,
             // we can check if the current sprite is one of our cached custom ones.
-            
+
             if (IsCustomSprite(_renderer.sprite))
                 return; // already our custom sprite
 
@@ -134,27 +134,27 @@ public class CowMonitor : MonoBehaviour
     {
         if (_spriteCache.TryGetValue(spriteName, out Sprite customSprite))
         {
-             // Use cached custom sprite
-             if (customSprite != null)
-             {
-                 _renderer.sprite = customSprite;
-             }
-             return;
+            // Use cached custom sprite
+            if (customSprite != null)
+            {
+                _renderer.sprite = customSprite;
+            }
+            return;
         }
 
         // Not in local cache, try to load it
         customSprite = CustomTexturePatch.LoadCustomSprite(spriteName, _renderer.sprite);
-        
+
         if (customSprite != null)
         {
             if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"[CowMonitor] Replaced cow frame: {spriteName}");
             }
-            
+
             // Cache it
             _spriteCache[spriteName] = customSprite;
-            
+
             // Apply it
             _renderer.sprite = customSprite;
         }

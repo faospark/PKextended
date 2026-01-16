@@ -5,19 +5,19 @@ namespace PKCore;
 public sealed class ModConfiguration
 {
     private ConfigFile _config;
-    
+
     // Sprite Filtering Settings
     public ConfigEntry<int> SpriteFilteringQuality { get; private set; }
     public ConfigEntry<float> SpriteMipmapBias { get; private set; }
-    
+
     // Display Settings
     public ConfigEntry<bool> EnableResolutionScaling { get; private set; }
     public ConfigEntry<float> ResolutionScale { get; private set; }
-    
+
     // Visual Settings
     public ConfigEntry<bool> DisableSpritePostProcessing { get; private set; }
     public ConfigEntry<bool> DisableMaskPortraitDialog { get; private set; }
-    
+
     // Display Settings
     public ConfigEntry<bool> EnableBorderlessWindow { get; private set; }
     public ConfigEntry<bool> ShowMouseCursor { get; private set; }
@@ -35,33 +35,33 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> LoadLauncherUITextures { get; private set; }
     public ConfigEntry<bool> LoadBattleTextures { get; private set; }
     public ConfigEntry<bool> EnableProjectKyaroSprites { get; private set; }
-    
+
     // NPC Portrait Settings
     public ConfigEntry<bool> EnableNPCPortraits { get; private set; }
     public ConfigEntry<bool> EnableDialogOverrides { get; private set; }
-    
+
     // Save Point Settings
     public ConfigEntry<string> SavePointColor { get; private set; }
     public ConfigEntry<string> TirRunTexture { get; private set; }
     public ConfigEntry<bool> DisableSavePointGlow { get; private set; }
-    
+
     // Suikoden 2 Classic UI Settings
     public ConfigEntry<bool> S2ClassicSaveWindow { get; private set; }
     public ConfigEntry<string> MercFortFence { get; private set; }
     public ConfigEntry<bool> ColoredIntroAndFlashbacks { get; private set; }
-    
+
     // UI Settings
     public ConfigEntry<string> DialogBoxScale { get; private set; }
     public ConfigEntry<string> MenuScale { get; private set; }
     public ConfigEntry<string> SMAAQuality { get; private set; }
-    
+
     // Performance Settings
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
     public ConfigEntry<bool> EnableTextureCompression { get; private set; }
     public ConfigEntry<string> TextureCompressionQuality { get; private set; }
     public ConfigEntry<string> TextureCompressionFormat { get; private set; }
     public ConfigEntry<bool> EnableDDSTextures { get; private set; }
-    
+
     // EXPERIMENTAL FEATURES (at end of config file)
     public ConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
     public ConfigEntry<bool> EnableCustomObjects { get; private set; }
@@ -69,8 +69,6 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
     public ConfigEntry<bool> EnableDebugMenu2 { get; private set; }
     public ConfigEntry<bool> EnableWarAbilityMod { get; private set; }
-
-    
 
 
 
@@ -197,7 +195,7 @@ public sealed class ModConfiguration
             true,
             "Enable dialog text overrides from DialogOverrides.json. Allows replacing specific text lines and injecting custom speaker names."
         );
-            
+
         SavePointColor = _config.Bind(
             "Custom Textures",
             "SavePointColor",
@@ -332,7 +330,7 @@ public sealed class ModConfiguration
         // ========================================
         // These features are work-in-progress and may not function correctly.
         // Enable at your own risk for testing purposes.
-        
+
         EnableObjectDiagnostics = _config.Bind(
             "zz - Experimental",
             "EnableObjectDiagnostics",

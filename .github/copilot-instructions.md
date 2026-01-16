@@ -33,6 +33,7 @@ Patches live in `Patches/` folder. Each has static `Initialize()` called from `P
 
 ## Build & Deploy
 
+- **Always use `dotnet build` to build the project.**
 - **Auto-deploy**: Release builds output directly to game's `BepInEx\plugins\` (via registry lookup in `.csproj`)
 - **Debug builds**: Go to `bin\Debug` for testing without game installation
 - **Excluded folders**: `reserve/`, `build/`, `forlater/` - documentation and experimental code

@@ -23,7 +23,7 @@ public partial class CustomTexturePatch
 
         if (Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo("HDBath.LoadInstance called - bath background is being loaded");
-        
+
         // Try to replace bath sprites immediately
         int replaced = TryReplaceBathSprites();
         if (replaced > 0 && Plugin.Config.DetailedTextureLog.Value)
@@ -58,20 +58,20 @@ public partial class CustomTexturePatch
 
         // Get all SpriteRenderers in the bath GameObject
         var spriteRenderers = bathInstance.GetComponentsInChildren<SpriteRenderer>(true);
-        
+
         int replaced = 0;
         foreach (var sr in spriteRenderers)
         {
             if (sr.sprite != null)
             {
                 string spriteName = sr.sprite.name;
-                
+
                 // Check if this is a bath sprite (bath_1 through bath_5)
                 if (spriteName.StartsWith("bath_"))
                 {
                     if (Plugin.Config.DetailedTextureLog.Value)
                         Plugin.Log.LogInfo($"Found bath sprite: {spriteName}");
-                    
+
                     // Try to replace with custom sprite
                     Sprite customSprite = LoadCustomSprite(spriteName, sr.sprite);
                     if (customSprite != null)
@@ -89,7 +89,7 @@ public partial class CustomTexturePatch
                 }
             }
         }
-        
+
         if (replaced > 0)
         {
             if (Plugin.Config.DetailedTextureLog.Value)
@@ -111,10 +111,10 @@ public partial class CustomTexturePatch
     {
         if (Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo("HDBath.OnDestroy called - bath is being destroyed");
-        
+
         // Reset the last bath BG instance ID so next bath will be treated as new
         lastBathBGInstanceID = -1;
-        
+
         // Reset bath background scan attempts
         bathBackgroundScanAttempts = 0;
     }
@@ -136,18 +136,18 @@ public partial class CustomTexturePatch
                 break;
             }
         }
-        
+
         // Skip preloading if no bath textures found
         if (!hasBathTextures)
             return;
-        
+
         int preloaded = 0;
-        
+
         // Preload bath_1 through bath_5
         for (int i = 1; i <= 5; i++)
         {
             string bathName = $"bath_{i}";
-            
+
             if (texturePathIndex.ContainsKey(bathName))
             {
                 Texture2D texture = LoadCustomTexture(bathName);
@@ -163,11 +163,11 @@ public partial class CustomTexturePatch
                         0,
                         SpriteMeshType.FullRect
                     );
-                    
+
                     // Prevent Unity from destroying this sprite when changing scenes
                     UnityEngine.Object.DontDestroyOnLoad(sprite);
                     UnityEngine.Object.DontDestroyOnLoad(texture);
-                    
+
                     // Cache the sprite for instant replacement
                     preloadedBathSprites[bathName] = sprite;
                     preloaded++;
@@ -204,7 +204,7 @@ public partial class CustomTexturePatch
         {
             Plugin.Log.LogInfo($"BathBG activated: {objectPath}");
         }
-        
+
         // Try to replace bath sprites
         int replaced = TryReplaceBathSprites();
         if (replaced > 0 && Plugin.Config.DetailedTextureLog.Value)

@@ -11,7 +11,7 @@ public partial class CustomTexturePatch
 {
     private static string cachePath;
     private static string manifestPath;
-    
+
     [Serializable]
     public class ManifestEntry
     {
@@ -27,20 +27,20 @@ public partial class CustomTexturePatch
         public int FileCount; // Number of texture files indexed
         public string ConfigHash; // Hash of texture-related config settings
         public List<ManifestEntry> Entries = new List<ManifestEntry>();
-        
+
         public void FromDictionary(Dictionary<string, string> dict)
         {
             Entries.Clear();
-            foreach(var kvp in dict)
+            foreach (var kvp in dict)
             {
                 Entries.Add(new ManifestEntry { Key = kvp.Key, Value = kvp.Value });
             }
         }
-        
+
         public Dictionary<string, string> ToDictionary()
         {
             var dict = new Dictionary<string, string>();
-            foreach(var entry in Entries)
+            foreach (var entry in Entries)
             {
                 if (!dict.ContainsKey(entry.Key))
                     dict.Add(entry.Key, entry.Value);
@@ -72,7 +72,7 @@ public partial class CustomTexturePatch
     {
         // Combine all texture-related config values into a string
         string configString = $"{Plugin.Config.SavePointColor.Value}";
-        
+
         // Simple hash (GetHashCode is sufficient for cache invalidation)
         return configString.GetHashCode().ToString();
     }
@@ -94,10 +94,10 @@ public partial class CustomTexturePatch
 
                 // Check if config has changed since manifest was created
                 string currentConfigHash = ComputeConfigHash();
-                
-                if (manifest != null && 
+
+                if (manifest != null &&
                     manifest.ConfigHash == currentConfigHash &&
-                    manifest.Entries != null && 
+                    manifest.Entries != null &&
                     manifest.Entries.Count > 0)
                 {
                     texturePathIndex = manifest.ToDictionary();
