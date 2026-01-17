@@ -209,9 +209,9 @@ public class Plugin : BasePlugin
 
 
         // Apply Menu Scale Patch (Menu Scaling)
-        if (Config.MenuScale.Value.Equals("alt", System.StringComparison.OrdinalIgnoreCase))
+        if (Config.ScaledDownMenu.Value.Equals("true", System.StringComparison.OrdinalIgnoreCase))
         {
-            Log.LogInfo($"Applying Menu Scale patches (mode: {Config.MenuScale.Value})...");
+            Log.LogInfo($"Applying Menu Scale patches (mode: {Config.ScaledDownMenu.Value})...");
             harmony.PatchAll(typeof(MenuScalePatch));
         }
 

@@ -33,7 +33,6 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> LogTexturePaths { get; private set; }
     public ConfigEntry<bool> DetailedTextureLog { get; private set; }
     public ConfigEntry<bool> LoadLauncherUITextures { get; private set; }
-    public ConfigEntry<bool> LoadBattleTextures { get; private set; }
     public ConfigEntry<bool> EnableProjectKyaroSprites { get; private set; }
 
     // NPC Portrait Settings
@@ -52,7 +51,7 @@ public sealed class ModConfiguration
 
     // UI Settings
     public ConfigEntry<string> DialogBoxScale { get; private set; }
-    public ConfigEntry<string> MenuScale { get; private set; }
+    public ConfigEntry<string> ScaledDownMenu { get; private set; }
     public ConfigEntry<string> SMAAQuality { get; private set; }
 
     // Performance Settings
@@ -69,9 +68,6 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> LogExistingMapObjects { get; private set; }
     public ConfigEntry<bool> EnableDebugMenu2 { get; private set; }
     public ConfigEntry<bool> EnableWarAbilityMod { get; private set; }
-
-
-
 
     public ModConfiguration(ConfigFile config)
     {
@@ -245,10 +241,10 @@ public sealed class ModConfiguration
             "Dialog box size preset. Options: Large (full size, default), Medium (80% size), Small (50% size, very compact). Affects both size and position."
         );
 
-        MenuScale = _config.Bind(
+        ScaledDownMenu = _config.Bind(
             "UI",
-            "MenuScale",
-            "default",
+            "ScaledDownMenu",
+            "false",
             "Main menu layout preset. Options: default (original layout), alt (scaled down 80% with adjusted position for better visibility)."
         );
 

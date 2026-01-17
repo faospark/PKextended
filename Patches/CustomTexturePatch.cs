@@ -479,11 +479,8 @@ public partial class CustomTexturePatch
         if (TryLoadManifestIndex())
             return;
 
-        // Only scan source image files (PNG, JPG, TGA)
-        // DDS files are either:
-        // 1. Pre-compressed textures you manually placed (will be found via LoadCustomTexture)
-        // 2. Runtime-generated compressed textures (shouldn't be counted as "custom textures")
-        string[] extensions = { "*.png", "*.jpg", "*.jpeg", "*.tga" };
+        // Scan image files and pre-compressed DDS textures
+        string[] extensions = { "*.png", "*.jpg", "*.jpeg", "*.tga", "*.dds" };
         
         string modsFolder = Path.Combine(customTexturesPath, "00-Mods");
         bool hasModsFolder = Directory.Exists(modsFolder);

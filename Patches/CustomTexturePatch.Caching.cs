@@ -70,11 +70,41 @@ public partial class CustomTexturePatch
     /// </summary>
     private static string ComputeConfigHash()
     {
-        // Combine all texture-related config values into a string
-        string configString = $"{Plugin.Config.SavePointColor.Value}";
+        // Combine all texture-impacting config values into a string
+        string configString = string.Join("|", 
+            Plugin.Config.SavePointColor.Value,
+            Plugin.Config.LoadLauncherUITextures.Value,
+            Plugin.Config.EnableProjectKyaroSprites.Value,
+            Plugin.Config.ForceControllerPrompts.Value,
+            Plugin.Config.MercFortFence.Value,
+            Plugin.Config.S2ClassicSaveWindow.Value,
+            Plugin.Config.TirRunTexture.Value
+        );
 
-        // Simple hash (GetHashCode is sufficient for cache invalidation)
-        return configString.GetHashCode().ToString();
+        // Use deterministic hash instead of string.GetHashCode() which is non-deterministic in .NET 6+
+        return GetDeterministicHashCode(configString).ToString();
+    }
+
+    /// <summary>
+    /// Helper to get a deterministic hash code for a string
+    /// </summary>
+    private static int GetDeterministicHashCode(string str)
+    {
+        unchecked
+        {
+            int hash1 = (5381 << 16) + 5381;
+            int hash2 = hash1;
+
+            for (int i = 0; i < str.Length; i += 2)
+            {
+                hash1 = ((hash1 << 5) + hash1) ^ str[i];
+                if (i == str.Length - 1)
+                    break;
+                hash2 = ((hash2 << 5) + hash2) ^ str[i + 1];
+            }
+
+            return hash1 + (hash2 * 1566083941);
+        }
     }
 
     /// <summary>
