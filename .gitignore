@@ -31,4 +31,4 @@ project.fragment.lock.json
 artifacts/
 
 # Agent
-.agent/
+#.agent/
