@@ -19,9 +19,9 @@ public partial class CustomTexturePatch
     #region Shared State
     
     // Caches
-    internal static Dictionary<string, Sprite> customSpriteCache = new Dictionary<string, Sprite>();
-    internal static Dictionary<string, Texture2D> customTextureCache = new Dictionary<string, Texture2D>();
-    internal static Dictionary<string, string> texturePathIndex = new Dictionary<string, string>(); // Maps texture name -> full file path
+    internal static Dictionary<string, Sprite> customSpriteCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
+    internal static Dictionary<string, Texture2D> customTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+    internal static Dictionary<string, string> texturePathIndex = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // Maps texture name -> full file path
     
     // Tracking for persistent textures that shouldn't be cleared on scene change
     internal static HashSet<string> persistentTextures = new HashSet<string> { "window_", "t_obj_savePoint_ball", "sactx" };

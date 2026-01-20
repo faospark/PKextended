@@ -151,9 +151,12 @@ public sealed class ModConfiguration
             "ControllerPromptType",
             "PlayStation",
             "Controller type to display:\n" +
-            "- PS4: 'PlayStation', 'PlayStation4', 'DS4', 'PS4'\n" +
-            "- PS5: 'PlayStation5', 'DualSense', 'PS5'\n" +
-            "- Xbox/Generic/Switch: 'Xbox', 'PS', 'Generic', 'Switch'\n" +
+            "- PS4: 'PlayStation', 'PlayStation4', 'DS4', 'PS4' (_01 suffix)\n" +
+            "- PS5: 'PlayStation5', 'DualSense', 'PS5' (_02 suffix)\n" +
+            "- Xbox/Generic/PC: 'Xbox', 'Generic', 'PC', 'Keyboard' (_00 suffix)\n" +
+            "- XboxNative: 'XboxNative' (_03 suffix - use with custom textures)\n" +
+            "- Switch: 'Switch', 'Nintendo' (_04 suffix - use with custom textures)\n" +
+            "- Custom: 'Custom' (_05 suffix - use with custom textures)\n" +
             "Only applies if ForceControllerPrompts is enabled."
         );
 

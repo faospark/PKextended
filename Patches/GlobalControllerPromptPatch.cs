@@ -117,7 +117,10 @@ namespace PKCore.Patches
             // Check if sprite ends with controller suffix pattern
             return spriteName.EndsWith("_00") || 
                    spriteName.EndsWith("_01") || 
-                   spriteName.EndsWith("_02");
+                   spriteName.EndsWith("_02") ||
+                   spriteName.EndsWith("_03") ||
+                   spriteName.EndsWith("_04") ||
+                   spriteName.EndsWith("_05");
         }
 
         /// <summary>
@@ -152,12 +155,31 @@ namespace PKCore.Patches
                 return "_02";
             }
             
-            // Xbox/Generic/Switch → _00
-            if (normalized == "xbox" || 
-                normalized == "ps" || 
+            // XboxNative → _03
+            if (normalized == "xboxnative"||
+            normalized == "xbox" )
+            {
+                return "_03";
+            }
+
+            // Switch/Nintendo → _04
+            if (normalized == "switch" || 
+                normalized == "nintendo")
+            {
+                return "_04";
+            }
+
+            // Custom → _05
+            if (normalized == "custom" || 
+                normalized == "custom1" || 
+                normalized == "custom2")
+            {
+                return "_05";
+            }
+
+            // Xbox/Generic/PC → _00
+            if ( 
                 normalized == "generic" || 
-                normalized == "switch" ||
-                normalized == "nintendo" ||
                 normalized == "pc" ||
                 normalized == "keyboard")
             {
@@ -176,16 +198,20 @@ namespace PKCore.Patches
         {
             switch (controllerType)
             {
-                case 0: // PlayStation
-                    return "_02";
-                case 1: // Xbox
+                case 0: // PlayStation (PS4)
+                    return "_01";
+                case 1: // Xbox/Generic/PC
                     return "_00";
-                case 2: // Switch
+                case 2: // Switch/Nintendo
+                    return "_04";
+                case 3: // PS5
                     return "_02";
-                case 3: // PC
-                    return "_00";
+                case 4: // Xbox Native
+                    return "_03";
+                case 5: // Custom
+                    return "_05";
                 default:
-                    return "_02";
+                    return "_01";
             }
         }
 
@@ -219,18 +245,30 @@ namespace PKCore.Patches
                     if (sprite != null && sprite.name == spriteName)
                     {
                         spriteCache[spriteName] = sprite;
-                        Logger.LogInfo($"Loaded sprite from resources: {spriteName}");
+                        Logger.LogDebug($"Loaded sprite from resources: {spriteName}");
                         return sprite;
                     }
                 }
-
-                Logger.LogWarning($"Sprite not found in resources: {spriteName}");
             }
             catch (System.Exception ex)
             {
-                Logger.LogError($"Error loading sprite {spriteName}: {ex.Message}");
+                Logger.LogError($"Error searching for sprite {spriteName} in resources: {ex.Message}");
             }
 
+            // Fallback: Try to load from custom textures folder via CustomTexturePatch
+            if (Plugin.Config.EnableCustomTextures.Value && CustomTexturePatch.HasCustomTexture(spriteName))
+            {
+                Logger.LogDebug($"Attempting to load custom button texture for: {spriteName}");
+                Sprite customSprite = CustomTexturePatch.LoadCustomSprite(spriteName, null);
+                if (customSprite != null)
+                {
+                    spriteCache[spriteName] = customSprite;
+                    Logger.LogInfo($"Loaded custom button sprite: {spriteName}");
+                    return customSprite;
+                }
+            }
+
+            Logger.LogWarning($"Sprite not found in resources or custom textures: {spriteName}");
             return null;
         }
 

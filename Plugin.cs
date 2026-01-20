@@ -54,28 +54,18 @@ public class Plugin : BasePlugin
         // since the event fires AFTER logging. Disabled for now due to IL2CPP Debug method patching issues.
         // SuppressLogs.Initialize();
 
+        // Initialize core texture system first (indexes all custom files)
+        if (Config.EnableCustomTextures.Value || Config.LogReplaceableTextures.Value)
+        {
+            CustomTexturePatch.Initialize();
+        }
+
         // Apply Sprite Filtering patch independently
         if (Config.SpriteFilteringQuality.Value > 0)
         {
             Log.LogInfo($"Applying Sprite Filtering patches (Level: {Config.SpriteFilteringQuality.Value})...");
             harmony.PatchAll(typeof(SpriteFilteringPatch));
             SpriteFilteringPatch.Initialize();
-        }
-
-        // Apply Resolution patch independently
-        if (Config.EnableResolutionScaling.Value && Config.ResolutionScale.Value != 1.0f)
-        {
-            Log.LogInfo("Applying Resolution patches...");
-            harmony.PatchAll(typeof(ResolutionPatch));
-            ResolutionPatch.Initialize();
-        }
-
-        // Apply Sprite Post-Processing patch independently
-        if (Config.DisableSpritePostProcessing.Value)
-        {
-            Log.LogInfo("Applying DisableSpritePostProcessing Patch");
-            harmony.PatchAll(typeof(DisableSpritePostProcessingPatch));
-            DisableSpritePostProcessingPatch.Initialize();
         }
 
 
@@ -114,7 +104,6 @@ public class Plugin : BasePlugin
             }
             
             harmony.PatchAll(typeof(CustomTexturePatch));
-            CustomTexturePatch.Initialize();
 
             // Patch for Save Window custom background
             harmony.PatchAll(typeof(SaveWindowPatch));
@@ -143,6 +132,22 @@ public class Plugin : BasePlugin
             
             // GameObject activation patches are part of CustomTexturePatch (already applied above)
             // This handles Dragon, Cow, and Suikozu monitor attachment
+        }
+        
+        // Resolution patch
+        if (Config.EnableResolutionScaling.Value && Config.ResolutionScale.Value != 1.0f)
+        {
+            Log.LogInfo("Applying Resolution patches...");
+            harmony.PatchAll(typeof(ResolutionPatch));
+            ResolutionPatch.Initialize();
+        }
+
+        // Sprite Post-Processing patch
+        if (Config.DisableSpritePostProcessing.Value)
+        {
+            Log.LogInfo("Applying DisableSpritePostProcessing Patch");
+            harmony.PatchAll(typeof(DisableSpritePostProcessingPatch));
+            DisableSpritePostProcessingPatch.Initialize();
         }
 
         // NPC Portrait Injection
