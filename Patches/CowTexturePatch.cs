@@ -41,6 +41,9 @@ public static class CowTexturePatch
 
     public static void CheckAndAttachMonitor(GameObject go)
     {
+        // Optimization: Only run for Suikoden 1
+        if (!GameDetection.IsGSD1()) return;
+
         if (go == null) return;
 
         // Check if object name matches cow prefix

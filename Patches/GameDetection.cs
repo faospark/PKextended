@@ -10,19 +10,28 @@ namespace PKCore.Patches;
 public static class GameDetection
 {
     private static string _cachedGameId = null;
-    
+    private static string _lastSceneName = "";
+
     /// <summary>
     /// Get the current game identifier (GSD1, GSD2, or Unknown)
-    /// Result is cached after first detection
+    /// Handles scene switching and cache invalidation
     /// </summary>
     public static string GetCurrentGame()
     {
-        // Return cached result if available
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        // Invalidate cache if scene changed (e.g. GSD1 -> Main -> GSD2)
+        if (sceneName != _lastSceneName)
+        {
+            _cachedGameId = null;
+            _lastSceneName = sceneName;
+            // Optional: Log scene change for debug only
+            // Plugin.Log.LogDebug($"[GameDetection] Scene changed to: {sceneName}");
+        }
+
+        // Return cached result if we have a resolved game ID
         if (_cachedGameId != null)
             return _cachedGameId;
-        
-        // Detect game from active scene name
-        string sceneName = SceneManager.GetActiveScene().name;
         
         if (sceneName == "GSD1")
         {
@@ -36,12 +45,9 @@ public static class GameDetection
         }
         else
         {
-            _cachedGameId = "Unknown";
-            // Don't log warning during launcher - it's expected
-            if (!string.IsNullOrEmpty(sceneName))
-            {
-                Plugin.Log.LogInfo($"[GameDetection] Launcher active - waiting for game selection");
-            }
+            // Do NOT cache "Unknown" to allow retrying later
+            // And do NOT log here to prevent spam (this is called every frame by monitors)
+            return "Unknown";
         }
         
         return _cachedGameId;

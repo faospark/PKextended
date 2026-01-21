@@ -42,6 +42,9 @@ public class DragonPatch
     /// </summary>
     public static void CheckAndAttachMonitor(GameObject go)
     {
+        // Optimization: Only run for Suikoden 1
+        if (!GameDetection.IsGSD1()) return;
+
         if (go == null) return;
 
         // Check if this is a dragon object we care about

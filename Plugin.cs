@@ -34,7 +34,7 @@ public class Plugin : BasePlugin
         {
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SavePointSpriteMonitor>();
 
-            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<DialogMonitor>();
+
         }
         catch (System.Exception ex)
         {
