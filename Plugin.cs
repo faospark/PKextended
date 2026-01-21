@@ -34,7 +34,7 @@ public class Plugin : BasePlugin
         {
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SavePointSpriteMonitor>();
 
-            // SuikozuMonitor removed (replaced by Harmony Patch)
+            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<DialogMonitor>();
         }
         catch (System.Exception ex)
         {
@@ -66,10 +66,7 @@ public class Plugin : BasePlugin
             Log.LogInfo($"Applying Sprite Filtering patches (Level: {Config.SpriteFilteringQuality.Value})...");
             harmony.PatchAll(typeof(SpriteFilteringPatch));
             SpriteFilteringPatch.Initialize();
-        }
-
-
-
+       }
 
         // Borderless Window Mode
         if (Config.EnableBorderlessWindow.Value)
