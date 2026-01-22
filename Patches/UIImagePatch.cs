@@ -60,11 +60,12 @@ public partial class CustomTexturePatch
         Sprite customSprite = LoadCustomSprite(originalName, value);
         if (customSprite != null)
         {
-            if (Plugin.Config.DetailedTextureLog.Value)
-            {
-                string objectPath = GetGameObjectPath(__instance.gameObject);
-                Plugin.Log.LogInfo($"[UI Image] Replaced sprite: {originalName} on {objectPath}");
-            }
+            // Suppress spammy replacement log even in detailed mode
+            // if (Plugin.Config.DetailedTextureLog.Value)
+            // {
+            //     string objectPath = GetGameObjectPath(__instance.gameObject);
+            //     Plugin.Log.LogInfo($"[UI Image] Replaced sprite: {originalName} on {objectPath}");
+            // }
             value = customSprite;
         }
     }

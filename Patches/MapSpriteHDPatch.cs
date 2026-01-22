@@ -61,10 +61,10 @@ namespace PKCore.Patches
                 // Log for diagnostics
                 if (Plugin.Config.DetailedTextureLog.Value)
                 {
-                    Plugin.Log.LogInfo($"[MapSpriteHD] Found SpriteRenderer with sprite: {spriteName}");
-                    if (originalSprite.texture != null)
+                    // Only log if it's NOT a generic atlas texture name (to avoid frame spam)
+                    if (!spriteName.Contains("atlas", System.StringComparison.OrdinalIgnoreCase))
                     {
-                        Plugin.Log.LogInfo($"[MapSpriteHD]   Texture: {originalSprite.texture.name}");
+                        // Plugin.Log.LogDebug($"[MapSpriteHD] Found SpriteRenderer with sprite: {spriteName}");
                     }
                 }
                 
