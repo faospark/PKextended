@@ -26,8 +26,13 @@ public class Plugin : BasePlugin
         Config = new ModConfiguration(base.Config);
         Config.Init();
 
-        // Suppress harmless Addressables warning after texture replacement
+        // Force immediate exit on quit to prevent Alt+F4 hangs (Unity 2022/BepInEx 6 issue)
         Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.None);
+        Application.quitting += (System.Action)(() => 
+        {
+            Log.LogInfo("Shutting down... forcing process exit.");
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+        });
         
         // Register custom MonoBehaviours for IL2CPP
         try
