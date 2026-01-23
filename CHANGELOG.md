@@ -28,7 +28,7 @@ Remove the glow effect from save point orbs:
 
 #### Config-Aware Cache Invalidation
 Texture manifest cache now tracks configuration changes:
-- **Tracked Settings**: `LoadLauncherUITextures`, `LoadBattleEffectTextures`, `LoadCharacterTextures`, `SavePointColor`
+- **Tracked Settings**: `LoadLauncherUITextures`, `SavePointColor`, `EnableProjectKyaroSprites`
 - **Automatic Rebuild**: Texture index rebuilds when any tracked config setting changes
 - **User Experience**: No more manual cache deletion when changing texture settings
 - **Implementation**: `ConfigHash` field in `TextureManifest` class

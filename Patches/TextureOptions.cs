@@ -64,7 +64,8 @@ public static class TextureOptions
         }
 
         // Tir Run Animation (shu_field_01_atlas)
-        if (textureName == "sactx-0-256x256-Uncompressed-shu_field_01_atlas-959a6bf2")
+        if (textureName == "sactx-0-256x256-Uncompressed-shu_field_01_atlas-959a6bf2" || 
+            textureName == "shu_field_01_atlas")
         {
              // Check if user wants the alt version
              string tirVariant = Plugin.Config.TirRunTexture.Value.ToLower();

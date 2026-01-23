@@ -70,8 +70,12 @@ public partial class CustomTexturePatch
     /// </summary>
     private static string ComputeConfigHash()
     {
+        // Manifest version - increment to force a cache rebuild when indexing logic changes
+        string manifestVersion = "2.1"; 
+
         // Combine all texture-impacting config values into a string
         string configString = string.Join("|", 
+            manifestVersion,
             Plugin.Config.SavePointColor.Value,
             Plugin.Config.LoadLauncherUITextures.Value,
             Plugin.Config.EnableProjectKyaroSprites.Value,

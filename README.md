@@ -68,8 +68,6 @@ ControllerPromptType = PlayStation  # PlayStation/PlayStation5/Xbox
 [Custom Textures]
 EnableCustomTextures = false
 LoadLauncherUITextures = true     # Load custom launcher UI
-LoadBattleEffectTextures = true   # Load custom battle effects
-LoadCharacterTextures = true      # Load custom character graphics
 SavePointColor = pink              # blue/red/yellow/pink/green/default
 DisableSavePointGlow = true        # Remove glow effect from save points
 LogReplaceableTextures = false     # Discovery mode

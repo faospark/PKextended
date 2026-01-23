@@ -33,15 +33,15 @@ public static class GameDetection
         if (_cachedGameId != null)
             return _cachedGameId;
         
-        if (sceneName == "GSD1")
+        if (sceneName.Contains("GSD1"))
         {
             _cachedGameId = "GSD1";
-            Plugin.Log.LogInfo("[GameDetection] ✓ Suikoden 1 (GSD1) detected");
+            Plugin.Log.LogInfo($"[GameDetection] ✓ Suikoden 1 (GSD1) detected (Scene: {sceneName})");
         }
-        else if (sceneName == "GSD2")
+        else if (sceneName.Contains("GSD2"))
         {
             _cachedGameId = "GSD2";
-            Plugin.Log.LogInfo("[GameDetection] ✓ Suikoden 2 (GSD2) detected");
+            Plugin.Log.LogInfo($"[GameDetection] ✓ Suikoden 2 (GSD2) detected (Scene: {sceneName})");
         }
         else
         {

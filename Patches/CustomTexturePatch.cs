@@ -75,6 +75,7 @@ public partial class CustomTexturePatch
     /// </summary>
     internal static string GetGameObjectPath(GameObject obj)
     {
+        if (obj == null) return "null";
         string path = obj.name;
         Transform current = obj.transform.parent;
         while (current != null)
@@ -83,6 +84,29 @@ public partial class CustomTexturePatch
             current = current.parent;
         }
         return path;
+    }
+
+    /// <summary>
+    /// Clean sactx- style texture names to their base names
+    /// e.g. sactx-0-128x128-Uncompressed-m_gat1_00_atlas-b4ac1ef3 -> m_gat1_00_atlas
+    /// </summary>
+    internal static string CleanSactxName(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return name;
+        if (!name.StartsWith("sactx-")) return name;
+
+        string[] parts = name.Split('-');
+        if (parts.Length < 6) return name; // Basic sactx has at least 6 parts (sactx, layer, res, comp, name, hash)
+
+        // The texture name is everything after the first 4 parts and before the last part (the hash)
+        // Skip sactx, layer, resolution, compression
+        int nameStart = 4;
+        int nameEnd = parts.Length - 2;
+        
+        if (nameStart > nameEnd) return name;
+        
+        // Join the name parts back together in case the name contained hyphens
+        return string.Join("-", parts.Skip(nameStart).Take(nameEnd - nameStart + 1));
     }
     
     /// <summary>
@@ -313,7 +337,9 @@ public partial class CustomTexturePatch
     /// </summary>
     internal static Texture2D LoadCustomTexture(string textureName)
     {
-        // Check cache
+        if (string.IsNullOrEmpty(textureName)) return null;
+
+        // Check cache with original name first
         if (customTextureCache.TryGetValue(textureName, out Texture2D cachedTexture))
         {
             if (cachedTexture != null && cachedTexture)
@@ -322,25 +348,62 @@ public partial class CustomTexturePatch
                 customTextureCache.Remove(textureName);
         }
 
-        // Check for texture variants (e.g., save point colors)
+        // 1. Try with original name (and its variants)
         string lookupName = TextureOptions.GetTextureNameWithVariant(textureName);
 
         // Try game-specific texture first (GSD1: or GSD2: prefix)
         string currentGame = GameDetection.GetCurrentGame();
+        string targetKey = null;
+
         if (currentGame == "GSD1" || currentGame == "GSD2")
         {
             string gameSpecificKey = $"{currentGame}:{lookupName}";
             if (texturePathIndex.ContainsKey(gameSpecificKey))
+                targetKey = gameSpecificKey;
+        }
+
+        if (targetKey == null && texturePathIndex.ContainsKey(lookupName))
+            targetKey = lookupName;
+
+        // 2. FALLBACK: Clean name for sactx textures if no exact match found
+        if (targetKey == null && textureName.StartsWith("sactx-"))
+        {
+            string cleanedName = CleanSactxName(textureName);
+            if (cleanedName != textureName)
             {
-                lookupName = gameSpecificKey; // Use game-specific version
+                string cleanedLookup = TextureOptions.GetTextureNameWithVariant(cleanedName);
+                
+                if (currentGame == "GSD1" || currentGame == "GSD2")
+                {
+                    string gsCleaned = $"{currentGame}:{cleanedLookup}";
+                    if (texturePathIndex.ContainsKey(gsCleaned))
+                        targetKey = gsCleaned;
+                }
+                
+                if (targetKey == null && texturePathIndex.ContainsKey(cleanedLookup))
+                    targetKey = cleanedLookup;
+                
+                if (targetKey != null)
+                {
+                    // Also check if we already cached this under the CLEANED name
+                    if (customTextureCache.TryGetValue(cleanedLookup, out Texture2D cleanedCache))
+                    {
+                        // Cache it under the full name too to speed up next time
+                        customTextureCache[textureName] = cleanedCache;
+                        return cleanedCache;
+                    }
+                    lookupName = targetKey; // Use this for the rest of the function
+                }
             }
         }
+
+        if (targetKey == null) return null;
 
         // Try DDS first if enabled
         if (Plugin.Config.EnableDDSTextures.Value)
         {
             // Look for .dds file
-            if (texturePathIndex.TryGetValue(lookupName, out string ddsPath) && ddsPath.EndsWith(".dds", System.StringComparison.OrdinalIgnoreCase))
+            if (texturePathIndex.TryGetValue(targetKey, out string ddsPath) && ddsPath.EndsWith(".dds", System.StringComparison.OrdinalIgnoreCase))
             {
                 Texture2D ddsTexture = DDSLoader.LoadDDS(ddsPath);
                 if (ddsTexture != null)
@@ -367,7 +430,7 @@ public partial class CustomTexturePatch
 
         // Fall back to PNG/JPG loading with runtime compression
         // Look up full path - skip if it's a DDS file (already tried above)
-        if (!texturePathIndex.TryGetValue(lookupName, out string filePath) || filePath.EndsWith(".dds", System.StringComparison.OrdinalIgnoreCase))
+        if (!texturePathIndex.TryGetValue(targetKey, out string filePath) || filePath.EndsWith(".dds", System.StringComparison.OrdinalIgnoreCase))
             return null;
 
         try
@@ -425,11 +488,51 @@ public partial class CustomTexturePatch
     /// </summary>
     internal static bool ReplaceTextureInPlace(Texture2D originalTexture, string textureName)
     {
-        if (originalTexture == null)
+        if (originalTexture == null || string.IsNullOrEmpty(textureName))
             return false;
 
-        if (!texturePathIndex.TryGetValue(textureName, out string filePath))
+        string targetKey = null;
+        string lookupName = TextureOptions.GetTextureNameWithVariant(textureName);
+
+        string currentGame = GameDetection.GetCurrentGame();
+
+        // 1. Try exact match (and game-specific version)
+        if (currentGame == "GSD1" || currentGame == "GSD2")
+        {
+            string gameKey = $"{currentGame}:{lookupName}";
+            if (texturePathIndex.ContainsKey(gameKey))
+                targetKey = gameKey;
+        }
+
+        if (targetKey == null && texturePathIndex.ContainsKey(lookupName))
+            targetKey = lookupName;
+
+        // 2. Try fallback to cleaned name for sactx textures
+        if (targetKey == null && textureName.StartsWith("sactx-"))
+        {
+            string cleanedName = CleanSactxName(textureName);
+            string cleanedLookup = TextureOptions.GetTextureNameWithVariant(cleanedName);
+            
+            if (currentGame == "GSD1" || currentGame == "GSD2")
+            {
+                string gameKey = $"{currentGame}:{cleanedLookup}";
+                if (texturePathIndex.ContainsKey(gameKey))
+                    targetKey = gameKey;
+            }
+
+            if (targetKey == null && texturePathIndex.ContainsKey(cleanedLookup))
+                targetKey = cleanedLookup;
+        }
+
+        if (targetKey == null || !texturePathIndex.TryGetValue(targetKey, out string filePath))
+        {
+            if (textureName.Contains("m_gat") || textureName.Contains("Summon"))
+            {
+                if (Plugin.Config.DetailedTextureLog.Value)
+                    Plugin.Log.LogDebug($"[ReplaceInPlace] No match for: {textureName} (Lookup: {lookupName}, Game: {currentGame})");
+            }
             return false;
+        }
 
         try
         {
@@ -449,6 +552,12 @@ public partial class CustomTexturePatch
             originalTexture.anisoLevel = isWindowUI ? 0 : 4;
             
             originalTexture.Apply(true, false);
+            
+            // Rename to avoid repeated replacements and for tracking
+            if (!originalTexture.name.EndsWith("_Custom"))
+            {
+                originalTexture.name = textureName + "_Custom";
+            }
             
             UnityEngine.Object.DontDestroyOnLoad(originalTexture);
             
@@ -508,6 +617,30 @@ public partial class CustomTexturePatch
             {
                 texturePathIndex[key] = path;
                 filesIndexed++;
+
+                // Also index by cleaned name for sactx- style filenames
+                // This allows matching even if resolutions or hashes differ
+                string sactxPart = key;
+                string prefix = "";
+                if (key.Contains(":"))
+                {
+                    int idx = key.IndexOf(":");
+                    prefix = key.Substring(0, idx + 1);
+                    sactxPart = key.Substring(idx + 1);
+                }
+
+                if (sactxPart.StartsWith("sactx-"))
+                {
+                    string cleaned = CleanSactxName(sactxPart);
+                    if (cleaned != sactxPart)
+                    {
+                        string cleanedKey = prefix + cleaned;
+                        if (allowOverride || !texturePathIndex.ContainsKey(cleanedKey))
+                        {
+                            texturePathIndex[cleanedKey] = path;
+                        }
+                    }
+                }
             }
         }
 
