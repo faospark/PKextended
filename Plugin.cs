@@ -69,6 +69,7 @@ public class Plugin : BasePlugin
         if (Config.EnableMemoryCaching.Value)
         {
             Log.LogInfo("Initializing Texture Memory Caching System...");
+            harmony.PatchAll(typeof(TextureMemoryCachePatch));
             TextureMemoryCachePatch.Initialize();
         }
 
