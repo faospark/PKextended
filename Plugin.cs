@@ -55,6 +55,9 @@ public class Plugin : BasePlugin
     {
         var harmony = new Harmony("faospark.pkcore");
 
+        // Apply log filter to suppress noisy warnings
+        harmony.PatchAll(typeof(LogFilterPatch));
+
         // Note: Log suppression via Application.logMessageReceived doesn't actually prevent logs
         // since the event fires AFTER logging. Disabled for now due to IL2CPP Debug method patching issues.
         // SuppressLogs.Initialize();

@@ -38,6 +38,13 @@ Patches live in `Patches/` folder. Each has static `Initialize()` called from `P
 - **Debug builds**: Go to `bin\Debug` for testing without game installation
 - **Excluded folders**: `reserve/`, `build/`, `forlater/` - documentation and experimental code
 
+## Git Commit Policy
+
+- **ONLY THE USER decides what gets committed to GitHub.**
+- AI agents do NOT commit changes without explicit user request.
+- Always ask the user for approval before `git commit` and `git push`.
+- Present changes for review and wait for explicit user command to commit.
+
 ## Adding New Features
 
 1. Create patch class in `Patches/` with `[HarmonyPatch]` attributes
@@ -54,9 +61,16 @@ Patches live in `Patches/` folder. Each has static `Initialize()` called from `P
 - **Scene-based detection**: Custom textures discovered per scene load, not globally
 - **Mipmap bias**: Negative values prevent white outlines on filtered sprites
 
+## Debugging & Development Tools
+
+- **DNSSpy  and Unity Asset Explorer**: Required for full debugging. Use to inspect game assets, scene hierarchy, and component values at runtime
+- **Game Focus**: This project targets **Suikoden I & II HD Remaster** (Unity 2022.3.28f1) exclusively. All patches, textures, and configurations must be tailored to these games
+- **Dependency Repository**: [d3xMachina/Suikoden-Fix](https://github.com/d3xMachina/Suikoden-Fix) is a major source for patches. Reference this repo for game-specific implementation patterns and compatibility considerations
+
 ## Reference Files
 
 - [Plugin.cs](Plugin.cs) - Entry point, patch orchestration
 - [ModConfiguration.cs](ModConfiguration.cs) - All config definitions
 - [GlobalControllerPromptPatch.cs](Patches/GlobalControllerPromptPatch.cs) - Example of global Image.sprite interception
 - [reserve/UNITY_CLASSES_EXPLAINED.md](reserve/UNITY_CLASSES_EXPLAINED.md) - Unity API technical details
+

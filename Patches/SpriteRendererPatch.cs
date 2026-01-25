@@ -120,8 +120,14 @@ public partial class CustomTexturePatch
                 
                 if (!shouldSkipReplacementLog)
                 {
-                    if (isBathBackground || isBgManager)
+                    if (Plugin.Config.DetailedTextureLog.Value)
                     {
+                        // Include GameObject path in detailed logs
+                        Plugin.Log.LogInfo($"Replaced sprite: {originalName} (from {objectPath})");
+                    }
+                    else if (isBathBackground || isBgManager)
+                    {
+                        // Show path only for bath/bgManager sprites in normal mode
                         Plugin.Log.LogInfo($"Replaced sprite: {originalName} (from {objectPath})");
                     }
                     else
