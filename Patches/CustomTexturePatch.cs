@@ -670,12 +670,52 @@ public partial class CustomTexturePatch
     }
 
     /// <summary>
+    /// Check if a texture/sprite key matches persistent patterns
+    /// </summary>
+    private static bool IsPersistentKey(string key)
+    {
+        if (string.IsNullOrEmpty(key)) return false;
+        
+        foreach (var prefix in persistentTextures)
+        {
+            if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Log a summary of all persistent textures and sprites currently in cache
+    /// </summary>
+    private static void LogPersistentTextureSummary(string sceneName)
+    {
+        if (!Plugin.Config.DetailedTextureLog.Value) return;
+        
+        var persistentTextureNames = customTextureCache.Keys.Where(IsPersistentKey).ToList();
+        var persistentSpriteNames = customSpriteCache.Keys.Where(IsPersistentKey).ToList();
+        
+        if (persistentTextureNames.Count > 0 || persistentSpriteNames.Count > 0)
+        {
+            Plugin.Log.LogInfo($"[Persistent Summary] {persistentTextureNames.Count} textures, {persistentSpriteNames.Count} sprites surviving transition to {sceneName}");
+            
+            foreach (var name in persistentTextureNames)
+                Plugin.Log.LogInfo($"  [Texture] {name}");
+            
+            foreach (var name in persistentSpriteNames)
+                Plugin.Log.LogInfo($"  [Sprite] {name}");
+        }
+    }
+    
+    /// <summary>
     /// Clear non-persistent caches on scene change to save memory
     /// </summary>
     private static void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         if (mode == UnityEngine.SceneManagement.LoadSceneMode.Additive)
             return;
+
+        // Log persistent textures BEFORE clearing
+        LogPersistentTextureSummary(scene.name);
 
         int texturesCleared = 0;
         int spritesCleared = 0;
@@ -684,17 +724,7 @@ public partial class CustomTexturePatch
         List<string> texturesToRemove = new List<string>();
         foreach (var kvp in customTextureCache)
         {
-            bool isPersistent = false;
-            foreach (var prefix in persistentTextures)
-            {
-                if (kvp.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    isPersistent = true;
-                    break;
-                }
-            }
-
-            if (!isPersistent)
+            if (!IsPersistentKey(kvp.Key))
                 texturesToRemove.Add(kvp.Key);
         }
 
@@ -702,17 +732,7 @@ public partial class CustomTexturePatch
         List<string> spritesToRemove = new List<string>();
         foreach (var kvp in customSpriteCache)
         {
-            bool isPersistent = false;
-            foreach (var prefix in persistentTextures)
-            {
-                if (kvp.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    isPersistent = true;
-                    break;
-                }
-            }
-
-            if (!isPersistent)
+            if (!IsPersistentKey(kvp.Key))
                 spritesToRemove.Add(kvp.Key);
         }
 

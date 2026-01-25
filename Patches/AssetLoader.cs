@@ -168,9 +168,6 @@ public static class AssetLoader
             {
                 texture.name = assetName + (context != null ? $"_{context}" : "");
                 
-                // Apply compression/filtering
-                TextureCompression.CompressTexture(texture, assetName, filePath);
-                
                 bool isWindowUI = CustomTexturePatch.IsWindowUITexture(assetName, filePath);
                 bool isMap = filePath.Contains("Maps", StringComparison.OrdinalIgnoreCase);
                 bool useBilinear = Plugin.Config.SpriteFilteringQuality.Value > 0 || !isMap;

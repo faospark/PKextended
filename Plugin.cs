@@ -70,6 +70,7 @@ public class Plugin : BasePlugin
         if (Config.EnableCustomTextures.Value || Config.LogReplaceableTextures.Value)
         {
             CustomTexturePatch.Initialize();
+            CustomTexturePersist.Initialize();
         }
 
         // Initialize memory caching system for smart texture cleanup
