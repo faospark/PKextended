@@ -42,7 +42,8 @@ public static class CustomTexturePersist
         "sactx-0-256x128-Uncompressed-shu_04_hd_atlas-bd7a8eea",
         "sactx-0-256x256-Uncompressed-shu_atlas-0db86654",
         "sactx-0-256x256-Uncompressed-shu_atlas-e7f71b8e",
-        "sactx-0-512x256-Uncompressed-shu_01_atlas-fb0fe61c"
+        "sactx-0-512x256-Uncompressed-shu_01_atlas-fb0fe61c",
+        "fp_129"  // Base portrait sprite for NPC portrait system
     };
     
     #endregion

@@ -254,6 +254,55 @@ public class NPCPortraitPatch
         {
             Plugin.Log.LogInfo($"Preloaded {portraitCache.Count} custom NPC portrait texture(s)");
         }
+        
+        // Preload fp_129 as the base portrait sprite for swapping
+        // This ensures we always have a template sprite available
+        PreloadBasePortraitSprite();
+    }
+    
+    /// <summary>
+    /// Preload fp_129 as a persistent base portrait sprite
+    /// This sprite serves as the template for all custom NPC portraits
+    /// </summary>
+    private static void PreloadBasePortraitSprite()
+    {
+        try
+        {
+            // Load fp_129 texture from CustomTexturePatch's cache (persistent textures)
+            Texture2D baseTexture = CustomTexturePatch.LoadCustomTexture("fp_129");
+            
+            if (baseTexture == null)
+            {
+                Plugin.Log.LogWarning("[NPCPortrait] Failed to load fp_129 from persistent textures - custom portraits may not work");
+                return;
+            }
+            
+            // Create a sprite from the texture
+            Sprite baseSprite = Sprite.Create(
+                baseTexture,
+                new Rect(0, 0, baseTexture.width, baseTexture.height),
+                new Vector2(0.5f, 0.5f),  // Center pivot
+                100f,                      // Standard pixelsPerUnit for portraits
+                0,
+                SpriteMeshType.FullRect
+            );
+            
+            // Mark as persistent
+            UnityEngine.Object.DontDestroyOnLoad(baseSprite);
+            UnityEngine.Object.DontDestroyOnLoad(baseTexture);
+            
+            // Cache it for use
+            cachedPortraitSprite = baseSprite;
+            
+            if (Plugin.Config.DetailedTextureLog.Value)
+            {
+                Plugin.Log.LogInfo($"[NPCPortrait] ✓ Preloaded base portrait sprite fp_129 ({baseTexture.width}x{baseTexture.height})");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Plugin.Log.LogError($"[NPCPortrait] Failed to preload base portrait sprite: {ex.Message}");
+        }
     }
     
     /// <summary>
@@ -261,8 +310,48 @@ public class NPCPortraitPatch
     /// </summary>
     private static Texture2D LoadPortraitTexture(string npcName)
     {
-        // Portraits are indexed in the global cache, so we can use LoadTextureSync
-        return AssetLoader.LoadTextureSync(npcName, "NPCPortrait");
+        // Build the full file path to the portrait
+        string filePath = Path.Combine(portraitsPath, $"{npcName}.png");
+        
+        if (!File.Exists(filePath))
+        {
+            if (Plugin.Config.DetailedTextureLog.Value)
+                Plugin.Log.LogWarning($"[NPCPortrait] Portrait file not found: {filePath}");
+            return null;
+        }
+        
+        try
+        {
+            // Load the PNG file directly
+            byte[] fileData = File.ReadAllBytes(filePath);
+            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, true);
+            
+            if (ImageConversion.LoadImage(texture, fileData))
+            {
+                texture.name = npcName;
+                texture.filterMode = FilterMode.Bilinear;
+                texture.wrapMode = TextureWrapMode.Clamp;
+                texture.anisoLevel = 4;
+                
+                UnityEngine.Object.DontDestroyOnLoad(texture);
+                
+                if (Plugin.Config.DetailedTextureLog.Value)
+                    Plugin.Log.LogInfo($"[NPCPortrait] ✓ Loaded portrait texture: {npcName} ({texture.width}x{texture.height})");
+                
+                return texture;
+            }
+            else
+            {
+                Plugin.Log.LogError($"[NPCPortrait] Failed to decode image data for: {npcName}");
+                UnityEngine.Object.Destroy(texture);
+                return null;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Plugin.Log.LogError($"[NPCPortrait] Error loading portrait {npcName}: {ex.Message}");
+            return null;
+        }
     }
     
     /// <summary>
@@ -408,11 +497,38 @@ public class NPCPortraitPatch
         if (!hasCustomPortrait)
             return;
             
-        // We have a custom portrait, but need a base sprite to swap
+        // Ensure we have a base portrait sprite to work with
+        // If we don't have one cached yet, load fp_129 from persistent textures
         if (cachedPortraitSprite == null)
         {
-            Plugin.Log.LogWarning($"[NPCPortrait] No cached portrait sprite yet - talk to an NPC with a portrait first (like Viktor)");
-            return;
+            Plugin.Log.LogInfo($"[NPCPortrait] No cached portrait sprite yet - loading fp_129 as base template");
+            
+            // Try to load fp_129 texture (should be in persistent cache from CustomTexturePersist)
+            Texture2D baseTexture = LoadPortraitTexture("fp_129");
+            
+            if (baseTexture != null)
+            {
+                // Create a sprite from fp_129 to use as our base template
+                Sprite baseSprite = Sprite.Create(
+                    baseTexture,
+                    new Rect(0, 0, baseTexture.width, baseTexture.height),
+                    new Vector2(0.5f, 0.5f),  // Center pivot
+                    100f,                      // Standard pixelsPerUnit for portraits
+                    0,
+                    SpriteMeshType.FullRect
+                );
+                
+                UnityEngine.Object.DontDestroyOnLoad(baseSprite);
+                UnityEngine.Object.DontDestroyOnLoad(baseTexture);
+                
+                cachedPortraitSprite = baseSprite;
+                Plugin.Log.LogInfo($"[NPCPortrait] ✓ Created and cached base portrait sprite from fp_129 ({baseTexture.width}x{baseTexture.height})");
+            }
+            else
+            {
+                Plugin.Log.LogWarning($"[NPCPortrait] Failed to load fp_129 - custom portrait for '{name}' cannot be displayed");
+                return;
+            }
         }
         
         Plugin.Log.LogInfo($"[NPCPortrait] Using cached portrait sprite for '{name}'");
@@ -430,11 +546,23 @@ public class NPCPortraitPatch
         try
         {
             // Create a new sprite using the custom texture
+            // Use the actual custom texture dimensions for the rect
+            Rect spriteRect = new Rect(0, 0, customTexture.width, customTexture.height);
+            
+            // Calculate PPU to maintain the same display size as the original portrait
+            // If custom texture is larger, increase PPU proportionally
+            float ppu = cachedPortraitSprite.pixelsPerUnit;
+            if (cachedPortraitSprite.rect.width > 0)
+            {
+                float scaleRatio = customTexture.width / cachedPortraitSprite.rect.width;
+                ppu = cachedPortraitSprite.pixelsPerUnit * scaleRatio;
+            }
+            
             Sprite newSprite = Sprite.Create(
                 customTexture,
-                cachedPortraitSprite.rect,
+                spriteRect,
                 cachedPortraitSprite.pivot,
-                cachedPortraitSprite.pixelsPerUnit,
+                ppu,
                 0,
                 SpriteMeshType.FullRect
             );
