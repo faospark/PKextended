@@ -48,14 +48,30 @@ For the absolute best performance, PKCore supports pre-compressed **DDS** files.
 - **Zero Stall**: Loading a 4K DDS texture is significantly faster than a PNG because it is copied directly to VRAM.
 - **Usage**: Use tools like `texconv` to convert your PNG mods to DDS (BC3/DXT5 format with Mipmaps). Place them in the same folders as your PNGs. PKCore will prioritize `.dds` files over `.png` if both are present.
 
-## 4. Performance Recommendations
+## 4. Intelligent Scene-Based Memory Caching
+
+PKCore features a "Smart Memory" management system that tracks custom textures at runtime and optimizes VRAM usage based on your current location.
+
+### How it works
+- **Scene Tracking**: PKCore monitors which textures are loaded in specific game areas (e.g., world map vs. town).
+- **Automatic Lifecycle Management**: When you move between major game scenes (like switching between Suikoden 1 and Suikoden 2), PKCore identifies textures that are no longer relevant and purges them from memory.
+- **Persistence System**: Essential textures—such as UI borders, menu elements, dialog windows, and save points—are marked as **Persistent**. These remain in memory across all scene transitions to ensure the interface never "blinks" or stays un-skinned.
+- **Leak Prevention**: By tracking usage and verifying if textures are still active on Unity renderers, the system prevents "memory creep," allowing long play sessions even with massive high-resolution texture packs.
+
+### Config Options
+- `EnableMemoryCaching = true`: Activates the scene-based purge system (Recommended).
+- `DetailedTextureLog = true`: Logs exactly which textures are registered, marked persistent, or purged during scene transitions.
+
+## 5. Performance Recommendations
 
 | Scenario | Recommendation |
 | :--- | :--- |
-| **Normal Use** | Keep `EnableTextureManifestCache = true` and `EnableTextureCompression = true`. |
-| **Low VRAM (4GB or less)** | Ensure `EnableTextureCompression = true` is active to prevent out-of-memory crashes. |
+| **Normal Use** | Keep `EnableTextureManifestCache`, `EnableTextureCompression`, and `EnableMemoryCaching` as `true`. |
+| **Low VRAM (4GB or less)** | Ensure `EnableTextureCompression = true` is active and `EnableMemoryCaching = true` to prevent out-of-memory crashes. |
 | **Large Mod Packs** | Convert textures to **DDS** format to eliminate the compression pause when entering new scenes. |
-| **Debugging** | Set `DetailedTextureLog = true` to see if your cache is being used or rebuilt. |
+| **Minimal Loading Times** | Use **DDS** files + `EnableTextureManifestCache = true`. |
+| **Debugging** | Set `DetailedTextureLog = true` to see cache registration and scene purge events in the console. |
 
 ---
-*Note: The Cache folder is located inside the game root under `PKCore/Cache/`.*
+*Note: The Texture Manifest Cache is located in `PKCore/Cache/`, while Memory Caching is managed dynamically in RAM.*
+
