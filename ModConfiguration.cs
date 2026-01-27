@@ -333,7 +333,7 @@ public sealed class ModConfiguration
         // These settings are NOT written to the config file and are hardcoded to false
         // If you need to enable them for development, replace these with _config.Bind() calls
         
-        EnableDialogOverrides = new HiddenConfigEntry<bool>(false);
+        EnableDialogOverrides = new HiddenConfigEntry<bool>(true);
         EnableObjectDiagnostics = new HiddenConfigEntry<bool>(false);
         EnableCustomObjects = new HiddenConfigEntry<bool>(false);
         DebugCustomObjects = new HiddenConfigEntry<bool>(false);
