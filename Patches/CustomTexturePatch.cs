@@ -181,6 +181,43 @@ public partial class CustomTexturePatch
         return false;
     }
     
+    /// <summary>
+    /// Check if a file path is allowed to be loaded for the current game.
+    /// Prevents GSD1 textures from loading in GSD2 and vice versa.
+    /// </summary>
+    internal static bool IsPathAllowedForCurrentGame(string filePath)
+    {
+        if (string.IsNullOrEmpty(filePath)) return false;
+        
+        string currentGame = GameDetection.GetCurrentGame();
+        
+        // If not in a specific game (launcher/menu), allow all textures
+        if (currentGame != "GSD1" && currentGame != "GSD2")
+            return true;
+        
+        // Normalize path separators for consistent checking
+        string normalizedPath = filePath.Replace('/', '\\');
+        
+        // Block GSD2 textures when in GSD1
+        if (currentGame == "GSD1" && normalizedPath.Contains("\\GSD2\\", StringComparison.OrdinalIgnoreCase))
+        {
+            if (Plugin.Config.DetailedTextureLog.Value)
+                Plugin.Log.LogInfo($"[Isolation] Blocked GSD2 texture in GSD1: {Path.GetFileName(filePath)}");
+            return false;
+        }
+        
+        // Block GSD1 textures when in GSD2
+        if (currentGame == "GSD2" && normalizedPath.Contains("\\GSD1\\", StringComparison.OrdinalIgnoreCase))
+        {
+            if (Plugin.Config.DetailedTextureLog.Value)
+                Plugin.Log.LogInfo($"[Isolation] Blocked GSD1 texture in GSD2: {Path.GetFileName(filePath)}");
+            return false;
+        }
+        
+        return true;
+    }
+
+    
     #endregion
     
     #region Core Texture/Sprite Loading
@@ -399,6 +436,13 @@ public partial class CustomTexturePatch
 
         if (targetKey == null) return null;
 
+        // Verify the resolved path is allowed for current game
+        if (!texturePathIndex.TryGetValue(targetKey, out string resolvedPath))
+            return null;
+            
+        if (!IsPathAllowedForCurrentGame(resolvedPath))
+            return null;
+
         // Use decentralized AssetLoader for unified loading logic
         Texture2D texture = AssetLoader.LoadTextureSync(targetKey, textureName != targetKey ? textureName : null);
         
@@ -409,6 +453,7 @@ public partial class CustomTexturePatch
         }
 
         return null;
+
     }
 
     /// <summary>
@@ -462,7 +507,12 @@ public partial class CustomTexturePatch
             return false;
         }
 
+        // Verify the resolved path is allowed for current game
+        if (!IsPathAllowedForCurrentGame(filePath))
+            return false;
+
         try
+
         {
             // Move IO to background thread
             byte[] fileData = System.Threading.Tasks.Task.Run(() => File.ReadAllBytes(filePath)).Result;
