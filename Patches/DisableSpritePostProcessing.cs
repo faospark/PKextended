@@ -9,18 +9,100 @@ public class DisableSpritePostProcessingPatch
     private const int SpriteLayerMask = 1 << 31; // Use layer 31 for sprites to exclude from post-processing
     private static bool _isEnabled = false;
 
-    // Hook into GRSpriteRenderer to move sprites to a non-post-processed layer
-    [HarmonyPatch(typeof(GRSpriteRenderer), nameof(GRSpriteRenderer.Awake))]
-    [HarmonyPostfix]
-    static void SetSpriteLayer(GRSpriteRenderer __instance)
+    /// <summary>
+    /// Check if a sprite comes from the specific battle directories that require disabling post-processing
+    /// </summary>
+    private static bool IsBattleSprite(Sprite sprite)
     {
-        if (!_isEnabled || __instance == null || __instance.gameObject == null)
+        if (sprite == null) return false;
+        
+        // Check if we have a path for this sprite's textue
+        string textureName = sprite.name;
+        
+        // If it's a custom texture/sprite, checking the index is reliable
+        if (CustomTexturePatch.texturePathIndex.TryGetValue(textureName, out string filePath))
         {
-            return;
+            // Normalize separators
+            filePath = filePath.Replace('/', '\\');
+            
+            // Check for specific battle directories
+            // PKCore\Textures\GSD2\PKS2\battle
+            // PKCore\Textures\GSD1\PKS1\battle
+            if (filePath.IndexOf("\\GSD2\\PKS2\\battle", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                filePath.IndexOf("\\GSD1\\PKS1\\battle", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
         }
+        
+        return false;
+    }
 
-        // Move sprite to a layer that won't be affected by post-processing
-        __instance.gameObject.layer = 31;
+    /// <summary>
+    /// Apply the correct layer to a renderer based on its sprite
+    /// </summary>
+    private static void UpdateRendererLayer(GRSpriteRenderer renderer)
+    {
+        if (renderer == null || renderer.gameObject == null) return;
+        
+        bool shouldDisablePostProcessing = IsBattleSprite(renderer.sprite);
+        
+        if (shouldDisablePostProcessing)
+        {
+            // Move to layer 31 (No Post-Processing)
+            if (renderer.gameObject.layer != 31)
+            {
+                renderer.gameObject.layer = 31;
+                // Plugin.Log.LogInfo($"[DisablePostProcess] Moved {renderer.gameObject.name} (Sprite: {renderer.sprite?.name}) to Layer 31");
+            }
+        }
+        else
+        {
+            // Revert to default layer (0) if it was previously set to 31
+            // Warning: This assumes the default was 0. Most sprites are on Default (0) or TransparentFX (1).
+            // Safe to assume 0 for standard sprites, but use caution.
+            if (renderer.gameObject.layer == 31)
+            {
+                renderer.gameObject.layer = 0;
+            }
+        }
+    }
+
+    // Hook into GRSpriteRenderer DO NOT hook Awake as sprite is often null then
+    // Instead hook Start or just rely on the sprite setter
+    [HarmonyPatch(typeof(GRSpriteRenderer), nameof(GRSpriteRenderer.Start))]
+    [HarmonyPostfix]
+    static void GRSpriteRenderer_Start_Postfix(GRSpriteRenderer __instance)
+    {
+        if (!_isEnabled || __instance == null) return;
+        UpdateRendererLayer(__instance);
+    }
+    
+    // Hook into sprite setter to catch runtime changes (animations, swaps)
+    [HarmonyPatch(typeof(GRSpriteRenderer), nameof(GRSpriteRenderer.sprite), MethodType.Setter)]
+    [HarmonyPostfix]
+    static void GRSpriteRenderer_set_sprite_Postfix(GRSpriteRenderer __instance)
+    {
+        if (!_isEnabled || __instance == null) return;
+        UpdateRendererLayer(__instance);
+    }
+
+    // Hook ForceSprite to catch that too
+    [HarmonyPatch(typeof(GRSpriteRenderer), nameof(GRSpriteRenderer.SetForceSprite))]
+    [HarmonyPostfix]
+    static void GRSpriteRenderer_SetForceSprite_Postfix(GRSpriteRenderer __instance)
+    {
+        if (!_isEnabled || __instance == null) return;
+        UpdateRendererLayer(__instance);
+    }
+    
+    // OnEnable is also a good place to check
+    [HarmonyPatch(typeof(GRSpriteRenderer), nameof(GRSpriteRenderer.OnEnable))]
+    [HarmonyPostfix]
+    static void GRSpriteRenderer_OnEnable_Postfix(GRSpriteRenderer __instance)
+    {
+        if (!_isEnabled || __instance == null) return;
+        UpdateRendererLayer(__instance);
     }
 
     // Alternative approach: Disable specific post-processing effects on sprite materials
@@ -31,6 +113,12 @@ public class DisableSpritePostProcessingPatch
     static void DisablePostProcessOnMaterial(GRSpriteRenderer __instance)
     {
         if (!_isEnabled || __instance == null || __instance._mat == null)
+        {
+            return;
+        }
+
+        // Only apply if this is a target battle sprite
+        if (!IsBattleSprite(__instance.sprite))
         {
             return;
         }
@@ -83,10 +171,7 @@ public class DisableSpritePostProcessingPatch
             
             foreach (var renderer in spriteRenderers)
             {
-                if (renderer != null && renderer.gameObject != null)
-                {
-                    renderer.gameObject.layer = 31;
-                }
+                UpdateRendererLayer(renderer);
                 
                 if (renderer != null && renderer._mat != null)
                 {
