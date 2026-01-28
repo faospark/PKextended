@@ -51,6 +51,9 @@ public sealed class ModConfiguration
     
     // War Ability Mod
     public ConfigEntry<bool> EnableWarAbilityMod { get; private set; }
+
+    // Suikoden 1 UI Settings
+    public ConfigEntry<bool> S1ScaledDownWorldMap { get; private set; }
  
     // UI Settings
     public ConfigEntry<string> DialogBoxScale { get; private set; }
@@ -247,6 +250,13 @@ public sealed class ModConfiguration
             "EnableWarAbilityMod",
             false,
             "Enable war battle ability modification. Allows you to customize character abilities in Suikoden 2's war battles. Wont appear on the game menu of Apple but will have an effect on battle. Base is already boosted but can be further configures in PKCore/Config/war_abilities.json"
+        );
+
+        S1ScaledDownWorldMap = _config.Bind(
+            "Suikoden 1",
+            "S1ScaledDownWorldMap",
+            true,
+            "Scale down the Suikoden 1 world map UI to 80% with adjusted positioning for better visibility. When enabled, applies scale (0.8, 0.8, 1) and position (652.0001, -355.3, 0) to the smap element."
         );
 
         DialogBoxScale = _config.Bind(

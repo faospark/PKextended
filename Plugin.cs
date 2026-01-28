@@ -235,6 +235,14 @@ public class Plugin : BasePlugin
             harmony.PatchAll(typeof(DialogPatch));
         }
 
+        // Apply Suikoden 1 World Map Scale Patch
+        if (Config.S1ScaledDownWorldMap.Value)
+        {
+            Log.LogInfo("Applying S1WorldMapScaleUI patches...");
+            S1WorldMapScaleUIPatch.Initialize();
+            harmony.PatchAll(typeof(S1WorldMapScaleUIPatch));
+        }
+
         // Apply Voice Acting Patch (Text-to-Speech)
 
 
