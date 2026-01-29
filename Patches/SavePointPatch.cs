@@ -42,7 +42,7 @@ public partial class CustomTexturePatch
 
             // Check if this is a save point animation frame
             if (spriteName.StartsWith("t_obj_savePoint_ball_") && preloadedSavePointSprites.TryGetValue(spriteName, out Sprite customSprite))
-            {Yes, now that there's adss folder. 
+            {
                 Plugin.Log.LogInfo($"[SavePoint] ✓ Replacing Resources.Load sprite: {spriteName}");
                 __result = customSprite;
             }
