@@ -42,7 +42,7 @@ public partial class CustomTexturePatch
 
             // Check if this is a save point animation frame
             if (spriteName.StartsWith("t_obj_savePoint_ball_") && preloadedSavePointSprites.TryGetValue(spriteName, out Sprite customSprite))
-            {
+            {Yes, now that there's adss folder. 
                 Plugin.Log.LogInfo($"[SavePoint] ✓ Replacing Resources.Load sprite: {spriteName}");
                 __result = customSprite;
             }
@@ -225,6 +225,111 @@ public partial class CustomTexturePatch
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Try to load a save point sprite (returns null if not a save point sprite or atlas not found)
+    /// </summary>
+    private static Sprite TryLoadSavePointSprite(string spriteName, Sprite originalSprite)
+    {
+        // Only process save point sprites
+        if (!spriteName.StartsWith("t_obj_savePoint_ball_"))
+            return null;
+
+        // Check if we have the atlas texture
+        if (!texturePathIndex.ContainsKey("t_obj_savePoint_ball"))
+        {
+            Plugin.Log.LogWarning($"[SavePoint] Atlas texture 't_obj_savePoint_ball' not found in texture index");
+            return null;
+        }
+
+        Sprite sprite = CreateSavePointSpriteFromAtlas(spriteName, originalSprite);
+        if (sprite != null)
+        {
+            customSpriteCache[spriteName] = sprite;
+        }
+        return sprite;
+    }
+
+    /// <summary>
+    /// Create a save point sprite from the atlas texture for a specific frame
+    /// </summary>
+    private static Sprite CreateSavePointSpriteFromAtlas(string spriteName, Sprite originalSprite)
+    {
+        // Extract frame number from sprite name (e.g., "t_obj_savePoint_ball_0" -> 0)
+        string frameNumStr = spriteName.Substring("t_obj_savePoint_ball_".Length);
+        if (!int.TryParse(frameNumStr, out int frameNum))
+            return null;
+
+        if (Plugin.Config.DetailedTextureLog.Value)
+        {
+            Plugin.Log.LogInfo($"[SavePoint] Creating sprite from atlas for: {spriteName} (frame {frameNum})");
+        }
+        
+        // Load the atlas texture
+        Texture2D atlasTexture = LoadCustomTexture("t_obj_savePoint_ball");
+        if (atlasTexture == null)
+        {
+            Plugin.Log.LogError($"[SavePoint] Failed to load atlas texture: t_obj_savePoint_ball");
+            return null;
+        }
+
+        // Atlas is 400x200 with 8 frames in a 4x2 grid (each frame is 100x100)
+        int frameWidth = 100;
+        int frameHeight = 100;
+        int columns = 4;
+        
+        // Calculate frame position (cycle through 8 frames if more than 8)
+        int frameIndex = frameNum % 8;
+        int col = frameIndex % columns;
+        int row = frameIndex / columns;
+        
+        // Calculate rect (flip Y for Unity's bottom-left origin)
+        float x = col * frameWidth;
+        float y = atlasTexture.height - (row + 1) * frameHeight;
+        
+        // Preserve original sprite properties if available
+        Vector2 customPivot = originalSprite != null ? originalSprite.pivot / originalSprite.rect.size : new Vector2(0.5f, 0.5f);
+        float customPPU = originalSprite != null ? originalSprite.pixelsPerUnit : 100f;
+
+        // Auto-scale pixelsPerUnit to maintain original display size
+        if (originalSprite != null)
+        {
+            float scaleRatio = frameWidth / originalSprite.rect.width;
+            customPPU = originalSprite.pixelsPerUnit * scaleRatio;
+        }
+
+        if (Plugin.Config.DetailedTextureLog.Value)
+        {
+            Plugin.Log.LogInfo($"[SavePoint] Creating sprite: rect=({x},{y},{frameWidth},{frameHeight}) from atlas {atlasTexture.width}x{atlasTexture.height} PPU:{customPPU} Pivot:{customPivot}");
+        }
+        
+        Sprite customSprite = Sprite.Create(
+            atlasTexture,
+            new Rect(x, y, frameWidth, frameHeight),
+            customPivot,
+            customPPU,
+            0,
+            SpriteMeshType.FullRect
+        );
+        
+        if (customSprite != null)
+        {
+            UnityEngine.Object.DontDestroyOnLoad(customSprite);
+            UnityEngine.Object.DontDestroyOnLoad(atlasTexture);
+            
+            if (Plugin.Config.DetailedTextureLog.Value)
+            {
+                Plugin.Log.LogInfo($"[SavePoint] ✓ Created and cached sprite: {spriteName}");
+            }
+            return customSprite;
+        }
+        else
+        {
+            Plugin.Log.LogError($"[SavePoint] Sprite.Create returned null for: {spriteName}");
+        }
+        
+        return null;
     }
 }
 

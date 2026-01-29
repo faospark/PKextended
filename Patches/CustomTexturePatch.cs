@@ -227,98 +227,10 @@ public partial class CustomTexturePatch
     /// </summary>
     internal static Sprite LoadCustomSprite(string spriteName, Sprite originalSprite)
     {
-        bool isSavePointSprite = spriteName.StartsWith("t_obj_savePoint_ball_");
-        
-        // For save point sprites, create from atlas on-demand
-        if (isSavePointSprite)
-        {
-            // Check if we have the atlas texture
-            string atlasName = "t_obj_savePoint_ball";
-            if (texturePathIndex.ContainsKey(atlasName))
-            {
-                // Extract frame number from sprite name (e.g., "t_obj_savePoint_ball_0" -> 0)
-                string frameNumStr = spriteName.Substring("t_obj_savePoint_ball_".Length);
-                if (int.TryParse(frameNumStr, out int frameNum))
-                {
-                    if (Plugin.Config.DetailedTextureLog.Value)
-                    {
-                        Plugin.Log.LogInfo($"[SavePoint] Creating sprite from atlas for: {spriteName} (frame {frameNum})");
-                    }
-                    
-                    // Load the atlas texture
-                    Texture2D atlasTexture = LoadCustomTexture(atlasName);
-                    if (atlasTexture != null)
-                    {
-                        // Atlas is 400x200 with 8 frames in a 4x2 grid (each frame is 100x100)
-                        int frameWidth = 100;
-                        int frameHeight = 100;
-                        int columns = 4;
-                        
-                        // Calculate frame position (cycle through 8 frames if more than 8)
-                        int frameIndex = frameNum % 8;
-                        int col = frameIndex % columns;
-                        int row = frameIndex / columns;
-                        
-                        // Calculate rect (flip Y for Unity's bottom-left origin)
-                        float x = col * frameWidth;
-                        float y = atlasTexture.height - (row + 1) * frameHeight;
-                        
-                        // Preserve original sprite properties if available
-                        Vector2 customPivot = originalSprite != null ? originalSprite.pivot / originalSprite.rect.size : new Vector2(0.5f, 0.5f);
-                        float customPPU = originalSprite != null ? originalSprite.pixelsPerUnit : 100f;
-
-                        // Auto-scale pixelsPerUnit to maintain original display size
-                        if (originalSprite != null)
-                        {
-                            // Assuming the frame width corresponds to the original width
-                            float scaleRatio = frameWidth / originalSprite.rect.width;
-                            customPPU = originalSprite.pixelsPerUnit * scaleRatio;
-                        }
-
-                        if (Plugin.Config.DetailedTextureLog.Value)
-                        {
-                            Plugin.Log.LogInfo($"[SavePoint] Creating sprite: rect=({x},{y},{frameWidth},{frameHeight}) from atlas {atlasTexture.width}x{atlasTexture.height} PPU:{customPPU} Pivot:{customPivot}");
-                        }
-                        
-                        Sprite customSprite = Sprite.Create(
-                            atlasTexture,
-                            new Rect(x, y, frameWidth, frameHeight),
-                            customPivot,
-                            customPPU,
-                            0,
-                            SpriteMeshType.FullRect
-                        );
-                        
-                        if (customSprite != null)
-                        {
-                            UnityEngine.Object.DontDestroyOnLoad(customSprite);
-                            UnityEngine.Object.DontDestroyOnLoad(atlasTexture);
-                            
-                            // Cache it for future use
-                            customSpriteCache[spriteName] = customSprite;
-                            
-                            if (Plugin.Config.DetailedTextureLog.Value)
-                            {
-                                Plugin.Log.LogInfo($"[SavePoint] ✓ Created and cached sprite: {spriteName}");
-                            }
-                            return customSprite;
-                        }
-                        else
-                        {
-                            Plugin.Log.LogError($"[SavePoint] Sprite.Create returned null for: {spriteName}");
-                        }
-                    }
-                    else
-                    {
-                        Plugin.Log.LogError($"[SavePoint] Failed to load atlas texture: {atlasName}");
-                    }
-                }
-            }
-            else
-            {
-                Plugin.Log.LogWarning($"[SavePoint] Atlas texture '{atlasName}' not found in texture index");
-            }
-        }
+        // Try save point sprite loading first (handled by SavePointPatch)
+        Sprite savePointSprite = TryLoadSavePointSprite(spriteName, originalSprite);
+        if (savePointSprite != null)
+            return savePointSprite;
         
         // Check cache
         if (customSpriteCache.TryGetValue(spriteName, out Sprite cachedSprite))
