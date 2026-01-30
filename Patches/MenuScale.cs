@@ -137,27 +137,101 @@ public class MenuScalePatch
                         menuTransform.DOLocalMove(targetPosition, 0.2f).SetEase(Ease.OutCubic);
                     }
                 }
+                
+                // Handle Formation_Set's Set_01 child after parent transformations
+                Transform formationSet = uiSet.Find("Formation_Set");
+                if (formationSet != null)
+                {
+                    Transform set01 = formationSet.Find("Set_01");
+                    if (set01 != null)
+                    {
+                        Vector3 set01Position = new Vector3(0f, -162f, 0f);
+                        set01.DOKill();
+                        set01.DOLocalMove(set01Position, 0.2f).SetEase(Ease.OutCubic);
+                    }
+                }
+                
+                // Footer Container: Apply scale and position to UI_Com_Footer/Img_Bg/Container
+                Transform footerPath = uiSet.Find("UI_Com_Footer");
+                if (footerPath != null)
+                {
+                    Transform imgBg = footerPath.Find("Img_Bg");
+                    if (imgBg != null)
+                    {
+                        Transform container = imgBg.Find("Container");
+                        if (container != null)
+                        {
+                            Vector3 targetScale = new Vector3(0.8f, 0.8f, 1f);
+                            Vector3 targetPosition = new Vector3(-171.5999f, 0f, 0f);
+                            
+                            container.DOKill();
+                            container.DOScale(targetScale, 0.2f).SetEase(Ease.OutCubic);
+                            container.DOLocalMove(targetPosition, 0.2f).SetEase(Ease.OutCubic);
+                        }
+                    }
+                }
             }
         }
+        
     }
     
     /// <summary>
-    /// Patch for UIMainMenu opening
+    /// Patch for GameObject.SetActive to catch menu activations
+    /// This approach catches UI elements when they become active, providing broader coverage
     /// </summary>
-    [HarmonyPatch(typeof(UIMainMenu), nameof(UIMainMenu.Open))]
+    [HarmonyPatch(typeof(GameObject), nameof(GameObject.SetActive))]
     [HarmonyPostfix]
-    public static void UIMainMenu_Open_Postfix(UIMainMenu __instance)
+    public static void GameObject_SetActive_Postfix(GameObject __instance, bool value)
     {
-        ApplyMenuTransformations(__instance.gameObject, "UIMainMenu");
+        // Only process when activating (not deactivating)
+        if (!value) return;
+        
+        // Check configuration setting first
+        string menuScaleSetting = Plugin.Config.ScaledDownMenu.Value.ToLower();
+        if (menuScaleSetting != "true") return;
+        
+        // Check if this is a UI object we care about
+        string objectName = __instance.name;
+        
+        bool isTargetUI = objectName.Contains("UIMainMenu") || 
+                         objectName.Contains("UI_Battle_Result") ||
+                         objectName.Contains("UI_Com_Header") ||
+                         objectName.Contains("UI_Com_BackLog") ||
+                         objectName.Contains("UI_Config_01") ||
+                         objectName.Contains("UI_Com_Footer") ||
+                         objectName.StartsWith("TopMenu") ||
+                         objectName.StartsWith("ItemMenu") ||
+                         objectName.StartsWith("EmblemMenu") ||
+                         objectName.StartsWith("Equipment_Set") ||
+                         objectName.StartsWith("State_Set") ||
+                         objectName.StartsWith("Formation_Set") ||
+                         objectName == "Set_01" ||
+                         (objectName == "Container" && IsFooterContainer(__instance));
+        
+        if (!isTargetUI) return;
+        
+        if (Plugin.Config.DetailedTextureLog.Value)
+        {
+            Plugin.Log.LogInfo($"[MenuScale] Detected UI activation: {objectName}");
+        }
+        
+        // Apply transformations directly
+        ApplyMenuTransformations(__instance, objectName);
     }
-
+    
     /// <summary>
-    /// Patch for Battle Result UI opening
+    /// Check if a Container object is the footer container we care about
     /// </summary>
-    [HarmonyPatch(typeof(UIBattleResultMain), nameof(UIBattleResultMain.Open))]
-    [HarmonyPostfix]
-    public static void UIBattleResultMain_Open_Postfix(UIBattleResultMain __instance)
+    private static bool IsFooterContainer(GameObject container)
     {
-        ApplyMenuTransformations(__instance.gameObject, "UIBattleResultMain");
+        // Check if this Container is in the footer hierarchy:
+        // UI_Com_Footer/Img_Bg/Container
+        Transform parent = container.transform.parent;
+        if (parent != null && parent.name == "Img_Bg")
+        {
+            Transform grandparent = parent.parent;
+            return grandparent != null && grandparent.name == "UI_Com_Footer";
+        }
+        return false;
     }
 }

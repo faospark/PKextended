@@ -184,6 +184,7 @@ public partial class CustomTexturePatch
     /// <summary>
     /// Check if a file path is allowed to be loaded for the current game.
     /// Prevents GSD1 textures from loading in GSD2 and vice versa.
+    /// Also applies recursively within 00-Mods subdirectories.
     /// </summary>
     internal static bool IsPathAllowedForCurrentGame(string filePath)
     {
@@ -198,8 +199,12 @@ public partial class CustomTexturePatch
         // Normalize path separators for consistent checking
         string normalizedPath = filePath.Replace('/', '\\');
         
+        // Check for game-specific restrictions in main folders and recursively in 00-Mods
+        bool isGSD1Path = normalizedPath.Contains("\\GSD1\\", StringComparison.OrdinalIgnoreCase);
+        bool isGSD2Path = normalizedPath.Contains("\\GSD2\\", StringComparison.OrdinalIgnoreCase);
+        
         // Block GSD2 textures when in GSD1
-        if (currentGame == "GSD1" && normalizedPath.Contains("\\GSD2\\", StringComparison.OrdinalIgnoreCase))
+        if (currentGame == "GSD1" && isGSD2Path)
         {
             if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"[Isolation] Blocked GSD2 texture in GSD1: {Path.GetFileName(filePath)}");
@@ -207,7 +212,7 @@ public partial class CustomTexturePatch
         }
         
         // Block GSD1 textures when in GSD2
-        if (currentGame == "GSD2" && normalizedPath.Contains("\\GSD1\\", StringComparison.OrdinalIgnoreCase))
+        if (currentGame == "GSD2" && isGSD1Path)
         {
             if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"[Isolation] Blocked GSD1 texture in GSD2: {Path.GetFileName(filePath)}");
