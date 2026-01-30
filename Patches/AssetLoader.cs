@@ -4,9 +4,8 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using PKCore.Patches;
 
-namespace PKCore;
+namespace PKCore.Patches;
 
 /// <summary>
 /// Centralized service for asynchronous asset loading.
@@ -14,19 +13,13 @@ namespace PKCore;
 /// </summary>
 public static class AssetLoader
 {
-    private static ConcurrentQueue<Action> mainThreadQueue = new ConcurrentQueue<Action>();
-    private static Dictionary<string, string> pathCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentQueue<Action> mainThreadQueue = new();
+    private static readonly Dictionary<string, string> pathCache = new(StringComparer.OrdinalIgnoreCase);
     private static string texturesRoot;
-    private static string gsd1Root;
-    private static string gsd2Root;
-    private static string modsRoot;
 
     public static void Initialize()
     {
         texturesRoot = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore", "Textures");
-        modsRoot = Path.Combine(texturesRoot, "00-Mods");
-        gsd1Root = Path.Combine(texturesRoot, "GSD1");
-        gsd2Root = Path.Combine(texturesRoot, "GSD2");
         
         pathCache.Clear();
     }
@@ -163,14 +156,14 @@ public static class AssetLoader
         }
         else
         {
-            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, true);
+            Texture2D texture = new(2, 2, TextureFormat.RGBA32, true);
             if (ImageConversion.LoadImage(texture, fileData))
             {
                 texture.name = assetName + (context != null ? $"_{context}" : "");
                 
                 bool isWindowUI = CustomTexturePatch.IsWindowUITexture(assetName, filePath);
                 bool isMap = filePath.Contains("Maps", StringComparison.OrdinalIgnoreCase);
-                bool useBilinear = Plugin.Config.SpriteFilteringQuality.Value > 0 || !isMap;
+                bool useBilinear = Plugin.Config.SpriteFilteringQuality.Value || !isMap;
 
                 texture.filterMode = (isWindowUI || (isMap && !useBilinear)) ? FilterMode.Point : FilterMode.Bilinear;
                 texture.wrapMode = TextureWrapMode.Clamp;

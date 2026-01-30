@@ -429,11 +429,52 @@ public partial class CustomTexturePatch
             // Move IO to background thread
             byte[] fileData = System.Threading.Tasks.Task.Run(() => File.ReadAllBytes(filePath)).Result;
             
-            if (!UnityEngine.ImageConversion.LoadImage(originalTexture, fileData))
+            // Handle DDS files separately
+            bool isDDS = filePath.EndsWith(".dds", StringComparison.OrdinalIgnoreCase);
+            bool loaded = false;
+            
+            if (isDDS)
             {
-                Plugin.Log.LogError($"Failed to load image data into texture: {filePath}");
-                return false;
+                // For DDS, we need to load the data into a new texture then copy to original
+                // DDS format requires special handling via DDSLoader
+                Texture2D ddsTexture = DDSLoader.LoadDDSFromBytes(fileData, textureName);
+                if (ddsTexture != null)
+                {
+                    // Copy DDS texture data to original texture
+                    // Note: This preserves the original texture reference but copies pixel data
+                    byte[] ddsPixels = ddsTexture.GetRawTextureData();
+                    originalTexture.LoadRawTextureData(ddsPixels);
+                    originalTexture.Apply(false, false);
+                    
+                    // Match the DDS format properties
+                    originalTexture.name = textureName + "_Custom";
+                    UnityEngine.Object.DontDestroyOnLoad(originalTexture);
+                    loaded = true;
+                    
+                    if (Plugin.Config.DetailedTextureLog.Value)
+                    {
+                        Plugin.Log.LogInfo($"Replaced raw DDS texture in-place: {textureName} ({ddsTexture.width}x{ddsTexture.height}, {ddsTexture.format})");
+                    }
+                }
+                else
+                {
+                    Plugin.Log.LogError($"Failed to load DDS texture: {filePath}");
+                    return false;
+                }
             }
+            else
+            {
+                // Standard image formats (PNG, JPG, TGA)
+                if (!UnityEngine.ImageConversion.LoadImage(originalTexture, fileData))
+                {
+                    Plugin.Log.LogError($"Failed to load image data into texture: {filePath}");
+                    return false;
+                }
+                loaded = true;
+            }
+            
+            if (!loaded)
+                return false;
 
             // Window-UI textures use Point filtering to prevent seams
             bool isWindowUI = IsWindowUITexture(textureName, filePath);

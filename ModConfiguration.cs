@@ -7,7 +7,7 @@ public sealed class ModConfiguration
     private ConfigFile _config;
 
     // Sprite Filtering Settings
-    public ConfigEntry<int> SpriteFilteringQuality { get; private set; }
+    public ConfigEntry<bool> SpriteFilteringQuality { get; private set; }
     public ConfigEntry<float> SpriteMipmapBias { get; private set; }
 
     // Display Settings
@@ -109,8 +109,8 @@ public sealed class ModConfiguration
         SpriteFilteringQuality = _config.Bind(
             "Visual",
             "SpriteFilteringQuality",
-            0,
-            "Texture filtering quality for sprites. 0 = Disabled (pure pixels), 1 = Low (Bilinear + 2x Aniso), 2 = Medium (Trilinear + 4x Aniso), 3 = High (Trilinear + 8x Aniso). Best for Project Kyaro's upscaled sprites."
+            false,
+            "Enable texture filtering for sprites. false = Disabled (pure pixels), true = Enabled (Bilinear + 2x Aniso). Best for Project Kyaro's upscaled sprites."
         );
 
         SpriteMipmapBias = _config.Bind(
