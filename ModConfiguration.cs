@@ -57,7 +57,7 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> S1ScaledDownWorldMap { get; private set; }
 
     // UI Settings
-    public ConfigEntry<string> DialogBoxScale { get; private set; }
+    public ConfigEntry<bool> DialogBoxScale { get; private set; }
     public ConfigEntry<string> ScaledDownMenu { get; private set; }
     public ConfigEntry<string> SMAAQuality { get; private set; }
 
@@ -270,8 +270,8 @@ public sealed class ModConfiguration
         DialogBoxScale = _config.Bind(
             "01 Interface",
             "DialogBoxScale",
-            "Large",
-            "Dialog box size preset. Options: Large (full size, default), Medium (80% size), Small (50% size, very compact). Affects both size and position."
+            false,
+            "Compact dialog box. false = Large (full size, default), true = Medium (80% size with adjusted position)."
         );
 
         ScaledDownMenu = _config.Bind(

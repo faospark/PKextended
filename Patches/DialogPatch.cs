@@ -15,7 +15,8 @@ namespace PKCore.Patches
         [HarmonyPostfix]
         public static void OpenMessageWindow_Postfix(UIMessageWindow __instance)
         {
-            float scale = GetScaleFromPreset(Plugin.Config.DialogBoxScale.Value);
+            // false = Large (1.0 scale, no change), true = Medium (0.8 scale)
+            float scale = Plugin.Config.DialogBoxScale.Value ? 0.8f : 1.0f;
             
             // Only apply if scale is not default (1.0)
             if (scale >= 0.99f)
@@ -40,7 +41,8 @@ namespace PKCore.Patches
         [HarmonyPostfix]
         public static void SetCharacterFace_Postfix(UIMessageWindow __instance)
         {
-            float scale = GetScaleFromPreset(Plugin.Config.DialogBoxScale.Value);
+            // false = Large (1.0 scale, no change), true = Medium (0.8 scale)
+            float scale = Plugin.Config.DialogBoxScale.Value ? 0.8f : 1.0f;
             
             // Only apply if scale is not default (1.0)
             if (scale >= 0.99f)
@@ -57,23 +59,6 @@ namespace PKCore.Patches
             else
             {
                 Plugin.Log.LogDebug($"[DialogPatch] Applied dialog transform (scale: {scale}) via SetCharacterFace");
-            }
-        }
-
-        /// <summary>
-        /// Convert string preset to float scale value
-        /// </summary>
-        private static float GetScaleFromPreset(string preset)
-        {
-            switch (preset.ToLower())
-            {
-                case "small":
-                    return 0.5f;
-                case "medium":
-                    return 0.8f;
-                case "large":
-                default:
-                    return 1.0f;
             }
         }
 
