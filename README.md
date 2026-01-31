@@ -32,7 +32,6 @@ Replace game textures with custom PNG or DDS files in `BepInEx/plugins/PKCore/Te
 ### Advanced Customization
 
 - **NPC Portraits**: Inject custom high-resolution portraits for any NPC.
-- **S2 Summon Support**: Direct replacement support for Suikoden 2 summon effects.
 - **War Battle Modding**: Customize character stats and abilities in Suikoden 2 war battles via JSON.
 - **UI Scaling**: Presets for dialog box size and menu layout scaling.
 - **Classic UI**: Revert Suikoden 2 save windows to the classic PSX look.
@@ -51,38 +50,7 @@ Replace game textures with custom PNG or DDS files in `BepInEx/plugins/PKCore/Te
 
 Config file auto-generates at `BepInEx\config\faospark.pkcore.cfg` on first launch.
 
-**Key Settings:**
 
-```ini
-[Sprite Filtering]
-SpriteFilteringQuality = 3        # 0-3: Off/Low/Medium/High (default: 3)
-SpriteMipmapBias = -0.5           # -0.5 (sharper) to 0.5 (softer)
-
-[Display]
-ResolutionScale = 1.0             # 0.5-2.0: Performance to quality
-EnableBorderlessWindow = false
-
-[Visual]
-DisableSpritePostProcessing = true
-
-[Controller]
-ForceControllerPrompts = false
-ControllerPromptType = PlayStation  # PlayStation/PlayStation5/Xbox
-
-[Custom Textures]
-EnableCustomTextures = true
-EnableTextureCompression = true   # Save 4-6x VRAM
-EnableDDSTextures = true         # Use .dds files for speed
-LoadLauncherUITextures = true     # Load custom launcher UI
-SavePointColor = default          # blue/red/yellow/pink/green/default
-
-[Graphics]
-SMAAQuality = Medium              # Off/Low/Medium/High
-
-[UI]
-ScaleDownDialogBox = Large           # Large/Medium/Small
-ScaledDownMenu = false           # true/false (alt layout)
-```
 
 **Latest (v2.1.0):**
 - **Native DDS Support**: Load pre-compressed DDS files for faster loading.
@@ -101,13 +69,13 @@ ScaledDownMenu = false           # true/false (alt layout)
 
 If you have **PKextended.dll** installed from a previous version:
 
-1. **Remove Old DLL**:
-
+1. **Remove Old files**:
    - Delete `PKextended.dll` from `BepInEx/plugins/`
-   - Add new `PKCore.dll` to `BepInEx/plugins/`
+   - Old config: `BepInEx/config/faospark.pkextended.cfg`
+   - Delete or Back-up `dxgi.dll` or `d3d11.dll` of what every .dll name you loaded SpecialK
+
 2. **Config File** (optional - will auto-generate):
 
-   - Old config: `BepInEx/config/faospark.pkextended.cfg`
    - New config: `BepInEx/config/faospark.pkcore.cfg`
    - You can copy your old settings to the new file, or let it regenerate with defaults
 
@@ -121,6 +89,8 @@ MIT License - See LICENSE.txt
 
 ## Credits
 
-**Author**: faospark
-**For**: [Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6) HD sprite pack
-**Compatible with**: [Suikoden Fix](https://github.com/d3xMachina/BepInEx.Suikoden) by d3xMachina
+**Author**: faospark  
+**For**: [Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6) HD sprite pack  
+**Compatible with**: [Suikoden Fix](https://github.com/d3xMachina/BepInEx.Suikoden) by d3xMachina  
+
+**Special Thanks**: d3xMachina for [Suikoden Fix](https://github.com/d3xMachina/Suikoden-Fix) - NPC portrait functionality is based on his text database patches for dialog detection and speaker identification.
