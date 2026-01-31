@@ -530,8 +530,8 @@ public partial class CustomTexturePatch
         if (!Directory.Exists(customTexturesPath))
             return;
 
-        // Try to load from manifest cache first
-        if (TryLoadManifestIndex())
+        // Try to load from manifest cache first (if enabled)
+        if (Plugin.Config.EnableTextureManifestCache.Value && TryLoadManifestIndex())
             return;
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -549,6 +549,9 @@ public partial class CustomTexturePatch
         // Helper to add texture to index with priority
         void AddToIndex(string path, string key, bool allowOverride)
         {
+            // Check if this texture should be loaded based on current settings
+            if (!TextureOptions.ShouldLoadTexture(path)) return;
+            
             if (allowOverride || !texturePathIndex.ContainsKey(key))
             {
                 texturePathIndex[key] = path;
@@ -643,7 +646,11 @@ public partial class CustomTexturePatch
             Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} textures from {allFiles.Length} files in {sw.ElapsedMilliseconds}ms");
         }
         
-        SaveManifestIndex();
+        // Only save cache if caching is enabled
+        if (Plugin.Config.EnableTextureManifestCache.Value)
+        {
+            SaveManifestIndex();
+        }
     }
 
     /// <summary>
@@ -663,6 +670,9 @@ public partial class CustomTexturePatch
 
         InitializeCaching();
         BuildTextureIndex();
+        
+        // Clear runtime texture cache to remove any old textures from memory
+        customTextureCache.Clear();
         
         if (Plugin.Config.DetailedTextureLog.Value)
         {

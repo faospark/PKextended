@@ -17,7 +17,7 @@ public static class TextureOptions
     {
         // Disable launcher UI textures
         if (!Plugin.Config.LoadLauncherUITextures.Value && 
-            filePath.Contains("\\launcher\\", StringComparison.OrdinalIgnoreCase))
+            filePath.Contains("Launcher-Mod", StringComparison.OrdinalIgnoreCase))
             return false;
 
         // Disable Project Kyaro textures
@@ -28,7 +28,7 @@ public static class TextureOptions
 
         // Disable minimal UI textures
         if (!Plugin.Config.MinimalUI.Value && 
-            filePath.Contains("\\minimal\\", StringComparison.OrdinalIgnoreCase))
+            filePath.Contains("minimal", StringComparison.OrdinalIgnoreCase))
             return false;
 
         // Add more filters here as needed:
