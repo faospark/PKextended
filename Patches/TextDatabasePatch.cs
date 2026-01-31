@@ -1,12 +1,15 @@
 using HarmonyLib;
 using PKCore.Patches;
 using System;
+using System.Collections.Generic;
 
 namespace PKCore.Patches;
 
 [HarmonyPatch]
 public class TextDatabasePatch
 {
+    // Track logged text IDs to prevent duplicate logging
+    private static readonly HashSet<string> loggedTextIDs = new HashSet<string>();
     // Patch GetSystemText to intercept ID-based lookups
     // Using Priority.Last to run after other mods (like SuikodenFix) so we can override their fixes if a custom override exists
     [HarmonyPatch(typeof(TextMasterData), nameof(TextMasterData.GetSystemText))]
@@ -48,7 +51,12 @@ public class TextDatabasePatch
         // 1. Log ID if enabled
         if (Plugin.Config.LogTextIDs.Value)
         {
-            Plugin.Log.LogInfo($"[TextDebug] [{id}:{index}] -> \"{__result}\"");
+            string key = $"{id}:{index}";
+            if (!loggedTextIDs.Contains(key))
+            {
+                loggedTextIDs.Add(key);
+                Plugin.Log.LogInfo($"[TextDebug] [{key}] -> \"{__result}\"");
+            }
         }
         
         // 2. Speaker Injection
@@ -56,8 +64,8 @@ public class TextDatabasePatch
             return;
             
         // Check for Speaker Override by ID
-        string key = $"{id}:{index}";
-        string speakerName = NPCPortraitPatch.GetSpeakerOverride(key);
+        string speakerKey = $"{id}:{index}";
+        string speakerName = NPCPortraitPatch.GetSpeakerOverride(speakerKey);
         
         if (!string.IsNullOrEmpty(speakerName))
         {
@@ -72,7 +80,7 @@ public class TextDatabasePatch
                  __result = $"<speaker:{speakerName}>{__result}";
                  
                  if (Plugin.Config.LogTextIDs.Value)
-                    Plugin.Log.LogInfo($"[TextDebug] Injected Speaker: {key} -> {speakerName}");
+                    Plugin.Log.LogInfo($"[TextDebug] Injected Speaker: {speakerKey} -> {speakerName}");
             }
         }
     }
@@ -87,15 +95,20 @@ public class TextDatabasePatch
         // 1. Log ID if enabled
         if (Plugin.Config.LogTextIDs.Value)
         {
-            Plugin.Log.LogInfo($"[TextDebug] [{id}:{index}] (GSD:{gsd}) -> \"{__result}\"");
+            string key = $"{id}:{index}:GSD{gsd}";
+            if (!loggedTextIDs.Contains(key))
+            {
+                loggedTextIDs.Add(key);
+                Plugin.Log.LogInfo($"[TextDebug] [{id}:{index}] (GSD:{gsd}) -> \"{__result}\"");
+            }
         }
         
         // 2. Speaker Injection
         if (!Plugin.Config.EnableDialogOverrides.Value)
             return;
             
-        string key = $"{id}:{index}";
-        string speakerName = NPCPortraitPatch.GetSpeakerOverride(key);
+        string speakerKey = $"{id}:{index}";
+        string speakerName = NPCPortraitPatch.GetSpeakerOverride(speakerKey);
         
         if (!string.IsNullOrEmpty(speakerName))
         {
@@ -104,7 +117,7 @@ public class TextDatabasePatch
                  __result = $"<speaker:{speakerName}>{__result}";
                  
                  if (Plugin.Config.LogTextIDs.Value)
-                    Plugin.Log.LogInfo($"[TextDebug] Injected Speaker: {key} -> {speakerName}");
+                    Plugin.Log.LogInfo($"[TextDebug] Injected Speaker: {speakerKey} -> {speakerName}");
             }
         }
     }
