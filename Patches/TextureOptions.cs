@@ -26,6 +26,11 @@ public static class TextureOptions
              filePath.Contains("\\PKS2\\", StringComparison.OrdinalIgnoreCase)))
             return false;
 
+        // Disable minimal UI textures
+        if (!Plugin.Config.MinimalUI.Value && 
+            filePath.Contains("\\minimal\\", StringComparison.OrdinalIgnoreCase))
+            return false;
+
         // Add more filters here as needed:
         // if (filePath.Contains("\\yourfolder\\", StringComparison.OrdinalIgnoreCase))
         //     return false;

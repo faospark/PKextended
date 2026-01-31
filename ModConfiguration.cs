@@ -33,6 +33,7 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> DetailedTextureLog { get; private set; }
     public ConfigEntry<bool> LoadLauncherUITextures { get; private set; }
     public ConfigEntry<bool> EnableProjectKyaroSprites { get; private set; }
+    public ConfigEntry<bool> MinimalUI { get; private set; }
 
     // NPC Portrait Settings
     public ConfigEntry<bool> LogTextIDs { get; private set; }
@@ -48,13 +49,13 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> S2ClassicSaveWindow { get; private set; }
     public ConfigEntry<string> MercFortFence { get; private set; }
     public ConfigEntry<bool> ColoredIntroAndFlashbacks { get; private set; }
-    
+
     // War Ability Mod
     public ConfigEntry<bool> EnableWarAbilityMod { get; private set; }
 
     // Suikoden 1 UI Settings
     public ConfigEntry<bool> S1ScaledDownWorldMap { get; private set; }
- 
+
     // UI Settings
     public ConfigEntry<string> DialogBoxScale { get; private set; }
     public ConfigEntry<string> ScaledDownMenu { get; private set; }
@@ -66,7 +67,7 @@ public sealed class ModConfiguration
 
     // EXPERIMENTAL FEATURES (at end of config file)
     public ConfigEntry<bool> EnableDebugMenu2 { get; private set; }
-    
+
     // Hidden internal settings - not exposed in config file at all
     // These are hardcoded to false and cannot be changed by users
     // If you need to enable them for development, uncomment the bindings in Init()
@@ -76,13 +77,13 @@ public sealed class ModConfiguration
         public T Value => _value;
         public HiddenConfigEntry(T defaultValue) { _value = defaultValue; }
     }
-    
+
     public HiddenConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
     public HiddenConfigEntry<bool> EnableCustomObjects { get; private set; }
     public HiddenConfigEntry<bool> DebugCustomObjects { get; private set; }
     public HiddenConfigEntry<bool> LogExistingMapObjects { get; private set; }
     public HiddenConfigEntry<bool> EnableDialogOverrides { get; private set; }
- 
+
 
     public ModConfiguration(ConfigFile config)
     {
@@ -176,49 +177,49 @@ public sealed class ModConfiguration
         );
 
         EnableCustomTextures = _config.Bind(
-            "Custom Textures",
+            "00 General",
             "EnableCustomTextures",
             true,
             "Enable custom texture replacement. Place PNG files in PKCore/Textures/ (in game root folder) with the same name as the game texture (e.g., hp_telepo_00.png)."
         );
 
+        EnableProjectKyaroSprites = _config.Bind(
+            "00 General",
+            "EnableProjectKyaroSprites",
+            true,
+            "Enable Project Kyaro sprite textures from PKS1 and PKS2 folders. Set to false to use original sprites."
+        );
+        
         LoadLauncherUITextures = _config.Bind(
-            "Custom Textures",
+            "01 Interface",
             "LoadLauncherUITextures",
             true,
             "Load custom textures from Textures/launcher folder. Set to false to use original launcher UI."
         );
 
-        EnableProjectKyaroSprites = _config.Bind(
-            "Custom Textures",
-            "EnableProjectKyaroSprites",
+        MinimalUI = _config.Bind(
+            "01 Interface",
+            "MinimalUI",
             true,
-            "Enable Project Kyaro sprite textures from PKS1 and PKS2 folders. Set to false to use original sprites."
+            "Load minimal UI textures. Set to false to skip loading textures with 'minimal' in the path."
         );
 
         EnableNPCPortraits = _config.Bind(
-            "NPC Portraits",
+            "00 General",
             "EnableNPCPortraits",
             true,
-            "Enable custom NPC portrait injection. Place PNG files in PKCore/NPCPortraits/ (in game root folder) named after the NPC (e.g., Viktor.png, Flik.png). Case-insensitive."
+            "Enable custom NPC portrait injection. Place PNG files in PKCore/NPCPortraits/ (in game root folder) named after the NPC (e.g., Ace.png, Yuri.png). Case-insensitive. For now Full Support of S2 and Partial S1"
         );
 
         SavePointColor = _config.Bind(
-            "Custom Textures",
+            "00 General",
             "SavePointColor",
             "default",
             "Save point orb color. Options: blue, red, yellow, pink, green, cyan, white, dark, purple, navy, default. Place color variants in Textures/SavePoint/ folder as 't_obj_savePoint_ball_<color>.png'."
         );
 
-        TirRunTexture = _config.Bind(
-            "Custom Textures",
-            "TirRunTexture",
-            "default",
-            "Texture variant for Tir running animation (shu_field_01_atlas). Options: default, alt. 'alt' will look for '..._alt.png'."
-        );
-
         DisableSavePointGlow = _config.Bind(
-            "Custom Textures",
+            "00 General",
             "DisableSavePointGlow",
             true,
             "Disable the glow effect on save point orbs. Set to false to keep the original glow."
@@ -259,24 +260,31 @@ public sealed class ModConfiguration
             "Scale down the Suikoden 1 world map UI to 80% with adjusted positioning for better visibility. When enabled, applies scale (0.8, 0.8, 1) and position (652.0001, -355.3, 0) to the smap element."
         );
 
+        TirRunTexture = _config.Bind(
+            "Suikoden 1",
+            "TirRunTexture",
+            "default",
+            "Texture variant for Tir running animation (shu_field_01_atlas). Options: default, alt. 'alt' will look for '..._alt.png'. ONLY FOR PROJECT KYARO SPRITES"
+        );
+
         DialogBoxScale = _config.Bind(
-            "UI",
+            "01 Interface",
             "DialogBoxScale",
             "Large",
             "Dialog box size preset. Options: Large (full size, default), Medium (80% size), Small (50% size, very compact). Affects both size and position."
         );
 
         ScaledDownMenu = _config.Bind(
-            "UI",
+            "01 Interface",
             "ScaledDownMenu",
-            "false",
+            "true",
             "Main menu layout preset. Options: default (original layout), alt (scaled down 80% with adjusted position for better visibility)."
         );
 
         SMAAQuality = _config.Bind(
             "Graphics",
             "SMAAQuality",
-            "Off",
+            "High",
             "SMAA anti-aliasing quality Mainly for battle effects. Options: Off, Low, Medium, High. Higher quality = better visuals but lower performance."
         );
 
@@ -342,7 +350,7 @@ public sealed class ModConfiguration
         // ========================================
         // These settings are NOT written to the config file and are hardcoded to false
         // If you need to enable them for development, replace these with _config.Bind() calls
-        
+
         EnableDialogOverrides = new HiddenConfigEntry<bool>(true);
         EnableObjectDiagnostics = new HiddenConfigEntry<bool>(false);
         EnableCustomObjects = new HiddenConfigEntry<bool>(false);
