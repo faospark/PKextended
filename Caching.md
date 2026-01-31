@@ -7,71 +7,86 @@ PKCore includes a sophisticated caching and optimization system designed to hand
 Scanning thousands of custom PNG files every time the game starts can significantly delay the "Press Start" screen. PKCore solves this with the **Texture Manifest Cache**.
 
 ### How it works
-- **First Run**: PKCore performs a deep scan of your `PKCore/Textures/` folder and builds a complete index of every replaceable texture. This index is saved to `BepInEx/plugins/PKCore/Cache/texture_manifest.xml`.
+- **First Run**: PKCore performs a deep scan of your `PKCore/Textures/` folder and builds a complete index of every replaceable texture. This index is saved to `PKCore/Cache/texture_manifest.xml`.
 - **Subsequent Runs**: PKCore simply loads the XML file. This reduces startup indexing time from several seconds down to ~20ms.
+
+### Texture Directory Filtering
+PKCore includes intelligent texture filtering that allows you to selectively disable specific texture categories:
+- **Project Kyaro Sprites** (`EnableProjectKyaroSprites = false`): Disables textures in `\PKS1\` and `\PKS2\` folders
+- **Launcher UI Textures** (`LoadLauncherUITextures = false`): Disables textures in `\Launcher-Mod\` folders  
+- **Minimal UI Textures** (`MinimalUI = false`): Disables textures containing "minimal" in their path
+
+When disabled, these custom textures are filtered out during index building, and the game uses original textures as fallback.
 
 ### Config-Aware Invalidation
 The cache is "smart." It tracks specific configuration settings that affect which textures should be used. The cache will **automatically rebuild** if you change any of the following:
 - `SavePointColor`
+- `LoadLauncherUITextures`
 - `EnableProjectKyaroSprites`
+- `MinimalUI`
 - `ForceControllerPrompts`
 - `ControllerPromptType`
 - `MercFortFence`
 - `S2ClassicSaveWindow`
 - `TirRunTexture`
-- `LoadLauncherUITextures`
 
-### Manual Rebuild
-If you add or remove textures while the game is closed and they aren't showing up, you can force a rebuild by:
-1. Setting `EnableTextureManifestCache = false` in your config.
-2. Deleting the `PKCore/Cache/` folder.
+### Manual Cache Control
+- **Disable Caching**: Set `EnableTextureManifestCache = false` to force fresh scans every startup (useful for texture development)
+- **Force Rebuild**: Delete the `PKCore/Cache/` folder or change any tracked config setting
+- **Cache Location**: `PKCore/Cache/texture_manifest.xml`
 
-## 2. Runtime Texture Compression
-
-Unity's standard `LoadImage` function creates uncompressed (RGBA32) textures. A large texture pack can easily consume several gigabytes of VRAM if left uncompressed, leading to crashes or stuttering.
-
-### Automatic BC3 (DXT5) Compression
-When a texture is first loaded, PKCore compresses it into a GPU-friendly format:
-- **BC3 (DXT5)**: Used for textures with transparency (6:1 compression ratio).
-- **BC1 (DXT1)**: Used for opaque textures (8:1 compression ratio).
-
-### Quality Settings
-You can control the trade-off between boot speed and visual quality:
-- `TextureCompressionQuality = High`: Slower first-time load, better visual results.
-- `TextureCompressionQuality = Normal`: Faster initial compression.
-
-## 3. High-Performance DDS Loading
+## 2. High-Performance DDS Loading
 
 For the absolute best performance, PKCore supports pre-compressed **DDS** files.
 
-- **Fastest Loading**: DDS files are already in the GPU's native format. They skip the expensive runtime compression step entirely.
-- **Zero Stall**: Loading a 4K DDS texture is significantly faster than a PNG because it is copied directly to VRAM.
-- **Usage**: Use tools like `texconv` to convert your PNG mods to DDS (BC3/DXT5 format with Mipmaps). Place them in the same folders as your PNGs. PKCore will prioritize `.dds` files over `.png` if both are present.
+- **Fastest Loading**: DDS files are already in the GPU's native format. They skip expensive runtime processing entirely.
+- **Priority System**: PKCore prioritizes `.dds` files over `.png` if both are present in the same folder
+- **Formats Supported**: BC1 (DXT1) for opaque textures, BC3 (DXT5) for textures with transparency
+- **Usage**: Use tools like `texconv` to convert your PNG mods to DDS format with mipmaps
 
-## 4. Intelligent Scene-Based Memory Caching
+## 3. Intelligent Scene-Based Memory Caching
 
 PKCore features a "Smart Memory" management system that tracks custom textures at runtime and optimizes VRAM usage based on your current location.
 
 ### How it works
-- **Scene Tracking**: PKCore monitors which textures are loaded in specific game areas (e.g., world map vs. town).
-- **Automatic Lifecycle Management**: When you move between major game scenes (like switching between Suikoden 1 and Suikoden 2), PKCore identifies textures that are no longer relevant and purges them from memory.
-- **Persistence System**: Essential textures—such as UI borders, menu elements, dialog windows, and save points—are marked as **Persistent**. These remain in memory across all scene transitions to ensure the interface never "blinks" or stays un-skinned.
-- **Leak Prevention**: By tracking usage and verifying if textures are still active on Unity renderers, the system prevents "memory creep," allowing long play sessions even with massive high-resolution texture packs.
+- **Scene Tracking**: PKCore monitors which textures are loaded in specific game areas (e.g., world map vs. town)
+- **Automatic Lifecycle Management**: When you move between major game scenes, PKCore identifies textures that are no longer relevant and purges them from memory
+- **Persistence System**: Essential textures—such as UI borders, menu elements, dialog windows, and save points—are marked as **Persistent** and remain in memory across all scene transitions
+- **Leak Prevention**: By tracking usage and verifying if textures are still active on Unity renderers, the system prevents memory creep during long play sessions
 
 ### Config Options
-- `EnableMemoryCaching = true`: Activates the scene-based purge system (Recommended).
-- `DetailedTextureLog = true`: Logs exactly which textures are registered, marked persistent, or purged during scene transitions.
+- `EnableMemoryCaching = true`: Activates the scene-based purge system (Recommended)
+- `DetailedTextureLog = true`: Logs texture operations and memory management events
 
-## 5. Performance Recommendations
+## 4. Performance Recommendations
 
 | Scenario | Recommendation |
 | :--- | :--- |
-| **Normal Use** | Keep `EnableTextureManifestCache`, `EnableTextureCompression`, and `EnableMemoryCaching` as `true`. |
-| **Low VRAM (4GB or less)** | Ensure `EnableTextureCompression = true` is active and `EnableMemoryCaching = true` to prevent out-of-memory crashes. |
-| **Large Mod Packs** | Convert textures to **DDS** format to eliminate the compression pause when entering new scenes. |
-| **Minimal Loading Times** | Use **DDS** files + `EnableTextureManifestCache = true`. |
-| **Debugging** | Set `DetailedTextureLog = true` to see cache registration and scene purge events in the console. |
+| **Normal Use** | Keep `EnableTextureManifestCache = true` and `EnableMemoryCaching = true` |
+| **Texture Development** | Set `EnableTextureManifestCache = false` to force fresh scans when adding/removing files |
+| **Selective Modding** | Use texture filtering options (`EnableProjectKyaroSprites`, `LoadLauncherUITextures`, `MinimalUI`) to disable specific texture categories |
+| **Low VRAM Systems** | Ensure `EnableMemoryCaching = true` to prevent out-of-memory issues |
+| **Large Mod Packs** | Convert textures to **DDS** format to eliminate load-time processing |
+| **Debugging** | Enable `DetailedTextureLog = true` to monitor cache and memory operations |
+
+## 5. Texture Organization
+
+PKCore supports the following folder structure:
+```
+PKCore/Textures/
+├── *.png, *.dds          # Base game textures
+├── GSD1/                 # Suikoden 1 specific textures
+├── GSD2/                 # Suikoden 2 specific textures
+├── 00-Mods/
+│   ├── Launcher-Mod/     # Custom launcher UI (filterable)
+│   ├── Minimal-UI-Mod/   # Minimal UI textures (filterable)
+│   └── PKS1/, PKS2/      # Project Kyaro sprites (filterable)
+├── NPCPortraits/         # Custom NPC portrait images
+└── SavePoint/            # Save point orb color variants
+```
+
+The filtering system allows granular control over which texture categories are active without manually moving files.
 
 ---
-*Note: The Texture Manifest Cache is located in `PKCore/Cache/`, while Memory Caching is managed dynamically in RAM.*
+*Note: The Texture Manifest Cache is located in `PKCore/Cache/`, while Memory Caching is managed dynamically in RAM. All texture filtering occurs during index building, not at runtime.*
 

@@ -229,7 +229,7 @@ public class Plugin : BasePlugin
         }
 
         // Apply Dialog Patch (Dialog Box Scaling)
-        if (Config.DialogBoxScale.Value)
+        if (Config.ScaleDownDialogBox.Value)
         {
             Log.LogInfo("Applying Dialog patches (size: Medium)...");
             harmony.PatchAll(typeof(DialogPatch));

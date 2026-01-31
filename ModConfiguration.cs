@@ -57,7 +57,7 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> S1ScaledDownWorldMap { get; private set; }
 
     // UI Settings
-    public ConfigEntry<bool> DialogBoxScale { get; private set; }
+    public ConfigEntry<bool> ScaleDownDialogBox { get; private set; }
     public ConfigEntry<string> ScaledDownMenu { get; private set; }
     public ConfigEntry<string> SMAAQuality { get; private set; }
 
@@ -267,18 +267,18 @@ public sealed class ModConfiguration
             "Texture variant for Tir running animation (shu_field_01_atlas). Options: default, alt. 'alt' will look for '..._alt.png'. ONLY FOR PROJECT KYARO SPRITES"
         );
 
-        DialogBoxScale = _config.Bind(
+        ScaleDownDialogBox = _config.Bind(
             "01 Interface",
-            "DialogBoxScale",
-            false,
-            "Compact dialog box. false = Large (full size, default), true = Medium (80% size with adjusted position)."
+            "ScaleDownDialogBox",
+            true,
+            "Compact dialog box. false = Normal, true = 80% size with adjusted position"
         );
 
         ScaledDownMenu = _config.Bind(
             "01 Interface",
             "ScaledDownMenu",
             "true",
-            "Main menu layout preset. Options: default (original layout), alt (scaled down 80% with adjusted position for better visibility)."
+            "Main menu layout preset. false = Normal , true: scaled down 80% with adjusted position)."
         );
 
         SMAAQuality = _config.Bind(
@@ -287,7 +287,6 @@ public sealed class ModConfiguration
             "High",
             "SMAA anti-aliasing quality Mainly for battle effects. Options: Off, Low, Medium, High. Higher quality = better visuals but lower performance."
         );
-
 
         EnableTextureManifestCache = _config.Bind(
             "Performance",

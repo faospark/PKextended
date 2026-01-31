@@ -16,7 +16,7 @@ namespace PKCore.Patches
         public static void OpenMessageWindow_Postfix(UIMessageWindow __instance)
         {
             // false = Large (1.0 scale, no change), true = Medium (0.8 scale)
-            float scale = Plugin.Config.DialogBoxScale.Value ? 0.8f : 1.0f;
+            float scale = Plugin.Config.ScaleDownDialogBox.Value ? 0.8f : 1.0f;
             
             // Only apply if scale is not default (1.0)
             if (scale >= 0.99f)
@@ -42,7 +42,7 @@ namespace PKCore.Patches
         public static void SetCharacterFace_Postfix(UIMessageWindow __instance)
         {
             // false = Large (1.0 scale, no change), true = Medium (0.8 scale)
-            float scale = Plugin.Config.DialogBoxScale.Value ? 0.8f : 1.0f;
+            float scale = Plugin.Config.ScaleDownDialogBox.Value ? 0.8f : 1.0f;
             
             // Only apply if scale is not default (1.0)
             if (scale >= 0.99f)

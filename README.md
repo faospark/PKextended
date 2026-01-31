@@ -80,7 +80,7 @@ SavePointColor = default          # blue/red/yellow/pink/green/default
 SMAAQuality = Medium              # Off/Low/Medium/High
 
 [UI]
-DialogBoxScale = Large           # Large/Medium/Small
+ScaleDownDialogBox = Large           # Large/Medium/Small
 ScaledDownMenu = false           # true/false (alt layout)
 ```
 
