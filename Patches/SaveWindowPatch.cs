@@ -14,12 +14,16 @@ namespace PKCore.Patches
             if (!value || !Plugin.Config.EnableCustomTextures.Value)
                 return;
 
-            // Only apply if S2ClassicSaveWindow is enabled
-            if (!Plugin.Config.S2ClassicSaveWindow.Value)
+            // Only apply if ClassicSaveWindow is enabled
+            if (!Plugin.Config.ClassicSaveWindow.Value)
                 return;
 
-            // Only apply to Suikoden 2 (GSD2)
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "GSD2")
+            // Check which game we're in
+            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            bool isSuikoden1 = sceneName == "GSD1";
+            bool isSuikoden2 = sceneName == "GSD2";
+            
+            if (!isSuikoden1 && !isSuikoden2)
                 return;
 
             // Check if this is a save/load set (UI_System_SaveLoad_Set00, Set01, etc.)
@@ -51,23 +55,24 @@ namespace PKCore.Patches
                 }
                 
                 // Continue with searching for the main window to insert background
-                // Find UI_System_SaveLoad2 - traverse up the hierarchy
+                // Find UI_System_SaveLoad1 (S1) or UI_System_SaveLoad2 (S2) - traverse up the hierarchy
+                string saveLoadContainerName = isSuikoden1 ? "UI_System_SaveLoad1" : "UI_System_SaveLoad2";
                 Transform current = __instance.transform;
-                Transform uiSystemSaveLoad2 = null;
+                Transform uiSystemSaveLoad = null;
                 
-                // Try to find UI_System_SaveLoad2 by going up the hierarchy
-                while (current != null && uiSystemSaveLoad2 == null)
+                // Try to find the appropriate UI_System_SaveLoad container by going up the hierarchy
+                while (current != null && uiSystemSaveLoad == null)
                 {
-                    // Check if any sibling is UI_System_SaveLoad2
+                    // Check if any sibling is the target container
                     if (current.parent != null)
                     {
                         // Use indexed loop instead of foreach to avoid IL2CPP cast issues
                         for (int i = 0; i < current.parent.childCount; i++)
                         {
                             Transform sibling = current.parent.GetChild(i);
-                            if (sibling.name.StartsWith("UI_System_SaveLoad2"))
+                            if (sibling.name.StartsWith(saveLoadContainerName))
                             {
-                                uiSystemSaveLoad2 = sibling;
+                                uiSystemSaveLoad = sibling;
 
                                 break;
                             }
@@ -76,14 +81,14 @@ namespace PKCore.Patches
                     current = current.parent;
                 }
                 
-                if (uiSystemSaveLoad2 != null)
+                if (uiSystemSaveLoad != null)
                 {
-                    // Find Window01 inside UI_System_SaveLoad2
-                    Transform window01 = uiSystemSaveLoad2.Find("Window01");
+                    // Find Window01 inside the container
+                    Transform window01 = uiSystemSaveLoad.Find("Window01");
                     if (window01 != null)
                     {
 
-                        TryInsertBackground(window01.gameObject);
+                        TryInsertBackground(window01.gameObject, isSuikoden1);
 
                         // Adjust Scrollbar Vertical
                         // Path: Window01/Panel/Panel/Scrollbar Vertical
@@ -98,8 +103,8 @@ namespace PKCore.Patches
                     }
                     else
                     {
-                        Plugin.Log.LogWarning("[SaveWindowPatch] Could not find Window01, using UI_System_SaveLoad2 as fallback");
-                        TryInsertBackground(uiSystemSaveLoad2.gameObject);
+                        Plugin.Log.LogWarning($"[SaveWindowPatch] Could not find Window01, using {saveLoadContainerName} as fallback");
+                        TryInsertBackground(uiSystemSaveLoad.gameObject, isSuikoden1);
                     }
                 }
                 else
@@ -109,16 +114,16 @@ namespace PKCore.Patches
                     if (__instance.transform.parent != null)
                     {
 
-                        TryInsertBackground(__instance.transform.parent.gameObject);
+                        TryInsertBackground(__instance.transform.parent.gameObject, isSuikoden1);
                     }
                 }
             }
         }
 
-        private static void TryInsertBackground(GameObject saveLoadWindow)
+        private static void TryInsertBackground(GameObject saveLoadWindow, bool isSuikoden1)
         {
-            // Check if we already created our object
-            string customObjName = "ClassicSaveBackground";
+            // Use different object names per game to allow both to coexist
+            string customObjName = isSuikoden1 ? "ClassicSaveBackground_S1" : "ClassicSaveBackground_S2";
             if (saveLoadWindow.transform.Find(customObjName) != null)
             {
                 if (Plugin.Config.DetailedTextureLog.Value)
@@ -188,20 +193,21 @@ namespace PKCore.Patches
 
             }
             
-            // Load texture
-            Texture2D tex = CustomTexturePatch.LoadCustomTexture("hp_classicmap_02");
+            // Load appropriate texture based on game
+            string textureName = isSuikoden1 ? "hp_classicmap_01" : "hp_classicmap_02";
+            Texture2D tex = CustomTexturePatch.LoadCustomTexture(textureName);
             if (tex != null)
             {
                 Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
                 img.sprite = sprite;
                 if (Plugin.Config.DetailedTextureLog.Value)
                 {
-                    Plugin.Log.LogInfo("[SaveWindowPatch] ✓ Applied hp_classicmap_02 to save window background");
+                    Plugin.Log.LogInfo($"[SaveWindowPatch] ✓ Applied {textureName} to save window background");
                 }
             }
             else
             {
-                Plugin.Log.LogError("[SaveWindowPatch] Failed to load hp_classicmap_02");
+                Plugin.Log.LogError($"[SaveWindowPatch] Failed to load {textureName}");
             }
         }
     }

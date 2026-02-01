@@ -46,7 +46,7 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> DisableSavePointGlow { get; private set; }
 
     // Suikoden 2 Classic UI Settings
-    public ConfigEntry<bool> S2ClassicSaveWindow { get; private set; }
+    public ConfigEntry<bool> ClassicSaveWindow { get; private set; }
     public ConfigEntry<string> MercFortFence { get; private set; }
     public ConfigEntry<bool> ColoredIntroAndFlashbacks { get; private set; }
 
@@ -225,11 +225,11 @@ public sealed class ModConfiguration
             "Disable the glow effect on save point orbs. Set to false to keep the original glow."
         );
 
-        S2ClassicSaveWindow = _config.Bind(
-            "Suikoden 2",
-            "S2ClassicSaveWindow",
+        ClassicSaveWindow = _config.Bind(
+            "00 General",
+            "ClassicSaveWindow",
             false,
-            "Mimics the feel of the PSX version of Save/Load window for Suikoden 2. Replaces the HD Remaster's ornate frame with a simple fullscreen background."
+            "Mimics the feel of the PSX version of Save/Load window for Both Games"
         );
 
         MercFortFence = _config.Bind(

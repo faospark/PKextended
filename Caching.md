@@ -27,7 +27,7 @@ The cache is "smart." It tracks specific configuration settings that affect whic
 - `ForceControllerPrompts`
 - `ControllerPromptType`
 - `MercFortFence`
-- `S2ClassicSaveWindow`
+- `ClassicSaveWindow`
 - `TirRunTexture`
 
 ### Manual Cache Control

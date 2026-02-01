@@ -83,7 +83,7 @@ public partial class CustomTexturePatch
             Plugin.Config.ForceControllerPrompts.Value,
             Plugin.Config.ControllerPromptType.Value,
             Plugin.Config.MercFortFence.Value,
-            Plugin.Config.S2ClassicSaveWindow.Value,
+            Plugin.Config.ClassicSaveWindow.Value,
             Plugin.Config.TirRunTexture.Value
         );
 
