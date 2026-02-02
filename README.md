@@ -1,7 +1,7 @@
 # PKCore - Project Kyaro Core
 
 **By faospark**
-**Current Version: 2026.01.0**
+**Current Version: 2026.1.0**
 
 The **core DLL component** for **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)** that provides a variety of features such as texture replacement framework, sprite smoothing, anti-aliasing, graphical and visual enhancement, and some gameplay enhancement for **Suikoden I & II HD Remaster**.
 
@@ -50,9 +50,8 @@ Replace game textures with custom PNG or DDS files in `BepInEx/plugins/PKCore/Te
 
 Config file auto-generates at `BepInEx\config\faospark.pkcore.cfg` on first launch.
 
-
-
 **Latest (v2.1.0):**
+
 - **Native DDS Support**: Load pre-compressed DDS files for faster loading.
 - **Runtime Compression**: Automatic BC1/BC3 compression for PNGs.
 - **SMAA Anti-Aliasing**: High-quality edge smoothing for the main camera.
@@ -91,6 +90,9 @@ MIT License - See LICENSE.txt
 
 **Author**: faospark  
 **For**: [Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6) HD sprite pack  
-**Compatible with**: [Suikoden Fix](https://github.com/d3xMachina/BepInEx.Suikoden) by d3xMachina  
+**Compatible with**: [Suikoden Fix](https://github.com/d3xMachina/SuikodenFix) by d3xMachina  
 
-**Special Thanks**: d3xMachina for [Suikoden Fix](https://github.com/d3xMachina/Suikoden-Fix) - NPC portrait functionality is based on his text database patches for dialog detection and speaker identification.
+**Special Thanks & Credits**:
+
+- **[d3xMachina](https://github.com/d3xMachina)**: For the excellent [Suikoden Fix](https://github.com/d3xMachina/SuikodenFix) mod. PKCore is built to work alongside it.
+  - The **NPC Portrait** feature leverages his `TextDatabase` research and speaker identification logic.
