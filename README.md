@@ -3,11 +3,9 @@
 **By faospark**
 **Current Version: 2026.1.0**
 
-The **core DLL component** for **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)** that provides a variety of features such as texture replacement framework, sprite smoothing, anti-aliasing, graphical and visual enhancement, and some gameplay enhancement for **Suikoden I & II HD Remaster**.
+The **core DLL component** for **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)** that provides a variety of features such as texture replacement framework, sprite smoothing, anti-aliasing, graphical and visual enhancement, and some gameplay enhancement for **Suikoden I & II HD Remaster**. As 2026, PKExtended has been Transformed to PKCore as this is now the backbone of Project Kyaro . Special K has now been removed as a Dependecy . 
 
 > **Note**: This repository contains the **source code for the PKCore.dll** file. The complete Project Kyaro mod package (including upscaled textures) is available on [Nexus Mods](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6).
-
-Built as the foundational enhancement suite for Project Kyaro's upscaled sprites, replacing the previous Special K dependency and now with native BepInEx integration.
 
 ## Requirements
 
@@ -17,13 +15,7 @@ Built as the foundational enhancement suite for Project Kyaro's upscaled sprites
 
 ## Features
 
-### Sprite Smoothing & Anti-Aliasing (SMAA)
-
-Designed for **Project Kyaro's upscaled sprites** - adds granular texture filtering with 4 quality levels (High/Medium/Low/Off) and mipmap bias control. Now includes native **SMAA (Subpixel Morphological Anti-Aliasing)** for the smoothest possible edges.
-
 ### Custom Texture Replacement (PNG & DDS)
-
-> **🆕 NOW SUPPORTS DDS**: Texture replacement support in any Project Kyaro. Support for pre-compressed **DDS files** (BC1/BC3/BC7) for zero-stall loading and reduced VRAM.
 
 Replace game textures with custom PNG or DDS files in `BepInEx/plugins/PKCore/Textures/`. Use `00-Mods/` subfolder for highest priority custom mods.
 
@@ -38,13 +30,15 @@ Replace game textures with custom PNG or DDS files in `BepInEx/plugins/PKCore/Te
 - **Controller Prompt Override**: Force specific button icons (Xbox/PS4/PS5/Switch) regardless of detected controller.
 - **Experimental Object Insertion**: Add new static objects to scenes via configuration.
 
+### Sprite Smoothing & Anti-Aliasing (SMAA)
+
+Designed for **Project Kyaro's upscaled sprites** - adds granular texture filtering with 4 quality levels (High/Medium/Low/Off) and mipmap bias control. Now includes native **SMAA (Subpixel Morphological Anti-Aliasing)** for the smoothest possible edges.
+
 ## Installation
 
 1. Install **BepInEx 6.0.0-pre.2 IL2CPP**
-2. Install **[Suikoden Fix](https://github.com/d3xMachina/BepInEx.Suikoden)** (highly recommended)
-3. Install **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)** sprites (optional, but this mod is designed for them)
-4. Place **PKCore.dll** in `BepInEx\plugins\`
-5. Launch game (config auto-generates in `BepInEx\config\faospark.pkcore.cfg`)
+2. Install **[Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6)**
+3. Launch game (config auto-generates in `BepInEx\config\faospark.pkcore.cfg`)
 
 ## Configuration
 
@@ -59,20 +53,20 @@ Config file auto-generates at `BepInEx\config\faospark.pkcore.cfg` on first laun
 - **NPC Portraits**: Inject custom portraits into the dialog system.
 - **War Battle Modding**: Configurable stats for Suikoden 2 war battles.
 - **UI scaling**: Presets for dialog box and menu sizes.
-
 - **Save Point Customization**: Choose from 5 color variants (blue/red/yellow/pink/green) and disable glow effect
 - **Config-Aware Manifest Cache**: Texture index automatically rebuilds when config settings change
 - **Texture Variant System**: Centralized texture variant handling in TextureOptions.cs
 
 ## Migration Guide (PKextended → PKCore)
 
-If you have **PKextended.dll** installed from a previous version:
+If you have **PKextended.dll** or Older Versions of Project Kyaro installed from a previous version:
 
 1. **Remove Old files**:
+
    - Delete `PKextended.dll` from `BepInEx/plugins/`
    - Old config: `BepInEx/config/faospark.pkextended.cfg`
    - Delete or Back-up `dxgi.dll` or `d3d11.dll` of what every .dll name you loaded SpecialK
-
+   - Delete all of the texture file `SK_Res\inject\textures` as they are now necessesary
 2. **Config File** (optional - will auto-generate):
 
    - New config: `BepInEx/config/faospark.pkcore.cfg`
@@ -88,9 +82,9 @@ MIT License - See LICENSE.txt
 
 ## Credits
 
-**Author**: faospark  
-**For**: [Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6) HD sprite pack  
-**Compatible with**: [Suikoden Fix](https://github.com/d3xMachina/SuikodenFix) by d3xMachina  
+**Author**: faospark
+**For**: [Project Kyaro](https://www.nexusmods.com/suikoden1and2hdremaster/mods/6) HD sprite pack
+**Compatible with**: [Suikoden Fix](https://github.com/d3xMachina/SuikodenFix) by d3xMachina
 
 **Special Thanks & Credits**:
 
