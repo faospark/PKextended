@@ -159,6 +159,23 @@ namespace PKCore.Patches
                             scrollbar.localPosition = new Vector3(720.1979f, 368.3988f, 0f);
                             scrollbar.localScale = new Vector3(1.8f, 0.9f, 1f);
 
+                            // Apply color to Handle
+                            Transform slidingArea = scrollbar.Find("Sliding Area");
+                            if (slidingArea != null)
+                            {
+                                Transform handle = slidingArea.Find("Handle");
+                                if (handle != null)
+                                {
+                                    Image handleImage = handle.GetComponent<Image>();
+                                    if (handleImage != null)
+                                    {
+                                        // Apply game-specific color
+                                        handleImage.color = isSuikoden1 
+                                            ? new Color(0f, 1f, 1f, 1f)  // Cyan
+                                            : new Color(1f, 1f, 0.6f, 1f); // Light yellow
+                                    }
+                                }
+                            }
                         }
 
                     }
@@ -203,7 +220,7 @@ namespace PKCore.Patches
             Transform imgBg = saveLoadWindow.transform.Find("Img_bg");
             if (imgBg != null)
             {
-                imgBg.localScale = new Vector3(1f, 0.9f, 1f);
+                imgBg.localScale = new Vector3(1.3f, 1.3f, 1f);
                 Image bgImage = imgBg.GetComponent<Image>();
                 if (bgImage != null)
                 {
@@ -215,14 +232,14 @@ namespace PKCore.Patches
                 }
             }
             
-            // Scale Img_Flame
+            // Disable Img_Flame
             Transform imgFlame = saveLoadWindow.transform.Find("Img_Flame");
             if (imgFlame != null)
             {
-                imgFlame.localScale = new Vector3(1f, 0.9f, 1f);
+                imgFlame.gameObject.SetActive(false);
                 if (Plugin.Config.DetailedTextureLog.Value)
                 {
-                    Plugin.Log.LogDebug("[SaveWindowPatch] Scaled Img_Flame");
+                    Plugin.Log.LogDebug("[SaveWindowPatch] Disabled Img_Flame");
                 }
             }
 
