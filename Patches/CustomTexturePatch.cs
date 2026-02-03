@@ -584,7 +584,9 @@ public partial class CustomTexturePatch
         }
 
         // Process files in layers to handle overrides correctly
-        // Layer 1: All files except special folders
+        // Layers processed in ASCENDING priority order (later layers override earlier ones)
+        
+        // Layer 1: Base folder (Lowest priority)
         foreach (var file in allFiles)
         {
             string ext = Path.GetExtension(file);
@@ -605,7 +607,7 @@ public partial class CustomTexturePatch
             }
         }
 
-        // Layer 2: GSD1 / GSD2
+        // Layer 2: GSD1 / GSD2 (Medium priority - overrides base folder)
         foreach (var file in allFiles)
         {
             string ext = Path.GetExtension(file);
@@ -616,17 +618,17 @@ public partial class CustomTexturePatch
 
             if (file.StartsWith(gsd1Folder, StringComparison.OrdinalIgnoreCase))
             {
-                AddToIndex(file, $"GSD1:{fileName}", isDDS);
-                AddToIndex(file, fileName, isDDS); // Fallback
+                AddToIndex(file, $"GSD1:{fileName}", true); // Always override
+                AddToIndex(file, fileName, true); // Always override base
             }
             else if (file.StartsWith(gsd2Folder, StringComparison.OrdinalIgnoreCase))
             {
-                AddToIndex(file, $"GSD2:{fileName}", isDDS);
-                AddToIndex(file, fileName, isDDS); // Fallback (overrides GSD1 if both exist)
+                AddToIndex(file, $"GSD2:{fileName}", true); // Always override
+                AddToIndex(file, fileName, true); // Always override base + GSD1
             }
         }
 
-        // Layer 3: 00-Mods (Highest priority)
+        // Layer 3: 00-Mods (HIGHEST PRIORITY - loaded LAST to override everything)
         foreach (var file in allFiles)
         {
             string ext = Path.GetExtension(file);
@@ -635,8 +637,14 @@ public partial class CustomTexturePatch
             if (file.StartsWith(modsFolder, StringComparison.OrdinalIgnoreCase))
             {
                 string fileName = Path.GetFileNameWithoutExtension(file);
-                bool isDDS = ext.Equals(".dds", StringComparison.OrdinalIgnoreCase);
-                AddToIndex(file, fileName, isDDS || !texturePathIndex.ContainsKey(fileName));
+                AddToIndex(file, fileName, true); // ALWAYS OVERRIDE - highest priority
+                
+                // Also add game-specific keys with override
+                string currentGame = GameDetection.GetCurrentGame();
+                if (currentGame == "GSD1" || currentGame == "GSD2")
+                {
+                    AddToIndex(file, $"{currentGame}:{fileName}", true);
+                }
             }
         }
         
