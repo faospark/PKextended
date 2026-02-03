@@ -108,11 +108,18 @@ public partial class CustomTexturePatch
         // Try to load custom sprite replacement
         if (Plugin.Config.EnableCustomTextures.Value)
         {
+            // NEW: Ignore atlas (sactx) sprites here in SpriteRenderer patch.
+            // These should be handled by the specialized SpriteAtlasInterceptPatch which preserves UVs correctly.
+            // Replacing them here blindly often causes "Mesh.uv out of bounds" errors because the new Sprite
+            // has different packing parameters than what the Renderer expects for the atlas.
+            if (originalName.StartsWith("sactx-")) 
+                return;
+
             Sprite customSprite = LoadCustomSprite(originalName, value);
             if (customSprite != null)
             {
-                // Skip logging for sactx, character sprites, and portraits to reduce spam
-                bool shouldSkipReplacementLog = originalName.StartsWith("sactx") || originalName.StartsWith("fp_");
+                // Skip logging for character sprites and portraits to reduce spam
+                bool shouldSkipReplacementLog = originalName.StartsWith("fp_");
                 if (!shouldSkipReplacementLog && texturePathIndex.TryGetValue(originalName, out string replacementTexPath))
                 {
                     shouldSkipReplacementLog = replacementTexPath.ToLower().Contains("characters");

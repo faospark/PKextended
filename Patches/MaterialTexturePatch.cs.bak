@@ -42,19 +42,13 @@ public partial class CustomTexturePatch
         if (textureName.EndsWith("_Custom"))
             return;
 
-        // Try in-place replacement first (works for most standard formats)
+        // Try to replace with custom texture reference
         if (value is Texture2D texture2D)
         {
-            if (ReplaceTextureInPlace(texture2D, textureName))
-            {
-                if (Plugin.Config.DetailedTextureLog.Value)
-                {
-                    Plugin.Log.LogInfo($"[Material] In-place replaced: {textureName}");
-                }
-                return;
-            }
+            // Do NOT use ReplaceTextureInPlace here. 
+            // Modifying the texture in-place crashes the game if that texture is also used by a Sprite (Mesh.uv out of bounds).
+            // Instead, we just swap the reference on the material to a new texture.
             
-            // Fallback: Load custom texture and replace reference (works for DDS and all formats)
             Texture2D customTexture = LoadCustomTexture(textureName);
             if (customTexture != null && customTexture != texture2D)
             {
@@ -63,10 +57,6 @@ public partial class CustomTexturePatch
                 {
                     Plugin.Log.LogInfo($"[Material] Replaced mainTexture: {textureName} ({customTexture.format})");
                 }
-            }
-            else if (Plugin.Config.DetailedTextureLog.Value && HasCustomTexture(textureName))
-            {
-                Plugin.Log.LogWarning($"[Material] Custom texture found but failed to load: {textureName}");
             }
         }
     }
@@ -88,17 +78,9 @@ public partial class CustomTexturePatch
         // Try to replace if we have a custom version
         if (__result is Texture2D texture2D)
         {
-            // First try in-place replacement
-            if (ReplaceTextureInPlace(texture2D, textureName))
-            {
-                if (Plugin.Config.DetailedTextureLog.Value)
-                {
-                    Plugin.Log.LogInfo($"[Material Get] In-place replaced: {textureName}");
-                }
-                return;
-            }
-
-            // Fallback: Load custom texture (supports DDS)
+            // Do NOT use ReplaceTextureInPlace here (causes Mesh.uv errors)
+            
+            // Load custom texture
             Texture2D customTexture = LoadCustomTexture(textureName);
             if (customTexture != null && customTexture != texture2D)
             {
