@@ -12,27 +12,6 @@ namespace PKCore.Patches;
 public partial class CustomTexturePatch
 {
     /// <summary>
-    /// Intercept SpriteAtlas.GetSprite to catch sprites loaded from atlases
-    /// NOTE: Individual sprite names from atlases are NOT replaceable - only the atlas texture itself is
-    /// </summary>
-    [HarmonyPatch(typeof(SpriteAtlas), nameof(SpriteAtlas.GetSprite))]
-    [HarmonyPostfix]
-    public static void SpriteAtlas_GetSprite_Postfix(SpriteAtlas __instance, string name, ref Sprite __result)
-    {
-        if (__result == null)
-            return;
-
-        string spriteName = __result.name;
-        
-        // Remove (Clone) suffix if present
-        if (spriteName.EndsWith("(Clone)"))
-            spriteName = spriteName.Substring(0, spriteName.Length - 7);
-
-        // DO NOT log individual sprite names from atlases - they're not replaceable files
-        // Only the atlas texture itself (accessed via Sprite.texture) is replaceable
-    }
-
-    /// <summary>
     /// Intercept Sprite.texture getter to replace atlas textures
     /// This is THE KEY PATCH for replacing atlas textures (including summon effects)
     /// </summary>

@@ -108,6 +108,15 @@ public partial class CustomTexturePatch
         // Join the name parts back together in case the name contained hyphens
         return string.Join("-", parts.Skip(nameStart).Take(nameEnd - nameStart + 1));
     }
+
+    /// <summary>
+    /// Clean texture names by removing (Clone), (Instance) suffixes
+    /// </summary>
+    public static string CleanTextureName(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return name;
+        return name.Replace("(Clone)", "").Replace("(Instance)", "").Trim();
+    }
     
     /// <summary>
     /// Try to replace bath sprites in the BathBG GameObject
@@ -793,6 +802,9 @@ public partial class CustomTexturePatch
         processedTextureIds.Clear();
         processedAtlases.Clear();
         replacedTextures.Clear();
+        
+        // Clear SpriteAtlas cache
+        SpriteAtlasCache.Clear();
     }
     
     #endregion

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **SpriteAtlas Support**: Implemented post-fix interception for Unity SpriteAtlas to allow texture replacement for packed sprites using loose files.
 - **MinimalUI Configuration**: New boolean option to control minimal UI texture loading for cleaner game experience.
 - **Revised Texture Filtering System**: Selective loading system for texture mods (Project Kyaro, Launcher, Minimal UI) via configuration options.
 - **Enhanced UI Refresh**: Improved MenuTopPartyStatus texture replacement with UIMainMenu.Open patch for proper atlas refresh.

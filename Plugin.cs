@@ -134,6 +134,14 @@ public class Plugin : BasePlugin
             // Apply Unity SpriteRenderer patches for standard Unity sprites
             harmony.PatchAll(typeof(UnitySpriteRendererPatch));
             UnitySpriteRendererPatch.Initialize();
+
+            // Apply SpriteAtlas interception patches
+            if (Config.EnableCustomTextures.Value)
+            {
+               Log.LogInfo("Applying SpriteAtlas interception patches...");
+               harmony.PatchAll(typeof(SpriteAtlasInterceptPatch));
+               SpriteAtlasInterceptPatch.Initialize();
+            }
             
             
             // Suikozu reactive patch (GSD2 world map)
