@@ -802,9 +802,6 @@ public partial class CustomTexturePatch
         processedTextureIds.Clear();
         processedAtlases.Clear();
         replacedTextures.Clear();
-        
-        // Clear SpriteAtlas cache
-        SpriteAtlasCache.Clear();
     }
     
     #endregion

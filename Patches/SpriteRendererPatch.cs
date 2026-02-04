@@ -109,7 +109,8 @@ public partial class CustomTexturePatch
         if (Plugin.Config.EnableCustomTextures.Value)
         {
             // NEW: Ignore atlas (sactx) sprites here in SpriteRenderer patch.
-            // These should be handled by the specialized SpriteAtlasInterceptPatch which preserves UVs correctly.
+            // These are handled by SpriteAtlasPatch which intercepts Sprite.texture getter
+            // and replaces the underlying texture while preserving sprite properties.
             // Replacing them here blindly often causes "Mesh.uv out of bounds" errors because the new Sprite
             // has different packing parameters than what the Renderer expects for the atlas.
             if (originalName.StartsWith("sactx-")) 
