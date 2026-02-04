@@ -66,7 +66,7 @@ namespace PKCore.Patches
             {
                 try 
                 {
-                    Logger.LogInfo($"Migrating war_abilities.json to {configDir}...");
+                    Logger.LogInfo($"[WarAbilityPatch] Migrating war_abilities.json to {configDir}...");
                     File.Move(legacyConfigPath, newConfigPath);
                 }
                 catch (Exception ex)

@@ -263,7 +263,7 @@ namespace PKCore.Patches
                 if (customSprite != null)
                 {
                     spriteCache[spriteName] = customSprite;
-                    Logger.LogInfo($"Loaded custom button sprite: {spriteName}");
+                    Logger.LogInfo($"[GlobalControllerPromptPatch] Loaded custom button sprite: {spriteName}");
                     return customSprite;
                 }
             }

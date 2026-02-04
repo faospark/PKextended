@@ -138,7 +138,7 @@ public partial class CustomTexturePatch
 
         if (Plugin.Config.DetailedTextureLog.Value)
         {
-            Plugin.Log.LogInfo($"New BathBG instance detected (ID: {currentInstanceID}, previous: {lastBathBGInstanceID})");
+            Plugin.Log.LogInfo($"[CustomTexturePatch] New BathBG instance detected (ID: {currentInstanceID}, previous: {lastBathBGInstanceID})");
         }
         
         lastBathBGInstanceID = currentInstanceID;
@@ -161,7 +161,7 @@ public partial class CustomTexturePatch
                         
                         if (Plugin.Config.DetailedTextureLog.Value)
                         {
-                            Plugin.Log.LogInfo($"Replaced bath sprite: {spriteName} in new BathBG instance");
+                            Plugin.Log.LogInfo($"[CustomTexturePatch] Replaced bath sprite: {spriteName} in new BathBG instance");
                         }
                         
                         replaced++;
@@ -467,7 +467,7 @@ public partial class CustomTexturePatch
                     
                     if (Plugin.Config.DetailedTextureLog.Value)
                     {
-                        Plugin.Log.LogInfo($"Replaced raw DDS texture in-place: {textureName} ({ddsTexture.width}x{ddsTexture.height}, {ddsTexture.format})");
+                        Plugin.Log.LogInfo($"[CustomTexturePatch] Replaced raw DDS texture in-place: {textureName} ({ddsTexture.width}x{ddsTexture.height}, {ddsTexture.format})");
                     }
                 }
                 else
@@ -509,7 +509,7 @@ public partial class CustomTexturePatch
             bool shouldSkipLog = textureName.StartsWith("sactx") || filePath.ToLower().Contains("characters");
             if (!shouldSkipLog && Plugin.Config.DetailedTextureLog.Value)
             {
-                Plugin.Log.LogInfo($"Replaced raw texture in-place: {textureName} ({originalTexture.width}x{originalTexture.height})");
+                Plugin.Log.LogInfo($"[CustomTexturePatch] Replaced raw texture in-place: {textureName} ({originalTexture.width}x{originalTexture.height})");
             }
             
             return true;
@@ -660,7 +660,7 @@ public partial class CustomTexturePatch
         sw.Stop();
         if (Plugin.Config.DetailedTextureLog.Value)
         {
-            Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} textures from {allFiles.Length} files in {sw.ElapsedMilliseconds}ms");
+            Plugin.Log.LogInfo($"[CustomTexturePatch] Indexed {texturePathIndex.Count} textures from {allFiles.Length} files in {sw.ElapsedMilliseconds}ms");
         }
         
         // Only save cache if caching is enabled
@@ -693,7 +693,7 @@ public partial class CustomTexturePatch
         
         if (Plugin.Config.DetailedTextureLog.Value)
         {
-            Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} custom texture(s) ready to use");
+            Plugin.Log.LogInfo($"[CustomTexturePatch] Indexed {texturePathIndex.Count} custom texture(s) ready to use");
         }
         
         // Register for scene loaded to clear caches

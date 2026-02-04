@@ -54,7 +54,7 @@ public partial class CustomTexturePatch
         // If this is a bath sprite being assigned, check if it's a new BathBG instance
         if (isBathBackground && originalName.StartsWith("bath_"))
         {
-            Plugin.Log.LogInfo($"Sprite setter called for bath sprite: {originalName} (path: {objectPath})");
+            Plugin.Log.LogInfo($"[SpriteRendererPatch] Sprite setter called for bath sprite: {originalName} (path: {objectPath})");
             
             if (Plugin.Config.EnableCustomTextures.Value)
             {
@@ -64,7 +64,7 @@ public partial class CustomTexturePatch
                     int currentInstanceID = bathBG.GetInstanceID();
                     if (currentInstanceID != lastBathBGInstanceID)
                     {
-                        Plugin.Log.LogInfo($"New BathBG instance detected via sprite setter (ID: {currentInstanceID}, previous: {lastBathBGInstanceID})");
+                        Plugin.Log.LogInfo($"[SpriteRendererPatch] New BathBG instance detected via sprite setter (ID: {currentInstanceID}, previous: {lastBathBGInstanceID})");
                         lastBathBGInstanceID = currentInstanceID;
                     }
                     
@@ -74,19 +74,19 @@ public partial class CustomTexturePatch
                         Sprite customSprite = LoadCustomSprite(originalName, value);
                         if (customSprite != null)
                         {
-                            Plugin.Log.LogInfo($"Replaced bath sprite via setter: {originalName}");
+                            Plugin.Log.LogInfo($"[SpriteRendererPatch] Replaced bath sprite via setter: {originalName}");
                             value = customSprite;
                             return; // Early return - we've replaced the sprite
                         }
                     }
                     else
                     {
-                        Plugin.Log.LogInfo($"Bath sprite {originalName} not found in texture index");
+                        Plugin.Log.LogInfo($"[SpriteRendererPatch] Bath sprite {originalName} not found in texture index");
                     }
                 }
                 else
                 {
-                    Plugin.Log.LogInfo("BathBG not found when trying to replace sprite");
+                    Plugin.Log.LogInfo("[SpriteRendererPatch] BathBG not found when trying to replace sprite");
                 }
             }
         }
@@ -131,16 +131,16 @@ public partial class CustomTexturePatch
                     if (Plugin.Config.DetailedTextureLog.Value)
                     {
                         // Include GameObject path in detailed logs
-                        Plugin.Log.LogInfo($"Replaced sprite: {originalName} (from {objectPath})");
+                        Plugin.Log.LogInfo($"[SpriteRendererPatch] Replaced sprite: {originalName} (from {objectPath})");
                     }
                     else if (isBathBackground || isBgManager)
                     {
                         // Show path only for bath/bgManager sprites in normal mode
-                        Plugin.Log.LogInfo($"Replaced sprite: {originalName} (from {objectPath})");
+                        Plugin.Log.LogInfo($"[SpriteRendererPatch] Replaced sprite: {originalName} (from {objectPath})");
                     }
                     else
                     {
-                        Plugin.Log.LogInfo($"Replaced sprite: {originalName}");
+                        Plugin.Log.LogInfo($"[SpriteRendererPatch] Replaced sprite: {originalName}");
                     }
                 }
                 value = customSprite;
