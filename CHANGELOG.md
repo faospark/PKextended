@@ -5,6 +5,18 @@ All notable changes to PKCore (formerly PKextended) will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.01.1] - 2026-02-05
+
+### Changed
+
+- **Configuration Cleanup**: Moved debug options (`LogReplaceableTextures`, `LogTexturePaths`) to hidden settings to declutter the user config file.
+- **Documentation**: Comprehensive update to `Caching.md` detailing technical priority layers, DDS handling, and memory persistence.
+
+### Added
+
+- **World Map Clouds**: Disabled `sm_wk_cloud` objects to remove visual clutter on the world map.
+- **World Map Sunrays**: Corrected sunray effects on the world map for consistent visuals.
+
 ## [2026.01.0] - 2026-01-31
 
 ### Added
