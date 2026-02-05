@@ -64,7 +64,7 @@ public static class TextureMemoryCachePatch
         SceneManager.sceneLoaded += (System.Action<Scene, LoadSceneMode>)OnSceneLoaded;
         currentSceneName = SceneManager.GetActiveScene().name;
         
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo("[TextureMemoryCache] Initialized - will track textures per scene");
         }
@@ -79,7 +79,7 @@ public static class TextureMemoryCachePatch
         currentSceneName = scene.name;
         sceneChangeCounter++;
         
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"[TextureMemoryCache] Scene loaded: {scene.name} (Change #{sceneChangeCounter})");
         }
@@ -124,7 +124,7 @@ public static class TextureMemoryCachePatch
         loadedTextureMap[textureId] = metadata;
         filenameToTextureId[sourceFilename] = textureId;
         
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogDebug($"[TextureMemoryCache] Registered texture: {sourceFilename} " +
                 $"({memoryEstimate / 1024}KB) in scene {currentSceneName}" +
@@ -145,7 +145,7 @@ public static class TextureMemoryCachePatch
             loadedTextureMap.Remove(textureId);
             filenameToTextureId.Remove(metadata.Filename);
             
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogDebug($"[TextureMemoryCache] Unregistered texture: {metadata.Filename} " +
                     $"(freed {metadata.MemorySize / 1024}KB)");
@@ -206,7 +206,7 @@ public static class TextureMemoryCachePatch
             }
         }
         
-        if (Plugin.Config.DetailedLogs.Value && texturesCleared > 0)
+        if (Plugin.Config.DetailedTextureLog.Value && texturesCleared > 0)
         {
             Plugin.Log.LogInfo($"[TextureMemoryCache] Purged {texturesCleared} textures, " +
                 $"freed {totalMemoryFreed / 1024 / 1024}MB memory");

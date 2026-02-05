@@ -77,7 +77,7 @@ public static class PortraitIndexCache
                             portraitNames.Add(name);
                         }
 
-                        if (Plugin.Config.DetailedLogs.Value)
+                        if (Plugin.Config.DetailedTextureLog.Value)
                         {
                             Plugin.Log.LogInfo($"✓ Loaded portrait index from cache ({portraitNames.Count} portraits)");
                         }
@@ -119,7 +119,7 @@ public static class PortraitIndexCache
                 serializer.Serialize(stream, manifest);
             }
 
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"✓ Saved portrait index cache ({manifest.FileCount} portraits)");
             }

@@ -102,7 +102,7 @@ namespace PKCore.Patches
                     }
                 }
 
-                if (Plugin.Config.DetailedLogs.Value)
+                if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     // Processed save window
                 }
@@ -204,14 +204,14 @@ namespace PKCore.Patches
             string customObjName = isSuikoden1 ? "ClassicSaveBackground_S1" : "ClassicSaveBackground_S2";
             if (saveLoadWindow.transform.Find(customObjName) != null)
             {
-                if (Plugin.Config.DetailedLogs.Value)
+                if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     // Background already exists
                 }
                 return;
             }
 
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 // Creating custom background
             }
@@ -226,7 +226,7 @@ namespace PKCore.Patches
                 {
                     bgImage.color = new Color(0f, 0f, 0f, 0.5f); // Black with 50% opacity
                 }
-                if (Plugin.Config.DetailedLogs.Value)
+                if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     Plugin.Log.LogDebug("[SaveWindowPatch] Scaled and recolored Img_bg");
                 }
@@ -237,7 +237,7 @@ namespace PKCore.Patches
             if (imgFlame != null)
             {
                 imgFlame.gameObject.SetActive(false);
-                if (Plugin.Config.DetailedLogs.Value)
+                if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     Plugin.Log.LogDebug("[SaveWindowPatch] Disabled Img_Flame");
                 }
@@ -263,7 +263,7 @@ namespace PKCore.Patches
             rt.anchoredPosition = Vector2.zero;
             rt.localScale = Vector3.one;
             rt.localPosition = new Vector3(0, 0, 100); // Z=100 to match other UI elements
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
 
             }
@@ -272,7 +272,7 @@ namespace PKCore.Patches
             Image img = customObj.AddComponent<Image>();
             img.color = Color.white; // Ensure image is fully opaque
             img.raycastTarget = false; // Don't block input
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
 
             }
@@ -284,7 +284,7 @@ namespace PKCore.Patches
             {
                 Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
                 img.sprite = sprite;
-                if (Plugin.Config.DetailedLogs.Value)
+                if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     Plugin.Log.LogInfo($"[SaveWindowPatch] ✓ Applied {textureName} to save window background");
                 }

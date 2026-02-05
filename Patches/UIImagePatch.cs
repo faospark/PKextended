@@ -61,7 +61,7 @@ public partial class CustomTexturePatch
         if (customSprite != null)
         {
             // Suppress spammy replacement log even in detailed mode
-            // if (Plugin.Config.DetailedLogs.Value)
+            // if (Plugin.Config.DetailedTextureLog.Value)
             // {
             //     string objectPath = GetGameObjectPath(__instance.gameObject);
             //     Plugin.Log.LogInfo($"[UI Image] Replaced sprite: {originalName} on {objectPath}");

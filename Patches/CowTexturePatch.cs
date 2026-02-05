@@ -23,7 +23,7 @@ public static class CowTexturePatch
         try
         {
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<CowMonitor>();
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo("[CowTexturePatch] Registered CowMonitor type (lazy-loaded on first cow encounter)");
             _isRegistered = true;
         }
@@ -71,7 +71,7 @@ public static class CowTexturePatch
     {
         if (obj.GetComponent<CowMonitor>() == null)
         {
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"[CowPatch] Detected cow object: {obj.name}. Attaching monitor.");
             obj.AddComponent<CowMonitor>();
         }
@@ -150,7 +150,7 @@ public class CowMonitor : MonoBehaviour
 
         if (customSprite != null)
         {
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"[CowMonitor] Replaced cow frame: {spriteName}");
             }

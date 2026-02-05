@@ -51,7 +51,7 @@ Game requests sprite from atlas → PKCore intercepts GetSprite → Returns cust
 
 1. **Enable detailed logging** in `BepInEx/config/PKCore.cfg`:
    ```ini
-   DetailedLogs = true
+   DetailedTextureLog = true
    EnableCustomTextures = true
    ```
 

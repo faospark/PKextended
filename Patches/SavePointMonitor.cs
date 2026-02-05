@@ -34,7 +34,7 @@ public class SavePointSpriteMonitor : MonoBehaviour
                     bool success = CustomTexturePatch.ReplaceTextureInPlace(spriteRenderer.sprite.texture, textureName);
                     if (success)
                     {
-                        if (Plugin.Config.DetailedLogs.Value)
+                        if (Plugin.Config.DetailedTextureLog.Value)
                         {
                             Plugin.Log.LogInfo("[SavePoint Monitor] ✓ Successfully replaced texture in-place. Disabling monitor.");
                         }

@@ -57,11 +57,11 @@ public static class TextureOptions
                 string colorVariant = $"{textureName}_{colorSuffix}";
                 if (CustomTexturePatch.texturePathIndex.ContainsKey(colorVariant))
                 {
-                    if (Plugin.Config.DetailedLogs.Value)
+                    if (Plugin.Config.DetailedTextureLog.Value)
                         Plugin.Log.LogInfo($"[SavePoint Color] Using color variant: {colorVariant}");
                     return colorVariant;
                 }
-                else if (Plugin.Config.DetailedLogs.Value)
+                else if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     Plugin.Log.LogWarning($"[SavePoint Color] Color variant '{colorVariant}' not found, using default");
                 }
@@ -83,11 +83,11 @@ public static class TextureOptions
                  string altName = $"{textureName}_alt";
                  if (CustomTexturePatch.texturePathIndex.ContainsKey(altName))
                  {
-                     if (Plugin.Config.DetailedLogs.Value)
+                     if (Plugin.Config.DetailedTextureLog.Value)
                          Plugin.Log.LogInfo($"[TirRun] Using alt variant: {altName}");
                      return altName;
                  }
-                 else if (Plugin.Config.DetailedLogs.Value)
+                 else if (Plugin.Config.DetailedTextureLog.Value)
                  {
                      Plugin.Log.LogWarning($"[TirRun] Alt variant '{altName}' not found, using default");
                  }
@@ -110,11 +110,11 @@ public static class TextureOptions
              string variantName = $"{textureName}_{fenceVariant}";
              if (CustomTexturePatch.texturePathIndex.ContainsKey(variantName))
              {
-                 if (Plugin.Config.DetailedLogs.Value)
+                 if (Plugin.Config.DetailedTextureLog.Value)
                      Plugin.Log.LogInfo($"[MercFortFence] Using variant: {variantName}");
                  return variantName;
              }
-             else if (Plugin.Config.DetailedLogs.Value)
+             else if (Plugin.Config.DetailedTextureLog.Value)
              {
                  Plugin.Log.LogWarning($"[MercFortFence] Variant '{variantName}' not found, using default");
              }

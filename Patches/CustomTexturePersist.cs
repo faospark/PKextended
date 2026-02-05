@@ -192,7 +192,7 @@ public static class CustomTexturePersist
                     CustomTexturePatch.persistentTextures.Add(textureName);
                 }
                 
-                if (Plugin.Config.DetailedLogs.Value)
+                if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     Plugin.Log.LogInfo($"  [✓] {textureName} ({texture.width}x{texture.height}) from {foundKey}");
                 }
@@ -200,7 +200,7 @@ public static class CustomTexturePersist
             }
             else
             {
-                if (Plugin.Config.DetailedLogs.Value)
+                if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     Plugin.Log.LogWarning($"  [✗] {textureName} not found in texture index");
                 }
@@ -245,7 +245,7 @@ public static class CustomTexturePersist
         persistentTextureCache[textureName] = texture;
         CustomTexturePatch.customTextureCache[textureName] = texture;
         
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"[CustomTexturePersist] Added persistent texture: {textureName}");
         }

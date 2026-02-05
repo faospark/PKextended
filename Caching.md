@@ -61,7 +61,7 @@ PKCore features a "Smart Memory" management system that tracks custom textures a
 
 ### Config Options
 - `EnableMemoryCaching = true`: Activates the scene-based purge system (Recommended).
-- `DetailedLogs = true`: Logs texture operations, memory stats, and purge events to the console.
+- `DetailedTextureLog = true`: Logs texture operations, memory stats, and purge events to the console.
 
 ## 5. Performance Recommendations
 

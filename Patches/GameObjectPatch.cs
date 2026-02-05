@@ -40,7 +40,7 @@ public partial class CustomTexturePatch
         // Handle background manager activation - scan for sprites to replace
         if (isBgManager)
         {
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"Background manager activated: {objectPath}");
             }
@@ -59,7 +59,7 @@ public partial class CustomTexturePatch
                     {
                         if (ReplaceTextureInPlace(texture, textureName))
                         {
-                            if (Plugin.Config.DetailedLogs.Value)
+                            if (Plugin.Config.DetailedTextureLog.Value)
                             {
                                 Plugin.Log.LogInfo($"Replaced MeshRenderer texture on activation: {textureName} (from {objectPath})");
                             }
@@ -101,7 +101,7 @@ public partial class CustomTexturePatch
                         sr.sprite = customSprite;
                         _processedSpriteInstances.Add(instanceId);
                         
-                        if (Plugin.Config.DetailedLogs.Value)
+                        if (Plugin.Config.DetailedTextureLog.Value)
                         {
                             Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
                         }

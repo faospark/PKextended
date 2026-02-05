@@ -21,7 +21,7 @@ public class SuikozuPatch
         try 
         {
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SuikozuTextureEnforcer>();
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo("[SuikozuPatch] Registered SuikozuTextureEnforcer type (lazy-loaded on first world map open)");
             _isRegistered = true;
         }
@@ -73,7 +73,7 @@ public class SuikozuPatch
         // Ensure type is registered before attaching component
         EnsureRegistered();
         
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo($"[SuikozuPatch] CreateMapObj produced: {__result.name} (Type: {type}) - Attaching Smart Enforcer.");
         
         // Immediate attachment
@@ -84,14 +84,14 @@ public class SuikozuPatch
     [HarmonyPostfix]
     public static void SuikozuInit_Postfix(OverlaySuikozu2.WORLD_SUIKOZU __result)
     {
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo("[SuikozuPatch] SuikozuInit completed. Identifying objects...");
         
         // 1. Identify MAP Object
         GameObject mapObj = OverlaySuikozu2.SuikozuObj;
         if (mapObj != null)
         {
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"[SuikozuPatch] IDENTIFIED MAP OBJECT: {mapObj.name}");
             
             // We pass NULL as target name to let the Enforcer auto-detect whatever the game assigns (e.g. suikozu_03)
@@ -106,7 +106,7 @@ public class SuikozuPatch
         GameObject dotObj = OverlaySuikozu2.DotObj;
         if (dotObj != null)
         {
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"[SuikozuPatch] IDENTIFIED DOT OBJECT: {dotObj.name}");
         }
     }
@@ -123,7 +123,7 @@ public class SuikozuPatch
         if (enforcer == null)
         {
             enforcer = obj.AddComponent<SuikozuTextureEnforcer>();
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"[SuikozuPatch] Attached Smart Texture Enforcer to MAP {obj.name}. (Waiting for game to assign texture)");
         }
         
@@ -166,7 +166,7 @@ public class SuikozuTextureEnforcer : MonoBehaviour
                 string texName = renderer.material.mainTexture.name;
                 if (!string.IsNullOrEmpty(texName) && texName.StartsWith("suikozu_", System.StringComparison.OrdinalIgnoreCase))
                 {
-                    if (Plugin.Config.DetailedLogs.Value)
+                    if (Plugin.Config.DetailedTextureLog.Value)
                         Plugin.Log.LogInfo($"[SuikozuEnforcer] Auto-Detected Game Map: {texName}");
                     _targetTextureName = texName;
                     _isLocked = true;

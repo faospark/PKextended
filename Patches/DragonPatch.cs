@@ -59,7 +59,7 @@ public class DragonPatch
         // Avoid adding multiple monitors
         if (go.GetComponent<DragonSpriteMonitor>() != null) return;
 
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"[DragonPatch] Attaching monitor to dragon object: {go.name}");
         }
@@ -111,7 +111,7 @@ public class DragonSpriteMonitor : MonoBehaviour
                 
                 // Only log if detailed logging is on AND we haven't just logged this specific enforcement
                 // This prevents spamminess when fighting the Animator every frame
-                if (Plugin.Config.DetailedLogs.Value && _lastEnforcedLogName != currentSpriteName)
+                if (Plugin.Config.DetailedTextureLog.Value && _lastEnforcedLogName != currentSpriteName)
                 {
                     Plugin.Log.LogInfo($"[DragonMonitor] Enforced sprite: {currentSpriteName}");
                     _lastEnforcedLogName = currentSpriteName;

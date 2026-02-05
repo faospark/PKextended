@@ -145,7 +145,7 @@ public class Plugin : BasePlugin
             // Log.LogInfo("Applying BGManagerHD.Load patch ...");
             // CustomTexturePatch.BGManagerHD_Load_Patch.Initialize(harmony);
             
-            if (Config.DetailedLogs.Value)
+            if (Config.DetailedTextureLog.Value)
             {
                 Log.LogInfo("Applying Native Map Texture patches...");
             }
@@ -214,7 +214,7 @@ public class Plugin : BasePlugin
 
         if (Config.EnableCustomTextures.Value)
         {
-            if (Config.DetailedLogs.Value)
+            if (Config.DetailedTextureLog.Value)
             {
                 Log.LogInfo("Applying Dragon Sprite patches...");
             }
@@ -223,7 +223,7 @@ public class Plugin : BasePlugin
 
         if (Config.EnableCustomTextures.Value)
         {
-             if (Config.DetailedLogs.Value)
+             if (Config.DetailedTextureLog.Value)
              {
                 Log.LogInfo("Applying Cow texture patches...");
              }
@@ -279,7 +279,7 @@ public class Plugin : BasePlugin
             excludedMasks.Add("Face_Mask_01");
         }
         
-        if (Config.DetailedLogs.Value)
+        if (Config.DetailedTextureLog.Value)
         {
             Log.LogInfo("Applying Mask Replacement System...");
         }

@@ -59,7 +59,7 @@ public class UnitySpriteRendererPatch
         {
             value = customSprite;
             
-            if (Plugin.Config.DetailedLogs.Value || isSavePoint || isDragon)
+            if (Plugin.Config.DetailedTextureLog.Value || isSavePoint || isDragon)
             {
                 Plugin.Log.LogInfo($"[UnitySpriteRenderer] ✓ Replaced sprite: {spriteName}");
                 if ((isSavePoint || isDragon) && customSprite.texture != null)
@@ -76,7 +76,7 @@ public class UnitySpriteRendererPatch
 
     public static void Initialize()
     {
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo("Applying Unity SpriteRenderer patches");
         }

@@ -158,9 +158,9 @@ The name "Extended" implied adding new features to the game, but this mod is the
 
 - **Reduced Log Spam**: Texture replacements are now logged only once per texture instead of multiple times when accessed through different code paths
 - **Simplified Texture Loading**: Removed verbose "Replaced texture", "Texture scaling", and "Created and cached sprite" messages - only essential "Loaded and cached" message remains
-- **Concise Texture List**: Startup now shows "Indexed X custom texture(s) ready to use" instead of enumerating all textures (detailed list still available when `DetailedLogs = true`)
+- **Concise Texture List**: Startup now shows "Indexed X custom texture(s) ready to use" instead of enumerating all textures (detailed list still available when `DetailedTextureLog = true`)
 - **Priority Override System**: Added `00-Mods/` folder with highest priority - textures here override base textures, allowing users to add custom texture mods without modifying base packs
-- **New Config Option**: `DetailedLogs` - enables/disables detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation.
+- **New Config Option**: `DetailedTextureLog` - enables/disables detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation.
 
 ### Fixed
 

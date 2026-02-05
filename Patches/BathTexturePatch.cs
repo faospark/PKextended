@@ -21,12 +21,12 @@ public partial class CustomTexturePatch
         if (!Plugin.Config.EnableCustomTextures.Value)
             return;
 
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo("HDBath.LoadInstance called - bath background is being loaded");
 
         // Try to replace bath sprites immediately
         int replaced = TryReplaceBathSprites();
-        if (replaced > 0 && Plugin.Config.DetailedLogs.Value)
+        if (replaced > 0 && Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"Replaced {replaced} bath sprite(s) in LoadInstance");
         }
@@ -43,7 +43,7 @@ public partial class CustomTexturePatch
         if (!Plugin.Config.EnableCustomTextures.Value)
             return;
 
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo("HDBath.Start called - scanning for bath sprites");
         ScanAndReplaceBathSprites(__instance);
     }
@@ -69,7 +69,7 @@ public partial class CustomTexturePatch
                 // Check if this is a bath sprite (bath_1 through bath_5)
                 if (spriteName.StartsWith("bath_"))
                 {
-                    if (Plugin.Config.DetailedLogs.Value)
+                    if (Plugin.Config.DetailedTextureLog.Value)
                         Plugin.Log.LogInfo($"Found bath sprite: {spriteName}");
 
                     // Try to replace with custom sprite
@@ -77,13 +77,13 @@ public partial class CustomTexturePatch
                     if (customSprite != null)
                     {
                         sr.sprite = customSprite;
-                        if (Plugin.Config.DetailedLogs.Value)
+                        if (Plugin.Config.DetailedTextureLog.Value)
                             Plugin.Log.LogInfo($"Replaced bath sprite: {spriteName}");
                         replaced++;
                     }
                     else
                     {
-                        if (Plugin.Config.DetailedLogs.Value)
+                        if (Plugin.Config.DetailedTextureLog.Value)
                             Plugin.Log.LogInfo($"No custom texture found for: {spriteName}");
                     }
                 }
@@ -92,12 +92,12 @@ public partial class CustomTexturePatch
 
         if (replaced > 0)
         {
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"Bath sprite scan complete: replaced {replaced} sprite(s)");
         }
         else
         {
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo("Bath sprite scan complete: no sprites replaced");
         }
     }
@@ -109,7 +109,7 @@ public partial class CustomTexturePatch
     [HarmonyPrefix]
     public static void HDBath_OnDestroy_Prefix(HDBath __instance)
     {
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo("HDBath.OnDestroy called - bath is being destroyed");
 
         // Reset the last bath BG instance ID so next bath will be treated as new
@@ -175,8 +175,8 @@ public partial class CustomTexturePatch
             }
         }
 
-        // Only log when DetailedLogs is enabled
-        if (preloaded > 0 && Plugin.Config.DetailedLogs.Value)
+        // Only log when DetailedTextureLog is enabled
+        if (preloaded > 0 && Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo("Applying BathTexture Patch");
             Plugin.Log.LogInfo($"  Preloaded {preloaded} bath sprite(s) for instant replacement");
@@ -200,14 +200,14 @@ public partial class CustomTexturePatch
         if (!objectPath.Contains("BathBG"))
             return;
 
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"BathBG activated: {objectPath}");
         }
 
         // Try to replace bath sprites
         int replaced = TryReplaceBathSprites();
-        if (replaced > 0 && Plugin.Config.DetailedLogs.Value)
+        if (replaced > 0 && Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"Replaced {replaced} bath sprite(s) on activation");
         }

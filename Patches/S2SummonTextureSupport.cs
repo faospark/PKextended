@@ -35,7 +35,7 @@ public partial class CustomTexturePatch
         
         void Awake()
         {
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"[SummonMonitor] Attached to {gameObject.name}");
         }
 
@@ -70,7 +70,7 @@ public partial class CustomTexturePatch
                     {
                         if (ReplaceTextureInPlace(texture2D, name))
                         {
-                            if (Plugin.Config.DetailedLogs.Value)
+                            if (Plugin.Config.DetailedTextureLog.Value)
                                 Plugin.Log.LogInfo($"[SummonMonitor] Replaced: {name}");
                         }
                     }
@@ -105,7 +105,7 @@ public partial class CustomTexturePatch
         if (hdEffects == null)
             return;
 
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo("[Proactive Scan] Found HDEffect GameObject, scanning children...");
 
         // Get all Renderer components in children (includes ParticleSystemRenderer)
@@ -135,14 +135,14 @@ public partial class CustomTexturePatch
                     {
                         processedTextureIds.Add(textureId);
                         replacedCount++;
-                        if (Plugin.Config.DetailedLogs.Value)
+                        if (Plugin.Config.DetailedTextureLog.Value)
                             Plugin.Log.LogInfo($"[Proactive Scan] ✅ Replaced particle texture: {textureName} (GameObject: {renderer.gameObject.name})");
                     }
                 }
             }
         }
 
-        if (replacedCount > 0 && Plugin.Config.DetailedLogs.Value)
+        if (replacedCount > 0 && Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"[Proactive Scan] ✅ Replaced {replacedCount} particle effect texture(s) in HDeffects");
         }
@@ -166,7 +166,7 @@ public partial class CustomTexturePatch
         {
             lastSummonTriggerTime = Time.time;
             
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"[Summon Trigger] Summon texture detected: {textureName}. forcing batch replacements...");
             }
@@ -222,19 +222,19 @@ public partial class CustomTexturePatch
                     {
                         processedTextureIds.Add(textureId);
                         replacedCount++;
-                        if (Plugin.Config.DetailedLogs.Value && originalName.Contains("Summon"))
+                        if (Plugin.Config.DetailedTextureLog.Value && originalName.Contains("Summon"))
                             Plugin.Log.LogInfo($"[Batch Replace] ✅ Replaced summon texture: {originalName}");
                     }
                     else if (originalName.Contains("Summon"))
                     {
-                        if (Plugin.Config.DetailedLogs.Value)
+                        if (Plugin.Config.DetailedTextureLog.Value)
                             Plugin.Log.LogDebug($"[Batch Replace] ❌ Failed to replace summon texture: {originalName} (Not in index or load error)");
                     }
                 }
             }
         }
 
-        if (replacedCount > 0 && Plugin.Config.DetailedLogs.Value)
+        if (replacedCount > 0 && Plugin.Config.DetailedTextureLog.Value)
             Plugin.Log.LogInfo($"[Batch Replace] ✅ Replaced {replacedCount} summon-related texture(s) in one scan");
     }
 
@@ -261,7 +261,7 @@ public partial class CustomTexturePatch
                 __instance.AddComponent<SummonMonitor>();
             }
 
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
                 Plugin.Log.LogInfo($"[Summon Effect Activated] GameObject '{__instance.name}' activated, attached SummonMonitor.");
             
             CheckAndTriggerSummonReplacement("m_gat_atlas"); // Dummy trigger to run the list
@@ -334,7 +334,7 @@ public partial class CustomTexturePatch
                 if (ReplaceTextureInPlace(texture2D, textureName))
                 {
                     processedTextureIds.Add(textureId);
-                    if (Plugin.Config.DetailedLogs.Value)
+                    if (Plugin.Config.DetailedTextureLog.Value)
                         Plugin.Log.LogInfo($"[Getter] Replaced texture in-place: {textureName}");
                 }
             }
@@ -391,7 +391,7 @@ public partial class CustomTexturePatch
                 if (ReplaceTextureInPlace(texture2D, textureName))
                 {
                     processedTextureIds.Add(textureId);
-                    if (Plugin.Config.DetailedLogs.Value)
+                    if (Plugin.Config.DetailedTextureLog.Value)
                         Plugin.Log.LogInfo($"[{renderer.GetType().Name}] Replaced texture in-place: {textureName} (GameObject: {renderer.gameObject.name})");
                 }
             }

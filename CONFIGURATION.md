@@ -86,7 +86,7 @@ This document outlines all available configuration options for PKCore layout in 
 | Setting | Type | Default | Description |
 | :--- | :---: | :---: | :--- |
 | **LogTextIDs** | bool | `false` | Log text lookups to console. Useful for finding dialog IDs. (Verbose!) |
-| **DetailedLogs** | bool | `false` | Enable detailed logging for texture replacements. |
+| **DetailedTextureLog** | bool | `false` | Enable detailed logging for texture replacements. |
 
 ## [zz - Experimental]
 **Work In Progress**

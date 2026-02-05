@@ -60,7 +60,7 @@ public static class WorldMapEffectsPatch
             if (isMapContainer)
             {
                  // Diagnostic logging
-                 if (Plugin.Config.DetailedLogs.Value)
+                 if (Plugin.Config.DetailedTextureLog.Value)
                  {
                      Plugin.Log.LogInfo($"[WorldMapEffects] Detected map container activation: {name}");
                  }
@@ -94,7 +94,7 @@ public static class WorldMapEffectsPatch
     private static void LogEffectDisabled(GameObject obj, string effectType, string reason)
     {
         string logKey = $"sm_wk_{effectType.ToLower()}_{obj.GetInstanceID()}";
-        if (Plugin.Config.DetailedLogs.Value && !CustomTexturePatch.IsTextureLogged(logKey))
+        if (Plugin.Config.DetailedTextureLog.Value && !CustomTexturePatch.IsTextureLogged(logKey))
         {
             Plugin.Log.LogInfo($"[WorldMapEffects] Disabled {effectType} ({reason}): {CustomTexturePatch.GetGameObjectPath(obj)}");
             CustomTexturePatch.LogReplaceableTexture(logKey, "WorldMapObject", $"Disabled {effectType}");

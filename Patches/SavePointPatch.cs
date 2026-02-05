@@ -88,7 +88,7 @@ public partial class CustomTexturePatch
                 if (!isSavePoint)
                     continue;
 
-                if (Plugin.Config.DetailedLogs.Value)
+                if (Plugin.Config.DetailedTextureLog.Value)
                 {
                     Plugin.Log.LogInfo($"[SavePoint GameObject] Found sprite: {spriteName} in {objectPath}");
                 }
@@ -97,7 +97,7 @@ public partial class CustomTexturePatch
                 if (customSprite != null)
                 {
                     sr.sprite = customSprite;
-                    if (Plugin.Config.DetailedLogs.Value)
+                    if (Plugin.Config.DetailedTextureLog.Value)
                     {
                         Plugin.Log.LogInfo($"[SavePoint GameObject] ✓ SET custom sprite: {spriteName}");
                     }
@@ -110,7 +110,7 @@ public partial class CustomTexturePatch
                             if (sr.GetComponent<SavePointSpriteMonitor>() == null)
                             {
                                 sr.gameObject.AddComponent<SavePointSpriteMonitor>();
-                                if (Plugin.Config.DetailedLogs.Value)
+                                if (Plugin.Config.DetailedTextureLog.Value)
                                 {
                                     Plugin.Log.LogInfo($"[SavePoint Monitor] Added monitor to: {sr.gameObject.name}");
                                 }
@@ -167,7 +167,7 @@ public partial class CustomTexturePatch
         if (!int.TryParse(frameNumStr, out int frameNum))
             return null;
 
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"[SavePoint] Creating sprite from atlas for: {spriteName} (frame {frameNum})");
         }
@@ -205,7 +205,7 @@ public partial class CustomTexturePatch
             customPPU = originalSprite.pixelsPerUnit * scaleRatio;
         }
 
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo($"[SavePoint] Creating sprite: rect=({x},{y},{frameWidth},{frameHeight}) from atlas {atlasTexture.width}x{atlasTexture.height} PPU:{customPPU} Pivot:{customPivot}");
         }
@@ -224,7 +224,7 @@ public partial class CustomTexturePatch
             UnityEngine.Object.DontDestroyOnLoad(customSprite);
             UnityEngine.Object.DontDestroyOnLoad(atlasTexture);
             
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"[SavePoint] ✓ Created and cached sprite: {spriteName}");
             }

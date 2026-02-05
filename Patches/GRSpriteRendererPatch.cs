@@ -45,7 +45,7 @@ public class GRSpriteRendererPatch
         {
             value = customSprite;
             
-            if (Plugin.Config.DetailedLogs.Value || isSavePoint)
+            if (Plugin.Config.DetailedTextureLog.Value || isSavePoint)
             {
                 Plugin.Log.LogInfo($"[GRSpriteRenderer] Replaced sprite: {spriteName}");
                 if (isSavePoint && customSprite.texture != null)
@@ -85,7 +85,7 @@ public class GRSpriteRendererPatch
         {
             spr = customSprite;
             
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"[GRSpriteRenderer] Force-replaced sprite: {spriteName}");
             }
@@ -133,7 +133,7 @@ public class GRSpriteRendererPatch
         {
             __instance.sprite = customSprite; // Use property setter to trigger updates
             
-            if (Plugin.Config.DetailedLogs.Value || isSavePoint)
+            if (Plugin.Config.DetailedTextureLog.Value || isSavePoint)
             {
                 Plugin.Log.LogInfo($"[GRSpriteRenderer] Replaced sprite on enable: {spriteName}");
             }
@@ -146,7 +146,7 @@ public class GRSpriteRendererPatch
 
     public static void Initialize()
     {
-        if (Plugin.Config.DetailedLogs.Value)
+        if (Plugin.Config.DetailedTextureLog.Value)
         {
             Plugin.Log.LogInfo("GRSpriteRenderer patches initialized");
         }

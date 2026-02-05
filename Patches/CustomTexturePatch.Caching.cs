@@ -137,7 +137,7 @@ public partial class CustomTexturePatch
                     manifest.Entries.Count > 0)
                 {
                     texturePathIndex = manifest.ToDictionary();
-                    if (Plugin.Config.DetailedLogs.Value)
+                    if (Plugin.Config.DetailedTextureLog.Value)
                     {
                         Plugin.Log.LogInfo($"✓ Loaded texture index from cache ({texturePathIndex.Count} textures, {manifest.FileCount} files)");
                     }
@@ -180,7 +180,7 @@ public partial class CustomTexturePatch
             {
                 serializer.Serialize(stream, manifest);
             }
-            if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedTextureLog.Value)
             {
                 Plugin.Log.LogInfo($"✓ Saved texture cache manifest ({manifest.FileCount} files)");
             }

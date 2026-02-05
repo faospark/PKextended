@@ -204,14 +204,14 @@ These tags are then processed by the dialog system to load the correct portrait.
 
 1. **File Naming:** Use consistent naming for variants (e.g., `fp_053_angry.png`, `fp_053_sad.png`)
 2. **Fallback Strategy:** Always provide a default portrait without expression
-3. **Testing:** Enable `DetailedLogs` config to see portrait loading diagnostics
+3. **Testing:** Enable `DetailedTextureLog` config to see portrait loading diagnostics
 4. **Organization:** Group related portraits together in the same folder
 5. **Portrait Size:** Match game's portrait dimensions (typically 256x256 or 512x512)
 
 ## Troubleshooting
 
 **Portrait doesn't display:**
-- Check `DetailedLogs` for loading errors
+- Check `DetailedTextureLog` for loading errors
 - Verify file paths and naming match exactly
 - Ensure portrait file exists in NPCPortraits folder
 - Check PortraitMappings.json for correct character name mapping

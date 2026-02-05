@@ -27,7 +27,7 @@ public sealed class ModConfiguration
 
     // Custom Texture Settings
     public ConfigEntry<bool> EnableCustomTextures { get; private set; }
-    public ConfigEntry<bool> DetailedLogs { get; private set; }
+    public ConfigEntry<bool> DetailedTextureLog { get; private set; }
     public ConfigEntry<bool> LoadLauncherUITextures { get; private set; }
     public ConfigEntry<bool> EnableProjectKyaroSprites { get; private set; }
     public ConfigEntry<bool> MinimalUI { get; private set; }
@@ -318,9 +318,9 @@ public sealed class ModConfiguration
             "Log all text ID lookups to the console. Enable this to find the ID of dialog lines you want to replace. WARNING: Creates a lot of log output."
         );
 
-        DetailedLogs = _config.Bind(
+        DetailedTextureLog = _config.Bind(
             "zz - Diagnostics",
-            "DetailedLogs",
+            "DetailedTextureLog",
             false,
             "Enable detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation (only errors will be logged)."
         );
