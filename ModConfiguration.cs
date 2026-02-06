@@ -22,11 +22,11 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> ShowMouseCursor { get; private set; }
 
     // Controller Prompt Settings
-    public ConfigEntry<bool> ForceControllerPrompts { get; private set; }
+    public HiddenConfigEntry<bool> ForceControllerPrompts { get; private set; }
     public ConfigEntry<string> ControllerPromptType { get; private set; }
 
     // Custom Texture Settings
-    public ConfigEntry<bool> EnableCustomTextures { get; private set; }
+    public HiddenConfigEntry<bool> EnableCustomTextures { get; private set; }
     public ConfigEntry<bool> DetailedLogs { get; private set; }
     public ConfigEntry<bool> LoadLauncherUITextures { get; private set; }
     public ConfigEntry<bool> EnableProjectKyaroSprites { get; private set; }
@@ -96,12 +96,7 @@ public sealed class ModConfiguration
 
     public void Init()
     {
-        EnableCustomTextures = _config.Bind(
-            "00 PK Core",
-            "EnableCustomTextures",
-            true,
-            "Enable custom texture replacement. Place PNG files in {GameRoot}/PKCore/Textures/ with the same name as the game texture (e.g., hp_telepo_00.png). This Essential for any Options below that invlove for textures to work"
-        );
+
 
         EnableProjectKyaroSprites = _config.Bind(
             "01 Project Kyaro Sprites",
@@ -131,12 +126,6 @@ public sealed class ModConfiguration
             "SMAA anti-aliasing quality for sprites. Options: Off, Low, Medium, High. NOTE: 'Low' is recommended. While this mod can be techincally under general. this feature is best used the project Kyaro sprites options. this also wont effect the game UI"
         );
 
-        ForceControllerPrompts = _config.Bind(
-            "02 User Interface",
-            "ForceControllerPrompts",
-            true,
-            "Force specific controller button prompts regardless of detected controller. Must be on for controller prompts to work."
-        );
 
         ControllerPromptType = _config.Bind(
             "02 User Interface",
@@ -352,6 +341,8 @@ public sealed class ModConfiguration
         SpriteMipmapBias = new HiddenConfigEntry<float>(-0.5f);
         LogReplaceableTextures = new HiddenConfigEntry<bool>(true);
         LogTexturePaths = new HiddenConfigEntry<bool>(true);
+        ForceControllerPrompts = new HiddenConfigEntry<bool>(true);
+        EnableCustomTextures = new HiddenConfigEntry<bool>(true);
 
     }
 }

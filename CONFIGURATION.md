@@ -3,12 +3,6 @@
 
 This document outlines all available configuration options for PKCore layout in `faospark.pkcore.cfg`.
 
-## [00 PK Core]
-**Core/Base Settings**
-
-| Setting | Type | Default | Description |
-| :--- | :---: | :---: | :--- |
-| **EnableCustomTextures** | bool | `true` | Enable custom texture replacement system. Essential for texture-based features. |
 
 ## [01 Project Kyaro Sprites]
 **Enhanced Sprite & Visual Settings**
@@ -25,8 +19,7 @@ This document outlines all available configuration options for PKCore layout in 
 
 | Setting | Type | Default | Description |
 | :--- | :---: | :---: | :--- |
-| **ForceControllerPrompts** | bool | `true` | Force specific controller button prompts regardless of detected controller. |
-| **ControllerPromptType** | string | `PlayStation` | Controller type: `PlayStation`, `Xbox`, `Switch`, `Generic`. |
+| **ControllerPromptType** | string | `PlayStation` | Controller type: `PlayStation`, `Xbox`, `Switch`, `Generic`. (Always enabled). |
 | **LoadLauncherUITextures** | bool | `true` | Load custom launcher UI textures based on unused game assets. |
 | **MinimalUI** | bool | `true` | Load minimal UI textures. |
 | **ClassicSaveWindow** | bool | `true` | Use PSX-style Save/Load window for a nostalgic feel. |
