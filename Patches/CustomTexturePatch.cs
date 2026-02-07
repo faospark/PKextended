@@ -46,9 +46,21 @@ public partial class CustomTexturePatch
     #region Helper Functions
     
     /// <summary>
-    /// Check if a texture has already been logged
+    /// Get a deduplication key for logging to reduce spam.
+    /// Strips (Clone) and numeric suffixes like _00, _01_02 etc.
     /// </summary>
-    internal static bool IsTextureLogged(string textureName) => loggedTextures.Contains(textureName);
+    internal static string GetLogDedupKey(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return name;
+        string clean = CleanTextureName(name); // Removes (Clone), (Instance)
+        // Strip trailing underscore+digit sequences (e.g. _00, _13_02)
+        return System.Text.RegularExpressions.Regex.Replace(clean, @"(_\d+)+$", "");
+    }
+
+    /// <summary>
+    /// Check if a texture has already been logged (using deduplicated key)
+    /// </summary>
+    internal static bool IsTextureLogged(string textureName) => !string.IsNullOrEmpty(textureName) && loggedTextures.Contains(GetLogDedupKey(textureName));
     
     /// <summary>
     /// Check if we have a custom texture for the given name
@@ -56,14 +68,19 @@ public partial class CustomTexturePatch
     internal static bool HasCustomTexture(string textureName) => texturePathIndex.ContainsKey(textureName);
     
     /// <summary>
-    /// Log a replaceable texture/sprite (only once per texture)
+    /// Log a replaceable texture/sprite (only once per texture variant group)
     /// </summary>
     internal static void LogReplaceableTexture(string textureName, string category, string context = null)
     {
-        if (!Plugin.Config.LogReplaceableTextures.Value || loggedTextures.Contains(textureName))
+        if (!Plugin.Config.LogReplaceableTextures.Value)
             return;
 
-        loggedTextures.Add(textureName);
+        string dedupKey = GetLogDedupKey(textureName);
+        if (loggedTextures.Contains(dedupKey))
+            return;
+
+        loggedTextures.Add(dedupKey);
+
         string message = string.IsNullOrEmpty(context) 
             ? $"[Replaceable {category}] {textureName}"
             : $"[Replaceable {category}] {textureName} ({context})";
@@ -648,11 +665,21 @@ public partial class CustomTexturePatch
                 string fileName = Path.GetFileNameWithoutExtension(file);
                 AddToIndex(file, fileName, true); // ALWAYS OVERRIDE - highest priority
                 
-                // Also add game-specific keys with override
-                string currentGame = GameDetection.GetCurrentGame();
-                if (currentGame == "GSD1" || currentGame == "GSD2")
+                // Determine if this mod file is specific to GSD1 or GSD2 based on folder structure
+                string normalizedPath = file.Replace('/', '\\');
+                bool isGSD1 = normalizedPath.Contains("\\GSD1\\", StringComparison.OrdinalIgnoreCase);
+                bool isGSD2 = normalizedPath.Contains("\\GSD2\\", StringComparison.OrdinalIgnoreCase);
+
+                // Add GSD1 override if this is a GSD1 mod OR a generic mod (not specifically GSD2)
+                if (isGSD1 || !isGSD2)
                 {
-                    AddToIndex(file, $"{currentGame}:{fileName}", true);
+                    AddToIndex(file, $"GSD1:{fileName}", true);
+                }
+
+                // Add GSD2 override if this is a GSD2 mod OR a generic mod (not specifically GSD1)
+                if (isGSD2 || !isGSD1)
+                {
+                    AddToIndex(file, $"GSD2:{fileName}", true);
                 }
             }
         }

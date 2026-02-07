@@ -99,9 +99,12 @@ namespace PKCore.Patches
         
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            // Debug log to confirm event firing
+            // Logger.LogInfo($"[WarAbilityPatch] OnSceneLoaded: {scene.name}");
+
             // Only apply patches when GSD2 scene loads
-            // Using GameDetection logic which is more robust
-            if (!GameDetection.IsGSD2())
+            // Check scene name directly to avoid race conditions with GameDetection update loop
+            if (!scene.name.Contains("GSD2"))
                 return;
                 
             if (isPatched)

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Log Cleanup**: Suppressed `DisableMask` log spam; messages now only appear when `DetailedTextureLog` is enabled.
+- **Sprite Logging**: Reduced log spam for `GRSpriteRenderer` by coalescing sprite variations (e.g. `person_vj10_01_XX`) into a single log entry.
 - **Jowy Disguise**: Reverted multi-character support for Jowy's disguise.
 
 ### Fixed

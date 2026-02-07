@@ -300,8 +300,39 @@ public class Plugin : BasePlugin
             WarAbilityPatch.Initialize(Log);
         }
 
+        // Create a MonoBehaviour to handle the Update loop (since BasePlugin doesn't have Update)
+        try
+        {
+            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<PkCoreMainLoop>();
+            
+            var obj = new GameObject("PkCoreMainLoop");
+            GameObject.DontDestroyOnLoad(obj);
+            obj.AddComponent<PkCoreMainLoop>();
+            obj.hideFlags = HideFlags.HideAndDontSave;
+            
+            Log.LogInfo("Initialized PkCoreMainLoop for Update events.");
+        }
+        catch (System.Exception ex)
+        {
+            Log.LogError($"Failed to register PkCoreMainLoop: {ex.Message}");
+        }
+
         // Reaction Monitor (MapChara/r_action trigger)
         ReactionMonitor.Initialize();
 
+    }
+}
+
+/// <summary>
+/// Helper MonoBehaviour to drive the Update loop for the plugin
+/// </summary>
+public class PkCoreMainLoop : MonoBehaviour
+{
+    public void Update()
+    {
+        if (Plugin.Instance != null)
+        {
+            Plugin.Instance.Update();
+        }
     }
 }
