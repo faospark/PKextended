@@ -25,14 +25,12 @@ namespace PKCore.Patches
         private Image overlayImage; // The purple background
         private Image portraitImage; // The "fu" portrait
         
-        private float checkInterval = 0.2f; // Check every 200ms
+        private float checkInterval = 0.1f; // Check more frequently (100ms) for UI sync
         private float timer = 0f;
-        private bool wasActive = false;
+        private bool wasTriggerActive = false;
+        private bool wasWindowActive = false;
         
-        // Fade effect
-        private bool isFading = false;
-        private float fadeTimer = 0f;
-        private float fadeDuration = 1.5f;
+        // Fade effect removed per request
 
         public static void Initialize()
         {
@@ -49,21 +47,6 @@ namespace PKCore.Patches
 
         private void Update()
         {
-            // Handle fade animation
-            if (isFading && portraitImage != null)
-            {
-                fadeTimer += Time.unscaledDeltaTime;
-                float progress = Mathf.Clamp01(fadeTimer / fadeDuration);
-                
-                // Fade the portrait image
-                Color c = portraitImage.color;
-                c.a = progress;
-                portraitImage.color = c;
-                
-                if (progress >= 1f)
-                    isFading = false;
-            }
-
             // Throttle checks
             timer += Time.unscaledDeltaTime;
             if (timer < checkInterval) return;
@@ -82,15 +65,20 @@ namespace PKCore.Patches
                      Logger.LogInfo($"[ReactionMonitor] Found '{TRIGGER_OBJECT_PATH}' (Active: {triggerObject.activeInHierarchy})");
             }
 
-            // 2. Check active state
-            bool isActive = triggerObject != null && triggerObject.activeInHierarchy;
+            // 2. Check trigger active state
+            bool isTriggerActive = triggerObject != null && triggerObject.activeInHierarchy;
+            
+            // 3. Check window active state
+            bool isWindowActive = CheckWindowActive();
 
-            // 3. Handle state change
-            if (isActive != wasActive)
+            // 4. Combined condition: Trigger MUST be active, AND Window MUST be active
+            bool shouldShow = isTriggerActive && isWindowActive;
+
+            // State change detection
+            if (shouldShow != (wasTriggerActive && wasWindowActive))
             {
-                wasActive = isActive;
-                
-                if (isActive)
+                // If we are showing now, and weren't before (or vice versa on the combined state)
+                if (shouldShow)
                 {
                     OnTriggerActivated();
                 }
@@ -99,6 +87,28 @@ namespace PKCore.Patches
                     OnTriggerDeactivated();
                 }
             }
+            
+            wasTriggerActive = isTriggerActive;
+            wasWindowActive = isWindowActive;
+        }
+
+        private bool CheckWindowActive()
+        {
+            // Look for "window_big_hd(Clone)" in UI_Root/UI_Canvas_Root/
+            // Since we can't easily find clones by path, we'll find the root and iterate children
+            GameObject canvasRoot = GameObject.Find("UI_Root/UI_Canvas_Root");
+            if (canvasRoot == null) return false;
+
+            int childCount = canvasRoot.transform.childCount;
+            for (int i = 0; i < childCount; i++)
+            {
+                Transform child = canvasRoot.transform.GetChild(i);
+                if (child.gameObject.activeInHierarchy && child.name.StartsWith("window_big_hd(Clone)"))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void OnTriggerActivated()
@@ -124,15 +134,12 @@ namespace PKCore.Patches
             if (overlayRoot != null)
             {
                 overlayRoot.SetActive(true);
-                // Start fade in
+                // Ensure fully opaque
                 if (portraitImage != null)
                 {
                     Color c = portraitImage.color;
-                    c.a = 0f;
+                    c.a = 1f;
                     portraitImage.color = c;
-                    
-                    isFading = true;
-                    fadeTimer = 0f;
                 }
             }
         }
