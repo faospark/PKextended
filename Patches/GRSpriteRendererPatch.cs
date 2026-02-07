@@ -36,7 +36,7 @@ public class GRSpriteRendererPatch
         // Log replaceable sprite if enabled
         if (Plugin.Config.LogReplaceableTextures.Value && !CustomTexturePatch.IsTextureLogged(spriteName))
         {
-            CustomTexturePatch.LogReplaceableTexture(spriteName, "Sprite - GRSpriteRenderer", __instance.gameObject);
+            CustomTexturePatch.LogReplaceableTexture(spriteName, "Sprite - GRSpriteRenderer");
         }
 
         // Try to replace with custom sprite
@@ -76,7 +76,7 @@ public class GRSpriteRendererPatch
         // Log replaceable sprite if enabled
         if (Plugin.Config.LogReplaceableTextures.Value && !CustomTexturePatch.IsTextureLogged(spriteName))
         {
-            CustomTexturePatch.LogReplaceableTexture(spriteName, "Sprite - ForceSet", __instance.gameObject);
+            CustomTexturePatch.LogReplaceableTexture(spriteName, "Sprite - ForceSet");
         }
 
         // Try to replace with custom sprite

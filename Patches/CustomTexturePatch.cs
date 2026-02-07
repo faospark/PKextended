@@ -60,31 +60,13 @@ public partial class CustomTexturePatch
     /// </summary>
     internal static void LogReplaceableTexture(string textureName, string category, string context = null)
     {
-        LogReplaceableTexture(textureName, category, null, context);
-    }
-
-    /// <summary>
-    /// Log a replaceable texture/sprite with GameObject context
-    /// </summary>
-    internal static void LogReplaceableTexture(string textureName, string category, GameObject obj, string context = null)
-    {
-        // Only log if DetailedLogs is enabled AND internal switch is on
-        if (!Plugin.Config.DetailedLogs.Value || !Plugin.Config.LogReplaceableTextures.Value || loggedTextures.Contains(textureName))
+        if (!Plugin.Config.LogReplaceableTextures.Value || loggedTextures.Contains(textureName))
             return;
 
         loggedTextures.Add(textureName);
-        
-        string message = $"[Replaceable {category}] {textureName}";
-        
-        if (!string.IsNullOrEmpty(context))
-            message += $" ({context})";
-            
-        // Append path if enabled and object is available
-        if (Plugin.Config.LogTexturePaths.Value && obj != null)
-        {
-            message += $" [Path: {GetGameObjectPath(obj)}]";
-        }
-            
+        string message = string.IsNullOrEmpty(context) 
+            ? $"[Replaceable {category}] {textureName}"
+            : $"[Replaceable {category}] {textureName} ({context})";
         Plugin.Log.LogInfo(message);
     }
     
@@ -156,7 +138,7 @@ public partial class CustomTexturePatch
 
         if (Plugin.Config.DetailedLogs.Value)
         {
-            Plugin.Log.LogInfo($"[CustomTexturePatch] New BathBG instance detected (ID: {currentInstanceID}, previous: {lastBathBGInstanceID})");
+            Plugin.Log.LogInfo($"New BathBG instance detected (ID: {currentInstanceID}, previous: {lastBathBGInstanceID})");
         }
         
         lastBathBGInstanceID = currentInstanceID;
@@ -179,7 +161,7 @@ public partial class CustomTexturePatch
                         
                         if (Plugin.Config.DetailedLogs.Value)
                         {
-                            Plugin.Log.LogInfo($"[CustomTexturePatch] Replaced bath sprite: {spriteName} in new BathBG instance");
+                            Plugin.Log.LogInfo($"Replaced bath sprite: {spriteName} in new BathBG instance");
                         }
                         
                         replaced++;
@@ -346,7 +328,37 @@ public partial class CustomTexturePatch
         if (targetKey == null && texturePathIndex.ContainsKey(lookupName))
             targetKey = lookupName;
 
-
+        // 2. FALLBACK: Clean name for sactx textures if no exact match found
+        if (targetKey == null && textureName.StartsWith("sactx-"))
+        {
+            string cleanedName = CleanSactxName(textureName);
+            if (cleanedName != textureName)
+            {
+                string cleanedLookup = TextureOptions.GetTextureNameWithVariant(cleanedName);
+                
+                if (currentGame == "GSD1" || currentGame == "GSD2")
+                {
+                    string gsCleaned = $"{currentGame}:{cleanedLookup}";
+                    if (texturePathIndex.ContainsKey(gsCleaned))
+                        targetKey = gsCleaned;
+                }
+                
+                if (targetKey == null && texturePathIndex.ContainsKey(cleanedLookup))
+                    targetKey = cleanedLookup;
+                
+                if (targetKey != null)
+                {
+                    // Also check if we already cached this under the CLEANED name
+                    if (customTextureCache.TryGetValue(cleanedLookup, out Texture2D cleanedCache))
+                    {
+                        // Cache it under the full name too to speed up next time
+                        customTextureCache[textureName] = cleanedCache;
+                        return cleanedCache;
+                    }
+                    lookupName = targetKey; // Use this for the rest of the function
+                }
+            }
+        }
 
         if (targetKey == null) return null;
 
@@ -394,7 +406,22 @@ public partial class CustomTexturePatch
         if (targetKey == null && texturePathIndex.ContainsKey(lookupName))
             targetKey = lookupName;
 
+        // 2. Try fallback to cleaned name for sactx textures
+        if (targetKey == null && textureName.StartsWith("sactx-"))
+        {
+            string cleanedName = CleanSactxName(textureName);
+            string cleanedLookup = TextureOptions.GetTextureNameWithVariant(cleanedName);
+            
+            if (currentGame == "GSD1" || currentGame == "GSD2")
+            {
+                string gameKey = $"{currentGame}:{cleanedLookup}";
+                if (texturePathIndex.ContainsKey(gameKey))
+                    targetKey = gameKey;
+            }
 
+            if (targetKey == null && texturePathIndex.ContainsKey(cleanedLookup))
+                targetKey = cleanedLookup;
+        }
 
         if (targetKey == null || !texturePathIndex.TryGetValue(targetKey, out string filePath))
         {
@@ -440,7 +467,7 @@ public partial class CustomTexturePatch
                     
                     if (Plugin.Config.DetailedLogs.Value)
                     {
-                        Plugin.Log.LogInfo($"[CustomTexturePatch] Replaced raw DDS texture in-place: {textureName} ({ddsTexture.width}x{ddsTexture.height}, {ddsTexture.format})");
+                        Plugin.Log.LogInfo($"Replaced raw DDS texture in-place: {textureName} ({ddsTexture.width}x{ddsTexture.height}, {ddsTexture.format})");
                     }
                 }
                 else
@@ -482,7 +509,7 @@ public partial class CustomTexturePatch
             bool shouldSkipLog = textureName.StartsWith("sactx") || filePath.ToLower().Contains("characters");
             if (!shouldSkipLog && Plugin.Config.DetailedLogs.Value)
             {
-                Plugin.Log.LogInfo($"[CustomTexturePatch] Replaced raw texture in-place: {textureName} ({originalTexture.width}x{originalTexture.height})");
+                Plugin.Log.LogInfo($"Replaced raw texture in-place: {textureName} ({originalTexture.width}x{originalTexture.height})");
             }
             
             return true;
@@ -539,7 +566,29 @@ public partial class CustomTexturePatch
                 texturePathIndex[key] = path;
                 filesIndexed++;
 
+                // Also index by cleaned name for sactx- style filenames
+                // This allows matching even if resolutions or hashes differ
+                string sactxPart = key;
+                string prefix = "";
+                if (key.Contains(":"))
+                {
+                    int idx = key.IndexOf(":");
+                    prefix = key.Substring(0, idx + 1);
+                    sactxPart = key.Substring(idx + 1);
+                }
 
+                if (sactxPart.StartsWith("sactx-"))
+                {
+                    string cleaned = CleanSactxName(sactxPart);
+                    if (cleaned != sactxPart)
+                    {
+                        string cleanedKey = prefix + cleaned;
+                        if (allowOverride || !texturePathIndex.ContainsKey(cleanedKey))
+                        {
+                            texturePathIndex[cleanedKey] = path;
+                        }
+                    }
+                }
             }
         }
 
@@ -611,7 +660,7 @@ public partial class CustomTexturePatch
         sw.Stop();
         if (Plugin.Config.DetailedLogs.Value)
         {
-            Plugin.Log.LogInfo($"[CustomTexturePatch] Indexed {texturePathIndex.Count} textures from {allFiles.Length} files in {sw.ElapsedMilliseconds}ms");
+            Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} textures from {allFiles.Length} files in {sw.ElapsedMilliseconds}ms");
         }
         
         // Only save cache if caching is enabled
@@ -644,7 +693,7 @@ public partial class CustomTexturePatch
         
         if (Plugin.Config.DetailedLogs.Value)
         {
-            Plugin.Log.LogInfo($"[CustomTexturePatch] Indexed {texturePathIndex.Count} custom texture(s) ready to use");
+            Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} custom texture(s) ready to use");
         }
         
         // Register for scene loaded to clear caches
@@ -652,7 +701,8 @@ public partial class CustomTexturePatch
 
         // Preload bath and save point sprites
         PreloadBathSprites();
-        // PreloadSavePointSprites(); // Not necessary - on-demand loading works fine
+        // TODO: Implement PreloadSavePointSprites() - method not yet created
+        // PreloadSavePointSprites();
     }
 
     /// <summary>
@@ -753,6 +803,9 @@ public partial class CustomTexturePatch
         processedTextureIds.Clear();
         processedAtlases.Clear();
         replacedTextures.Clear();
+        
+        // TODO: SpriteAtlasCache not yet implemented - would clear atlas cache here
+        // SpriteAtlasCache.Clear();
     }
     
     #endregion

@@ -98,7 +98,6 @@ public partial class CustomTexturePatch
         }
         
         // Log replaceable textures if enabled (only once per texture)
-        // Log replaceable textures if enabled (only once per texture)
         if (Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(originalName))
         {
             string context = null;
@@ -107,7 +106,7 @@ public partial class CustomTexturePatch
                 context = $"from {objectPath}";
             }
             
-            LogReplaceableTexture(originalName, "Sprite", __instance.gameObject, context);
+            LogReplaceableTexture(originalName, "Sprite", context);
         }
         
         // Try to load custom sprite replacement
