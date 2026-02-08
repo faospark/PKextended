@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note**: This changelog primarily documents changes specific to PK Core. Version numbers may not align with the Project Kyaro Suite releases on Nexus Mods, as PK Core development may progress independently.
 
-## [2026.01.2] - 2026-02-07
+## [2026.02.0] - 2026-02-09
 
 ### Added
 
