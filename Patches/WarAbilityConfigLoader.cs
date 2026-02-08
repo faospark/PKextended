@@ -33,15 +33,43 @@ namespace PKCore.Patches
         
         [JsonPropertyName("defense")]
         public byte? Defense { get; set; } = null;
+
+        [JsonPropertyName("bonusAttack")]
+        public byte? BonusAttack { get; set; } = null;
+
+        [JsonPropertyName("bonusDefense")]
+        public byte? BonusDefense { get; set; } = null;
     }
 
     /// <summary>
-    /// Loads and parses war ability configuration from JSON
+    /// Loads and parses war ability configuration from JSON.
+    /// 
+    /// JSON Format Example:
+    /// {
+    ///   "globalAbilities": ["SP_MOUNT", "SP_AIMING"],
+    ///   "characterAbilities": {
+    ///     "3347": {
+    ///       "name": "Riou",
+    ///       "abilities": ["SP_FLAME_SPEAR", "SP_CHARGE"],
+    ///       "attack": 10,
+    ///       "defense": 11,
+    ///       "bonusAttack": 2,      // Assist/bonus attack from subunits
+    ///       "bonusDefense": 1      // Assist/bonus defense from subunits
+    ///     }
+    ///   }
+    /// }
     /// </summary>
     public static class WarAbilityConfigLoader
     {
         private static readonly string ConfigFileName = "S2WarAbilities.json";
         private static ManualLogSource Logger;
+
+        // Abilities that are known to crash or malfunction - blocklisted from config
+        private static readonly HashSet<string> BlocklistedAbilities = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "SP_KIN_SLAYER",    // Crashes game if used
+            "SP_MAGIC_WIND2"    // Non-functional/broken ability
+        };
 
         public static WarAbilityConfig LoadConfig(string configPath, ManualLogSource logger)
         {
@@ -119,6 +147,7 @@ namespace PKCore.Patches
 
         /// <summary>
         /// Converts ability name string to enum
+        /// Blocklists dangerous abilities (SP_KIN_SLAYER, SP_MAGIC_WIND2) that crash or don't work
         /// </summary>
         public static war_data_h.tagSPECIAL_ABILITY ParseAbility(string abilityName)
         {
@@ -127,6 +156,13 @@ namespace PKCore.Patches
 
             try
             {
+                // Check blocklist first
+                if (BlocklistedAbilities.Contains(abilityName))
+                {
+                    Logger?.LogWarning($"⚠️ Ability '{abilityName}' is blocklisted (crashes or doesn't work). Using SP_NONE instead.");
+                    return war_data_h.tagSPECIAL_ABILITY.SP_NONE;
+                }
+
                 if (Enum.TryParse<war_data_h.tagSPECIAL_ABILITY>(abilityName, true, out var ability))
                 {
                     return ability;

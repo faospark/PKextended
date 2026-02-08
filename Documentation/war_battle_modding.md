@@ -173,10 +173,10 @@ Each character entry can customize:
 | `SP_INVENTION` | Invention | Damage all Surrounding units including self |
 | `SP_CONFUSED_FIGHT` | Melee | Increases Damage on Magic And Arm |
 | `SP_FLYING` | Flying | Aerial unit |
-| `SP_KIN_SLAYER` | Kin Slayer ⚠️ | DO NOT USE. Will Crash Game |
+| `SP_KIN_SLAYER` | Kin Slayer ⚠️ | **BLOCKLISTED** - Crashes game. Ignored in config files. |
 | `SP_FORCE_MOVE` | Force Move ⚠️ | Can force enemy movement |
 | `SP_CHARGE` | Charge ⚠️ | Powerful charge attack (likely unused/cut content) |
-| `SP_MAGIC_WIND2` | Wind Magic Lv2 ⚠️ | Do Not Use |
+| `SP_MAGIC_WIND2` | Wind Magic Lv2 ⚠️ | **BLOCKLISTED** - Doesn't work. Ignored in config files. |
 
 ### Ability Slot Limits
 
@@ -500,6 +500,23 @@ Balanced configuration with various roles:
 2. ✅ Use only abilities from the [Available Abilities](#available-abilities) list
 3. ✅ Ensure abilities are in the correct format: `"SP_MOUNT"` not `"Mount"` or `"MOUNT"`
 4. ✅ Check for typos: `SP_MAGIC_THUNDER1` not `SP_THUNDER1`
+5. ✅ Avoid blocklisted abilities: `SP_KIN_SLAYER` and `SP_MAGIC_WIND2` are automatically ignored
+
+### Blocklisted Abilities Ignored
+
+**Symptoms:**
+- You specified `SP_KIN_SLAYER` or `SP_MAGIC_WIND2` in config
+- Log shows: `⚠️ Ability 'SP_KIN_SLAYER' is blocklisted (crashes or doesn't work). Using SP_NONE instead.`
+- Character has fewer abilities than intended
+
+**Explanation:**
+- `SP_KIN_SLAYER` - Crashes the game if used, permanently blocklisted
+- `SP_MAGIC_WIND2` - Non-functional, automatically blocked to prevent wasted slots
+
+**Solutions:**
+1. Remove these abilities from your JSON config
+2. Replace with working alternatives (see [Full Syntax](#full-syntax))
+3. PKCore automatically logs warnings when blocklisted abilities are detected
 
 ### Game Crashes
 

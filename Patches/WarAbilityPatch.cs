@@ -197,6 +197,9 @@ namespace PKCore.Patches
             {
                 Logger.LogInfo($"[WarAbilityPatch] Modifying all war characters...");
                 
+                // Log battle status flags
+                LogBattleStatusFlags();
+                
                 // Iterate through all 108 war characters
                 for (int i = 0; i < 108; i++)
                 {
@@ -231,10 +234,18 @@ namespace PKCore.Patches
             {
                 int nameIndex = character.name;
                 
-                // Log character state
+                // Log character state with unit type priority
                 var currentAbilities = character.nouryoku;
                 var abilityString = FormatAbilities(currentAbilities);
-                Logger.LogInfo($"Character {nameIndex} - ATK: {character.attack}, DEF: {character.defense}, Abilities: {abilityString}");
+                
+                // Get unit type info
+                string unitType = GetUnitTypeInfo(character);
+                
+                // Log character stats including bonuses
+                Logger.LogInfo($"[{unitType}] Character {nameIndex} - " +
+                    $"ATK: {character.attack} (Bonus: {character.assist_attack}), " +
+                    $"DEF: {character.defense} (Bonus: {character.assist_defense}) - " +
+                    $"Abilities: {abilityString}");
                 
                 // Apply custom config
                 if (CharacterConfigs.TryGetValue(nameIndex, out var config))
@@ -248,9 +259,29 @@ namespace PKCore.Patches
                         ApplyAbilities(character, abilities);
                     }
                     
-                    // Stats
-                    if (config.Attack.HasValue) character.attack = config.Attack.Value;
-                    if (config.Defense.HasValue) character.defense = config.Defense.Value;
+                    // Base Stats
+                    if (config.Attack.HasValue)
+                    {
+                        character.attack = config.Attack.Value;
+                        Logger.LogInfo($"  ➜ Updated attack to {config.Attack.Value}");
+                    }
+                    if (config.Defense.HasValue)
+                    {
+                        character.defense = config.Defense.Value;
+                        Logger.LogInfo($"  ➜ Updated defense to {config.Defense.Value}");
+                    }
+
+                    // Bonus Stats (from unit composition)
+                    if (config.BonusAttack.HasValue)
+                    {
+                        character.assist_attack = config.BonusAttack.Value;
+                        Logger.LogInfo($"  ➜ Updated assist_attack bonus to {config.BonusAttack.Value}");
+                    }
+                    if (config.BonusDefense.HasValue)
+                    {
+                        character.assist_defense = config.BonusDefense.Value;
+                        Logger.LogInfo($"  ➜ Updated assist_defense bonus to {config.BonusDefense.Value}");
+                    }
                 }
                 // Or apply global abilities
                 else if (GlobalAbilities.Length > 0)
@@ -352,6 +383,64 @@ namespace PKCore.Patches
             
             var formatted = abilities.Take(3).Select(a => a.ToString()).ToList();
             return string.Join(", ", formatted);
+        }
+
+        private static string GetUnitTypeInfo(WAR_CHARA_TYPE character)
+        {
+            try
+            {
+                if (character == null) return "UNKNOWN_TYPE";
+
+                // Detect unit type from character properties
+                // Try to identify from force_type or attack/defense patterns
+                byte forceType = character.force_type;
+
+                // Map units to types based on known character indices and patterns
+                // This is a heuristic approach - can be refined with more data
+                int charName = character.name;
+
+                // Check against known unit type constants from war_data_h
+                byte infantryVal = war_data_h.INFANTRY;
+                byte archerVal = war_data_h.ARCHER;
+                byte magiciansVal = war_data_h.MAGICIANS;
+                byte magicThunderVal = war_data_h.MAGIC_THUNDER;
+                byte magicFireVal = war_data_h.MAGIC_FIRE;
+                byte magicWindVal = war_data_h.MAGIC_WIND;
+
+                // Log unit type constants for reference (debug)
+                Logger.LogDebug($"Unit Type Constants - INFANTRY: {infantryVal}, ARCHER: {archerVal}, MAGICIANS: {magiciansVal}, " +
+                    $"MAGIC_THUNDER: {magicThunderVal}, MAGIC_FIRE: {magicFireVal}, MAGIC_WIND: {magicWindVal}");
+
+                // For now, return generic type with force affiliation
+                // In future, this can be extended to detect actual unit types
+                string typeStr = forceType switch
+                {
+                    0 => "FORCE_0", // Likely main force
+                    1 => "FORCE_1", // Likely enemy force
+                    _ => $"FORCE_{forceType}"
+                };
+
+                return typeStr;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogDebug($"Error detecting unit type: {ex.Message}");
+                return "WAR_UNIT";
+            }
+        }
+
+        private static void LogBattleStatusFlags()
+        {
+            try
+            {
+                // Log available battle status flags for debugging
+                Logger.LogDebug($"[WarAbilityPatch] Battle Status - DEAD_POSSIBLE: {war_data_h.DEAD_POSSIBLE}, DEAD_UNPOSSIBLE: {war_data_h.DEAD_UNPOSSIBLE}, ANNIHILATION_UNPOSSIBLE: {war_data_h.ANNIHILATION_UNPOSSIBLE}");
+                Logger.LogDebug($"[WarAbilityPatch] Unit Flags - WAIT: {war_data_h.UNIT_FLAG_WAIT}, ON_STAGE: {war_data_h.UNIT_FLAG_ON_STAGE}, DESTROY: {war_data_h.UNIT_FLAG_DESTROY}");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogDebug($"[WarAbilityPatch] Could not log battle status flags: {ex.Message}");
+            }
         }
     }
 }
