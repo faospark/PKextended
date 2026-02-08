@@ -250,7 +250,7 @@ public sealed class ModConfiguration
             "05 Game : Suikoden 2",
             "EnableWarAbilityMod",
             true,
-            "Enable war battle ability modification. Allows you to customize character abilities in Suikoden 2's war battles. Wont appear on the game menu of Apple but will have an effect on battle. Base is already boosted but can be further configures in PKCore/Config/war_abilities.json"
+            "Enable war battle ability modification. Allows you to customize character abilities in Suikoden 2's war battles. Wont appear on the game menu of Apple but will have an effect on battle. Base is already boosted but can be further configures in PKCore/Config/S2WarAbilities.json"
         );
 
         // Performance section - all performance related settings

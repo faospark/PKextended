@@ -24,12 +24,12 @@ EnableWarAbilityMod = true
 
 The war battle configuration file is located at:
 ```
-<Game Root>/PKCore/Config/war_abilities.json
+<Game Root>/PKCore/Config/S2WarAbilities.json
 ```
 
 **Full path example:**
 ```
-D:\SteamLibrary\steamapps\common\Suikoden I and II HD Remaster\PKCore\Config\war_abilities.json
+D:\SteamLibrary\steamapps\common\Suikoden I and II HD Remaster\PKCore\Config\S2WarAbilities.json
 ```
 
 ### 3. Basic JSON Structure
@@ -54,7 +54,7 @@ D:\SteamLibrary\steamapps\common\Suikoden I and II HD Remaster\PKCore\Config\war
 
 ### Initialization
 
-1. **Game Launch**: PKCore loads `war_abilities.json` on startup
+1. **Game Launch**: PKCore loads `S2WarAbilities.json` on startup
 2. **War Battle Start**: When a war battle begins, the mod intercepts character initialization
 3. **Ability Assignment**: Characters receive custom abilities and stats from the JSON config
 4. **Usage Counts**: Each ability is given 9 uses per battle (default)
@@ -152,31 +152,31 @@ Each character entry can customize:
 | Ability Code | Description | Effect |
 |--------------|-------------|--------|
 | `SP_NONE` | No ability | Empty slot |
-| `SP_MOUNT` | Cavalry | Mounted unit bonus |
-| `SP_CHARGE` | Charge ⚠️ | Powerful charge attack (likely unused/cut content) |
-| `SP_AIMING` | Precise Aim | Improved accuracy |
+| `SP_MOUNT` | Cavalry | Movement Ability Up |
+| `SP_AIMING` | Ranged Ability | Attack Enemy With 5 spaces|
 | `SP_FLAME_SPEAR` | Fire Spear | Fire-based attack |
-| `SP_SHINING_SHIELD` | Shining Shield | Large Heal AOE |
-| `SP_HP_PLUS` | HP Bonus | Increased health |
+| `SP_SHINING_SHIELD` | Bright Shield | Large Heal AOE |
+| `SP_HP_PLUS` | Heavy Armor | Defense plus 1  |
 | `SP_CRITICAL` | Critical Hit | Chance for critical damage |
-| `SP_FORCE_MOVE` | Force Move | Can force enemy movement |
 | `SP_SCOUT` | Scout | Reconnaissance ability |
 | `SP_FOREST_WALK` | Forest Walk | Larger are movement through forests |
 | `SP_MAGIC_WIND1` | Wind Magic Lv1 | Wind-based magic attack |
 | `SP_MAGIC_FIRE1` | Fire Magic Lv1 | Fire-based magic attack |
 | `SP_MAGIC_THUNDER1` | Thunder Magic Lv1 | Lightning-based attack |
-| `SP_MAGIC_WIND2` | Wind Magic Lv2 | Stronger wind magic |
 | `SP_SEE_THROUGH` | See Through | Detect deception/traps |
-| `SP_KIN_SLAYER` | Kin Slayer | Bonus vs specific types |
-| `SP_MEDICAL1` | Healing Lv1 | Minor healing ability |
-| `SP_MEDICAL2` | Healing Lv2 | Stronger healing |
-| `SP_THROUGH_ROAD` | Road Movement | Faster movement on roads |
+| `SP_MEDICAL1` | Mend Self | Minor healing ability |
+| `SP_MEDICAL2` | Heal | Heal 1 unit on a larger area |
+| `SP_THROUGH_ROAD` | Evade | Provides a Chance in Avoiding Damage|
 | `SP_BODY_GUARD` | Bodyguard | Protect nearby allies |
-| `SP_CHEAR_UP` | Cheer Up | Morale boost |
-| `SP_INVESTIGATION` | Investigation | Special recon ability |
-| `SP_INVENTION` | Invention | Unique gadget abilities |
-| `SP_CONFUSED_FIGHT` | Confuse | Can confuse enemies |
+| `SP_CHEAR_UP` | Cheer Up | Gives Extra Turn |
+| `SP_INVESTIGATION` | Investigation | Success Rates Disclosed |
+| `SP_INVENTION` | Invention | Damage all Surrounding units including self |
+| `SP_CONFUSED_FIGHT` | Melee | Increases Damage on Magic And Arm |
 | `SP_FLYING` | Flying | Aerial unit |
+| `SP_KIN_SLAYER` | Kin Slayer ⚠️ | DO NOT USE. Will Crash Game |
+| `SP_FORCE_MOVE` | Force Move ⚠️ | Can force enemy movement |
+| `SP_CHARGE` | Charge ⚠️ | Powerful charge attack (likely unused/cut content) |
+| `SP_MAGIC_WIND2` | Wind Magic Lv2 ⚠️ | Do Not Use |
 
 ### Ability Slot Limits
 
@@ -199,30 +199,59 @@ Some abilities are defined in game code but may not function:
 
 ## Character ID Reference
 
-### Known Character IDs (Partial List)
+### Main War Units
 
-Based on your log output:
+| Character ID | Name | ATK | DEF | Abilities |
+|--------------|------|-----|-----|-----------|
+| 3347 | Riou | 8 | 9 | SP_SHINING_SHIELD |
+| 4 | Viktor | 8 | 7 | None |
+| 118 | Ridley | 10 | 7 | SP_CRITICAL |
+| 13 | Valeria | 8 | 8 | SP_MOUNT |
+| 88 | Kiba | 7 | 12 | SP_HP_PLUS, SP_MOUNT |
+| 35 | Hauser | 9 | 7 | SP_MOUNT |
+| 12 | George | 11 | 8 | SP_CRITICAL |
+| 120 | Maximillian | 6 | 7 | SP_MOUNT |
+| 122 | Gilbert | 7 | 8 | None |
+| 3 | Flik | 7 | 7 | SP_MOUNT |
+| 102 | Teresa | 5 | 6 | SP_AIMING |
+| 44 | Ayda | 6 | 5 | SP_MEDICAL1, SP_FOREST_WALK |
+| 74 | Kasumi | 6 | 6 | SP_SCOUT |
+| 123 | Boris | 9 | 8 | SP_SEE_THROUGH |
+| 54 | Luc | 10 | 4 | SP_MAGIC_WIND1 |
+| 62 | Mazus | 9 | 6 | SP_MAGIC_FIRE1 |
 
-| Character ID | Name | Original Stats | Original Abilities |
-|--------------|------|----------------|-------------------|
-| 3347 | Riou | ATK: 8, DEF: 9 | SP_SHINING_SHIELD |
-| 4 | Viktor | ATK: 8, DEF: 7 | None |
-| 3 | Flik | ATK: 7, DEF: 7 | SP_MOUNT |
-| 12 | George | ATK: 11, DEF: 8 | SP_CRITICAL |
-| 13 | Valeria | ATK: 8, DEF: 8 | SP_MOUNT |
-| 44 | Ayda | ATK: 6, DEF: 5 | SP_MEDICAL1, SP_FOREST_WALK |
-| 54 | Luc | ATK: 10, DEF: 4 | SP_MAGIC_WIND1 |
-| 62 | Mazus | ATK: 9, DEF: 6 | SP_MAGIC_FIRE1 |
-| 88 | Kasumi (?) | ATK: 7, DEF: 12 | SP_HP_PLUS, SP_MOUNT |
-| 93 | Juan | ATK: 0, DEF: 0 | SP_MEDICAL2 |
-| 102 | Teresa | ATK: 5, DEF: 6 | SP_AIMING |
-| 106 | Adlai | ATK: 0, DEF: 0 | SP_INVENTION |
-| 113 | Annallee | ATK: 0, DEF: 0 | SP_CHEAR_UP |
-| 117 | Jeane | ATK: 0, DEF: 0 | SP_MAGIC_THUNDER1 |
-| 118 | Ridley | ATK: 10, DEF: 7 | SP_CRITICAL |
-| 120 | Maximillian | ATK: 6, DEF: 7 | SP_MOUNT |
-| 122 | Gilbert | ATK: 7, DEF: 8 | None |
-| 123 | Boris | ATK: 9, DEF: 8 | SP_SEE_THROUGH |
+### Subunits
+
+| Character ID | Name | ATK | DEF | Abilities |
+|--------------|------|-----|-----|-----------|
+| 90 | Shu | 0 | 0 | SP_CRITICAL, SP_SEE_THROUGH |
+| 86 | Apple | 0 | 0 | SP_SEE_THROUGH |
+| 119 | Klaus | 0 | 0 | SP_SEE_THROUGH, SP_MOUNT |
+| 19 | Nanami | 0 | 0 | SP_MEDICAL1 |
+| 53 | Tsai | 0 | 0 | SP_FLAME_SPEAR |
+| 33 | Miklotov | 11 | 6 | SP_MOUNT |
+| 34 | Camus | 9 | 8 | SP_MOUNT |
+| 16 | Shin | 0 | 0 | SP_CRITICAL |
+| 94 | (Unknown) | 0 | 0 | SP_SEE_THROUGH |
+| 3348 | Freed Y | 6 | 7 | None |
+| 93 | Huan | 0 | 0 | SP_MEDICAL2 |
+| 23 | Tuta | 0 | 0 | SP_MEDICAL1 |
+| 11 | Humphrey | 0 | 0 | SP_HP_PLUS |
+| 87 | Templeton | 0 | 0 | SP_THROUGH_ROAD |
+| 117 | Jeane | 0 | 0 | SP_MAGIC_THUNDER1 |
+| 39 | Tai Ho | 0 | 0 | None |
+| 101 | Yam Koo | 0 | 0 | None |
+| 47 | Oulan | 0 | 0 | SP_BODY_GUARD |
+| 113 | Annallee | 0 | 0 | SP_CHEAR_UP |
+| 14 | Pesmerga | 0 | 0 | SP_MOUNT |
+| 15 | Lorelai | 0 | 0 | None |
+| 97 | Emilia | 0 | 0 | SP_INVESTIGATION |
+| 106 | Adlai | 0 | 0 | SP_INVENTION |
+| 24 | Hanna | 0 | 0 | None |
+| 55 | Chaco | 0 | 0 | SP_FLYING |
+| 59 | Gijimu | 0 | 0 | SP_CONFUSED_FIGHT |
+| 60 | Koyu | 0 | 0 | SP_MEDICAL1 |
+| 61 | Lowen | 0 | 0 | SP_CONFUSED_FIGHT |
 
 **Finding More IDs:**
 1. Set `DetailedLogs = true` in config
@@ -381,7 +410,7 @@ Balanced configuration with various roles:
 
 **Solutions:**
 1. ✅ Check `EnableWarAbilityMod = true` in config
-2. ✅ Verify JSON file is at correct location: `PKCore/Config/war_abilities.json`
+2. ✅ Verify JSON file is at correct location: `PKCore/Config/S2WarAbilities.json`
 3. ✅ Validate JSON syntax using [JSONLint](https://jsonlint.com/)
 4. ✅ Ensure character IDs are strings (in quotes): `"3347"` not `3347`
 5. ✅ Set `DetailedLogs = true` to see if config is loading
@@ -483,7 +512,7 @@ Balanced configuration with various roles:
 2. Remove recently added entries to isolate problem
 3. Check for invalid ability names (typos)
 4. Ensure attack/defense values are numbers, not strings
-5. Delete `war_abilities.json` to reset to defaults, then rebuild
+5. Delete `S2WarAbilities.json` to reset to defaults, then rebuild
 
 ---
 
@@ -527,8 +556,8 @@ Balanced configuration with various roles:
 
 ### Configuration Loading
 
-1. **Location Check**: PKCore looks for `PKCore/Config/war_abilities.json`
-2. **Migration**: Automatically migrates from old `PKCore/war_abilities.json` location
+1. **Location Check**: PKCore looks for `PKCore/Config/S2WarAbilities.json`
+2. **Migration**: Automatically migrates from old `PKCore/S2WarAbilities.json` location
 3. **Parsing**: JSON deserialized into internal config objects
 4. **Validation**: Ability names converted to enum values
 5. **Storage**: Character configs cached in memory for quick access
@@ -585,7 +614,7 @@ A: Yes, delete the character entry from JSON or set abilities to original values
 A: These are enemy units or unrecruited characters. You typically don't modify these.
 
 **Q: Can I share my custom configurations?**  
-A: Yes! Just share your `war_abilities.json` file. Others can place it in their `PKCore/Config/` folder.
+A: Yes! Just share your `S2WarAbilities.json` file. Others can place it in their `PKCore/Config/` folder.
 
 **Q: Does this work with other mods?**  
 A: Yes, compatible with Suikoden Fix and other BepInEx mods. Load order doesn't matter.

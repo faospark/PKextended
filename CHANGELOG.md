@@ -96,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Specialized Suikoden 2 Support
 
 - **Summon Effect Replacement**: New `SummonMonitor` system proactively replaces textures for summon effects (Eff_tex_Summon_*) which was previously unsupported.
-- **War Battle Modding**: Modify character stats and abilities for Suikoden 2 war battles via `war_abilities.json`.
+- **War Battle Modding**: Modify character stats and abilities for Suikoden 2 war battles via `S2WarAbilities.json`.
 - **Texture Variants**: Toggle alternate textures for Tir's run cycle (`TirRunTexture`) and the Mercenary Fortress fence (`MercFortFence`).
 
 #### UI Scaling & Customization

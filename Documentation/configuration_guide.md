@@ -61,7 +61,7 @@ This document outlines all available configuration options for PKCore layout in 
 | **EnableNPCPortraits**        |  bool  |  `true`  | Enable custom NPC portrait injection system.                          |
 | **MercFortFence**             | string | `default` | Mercenary Fortress fence texture variant (`default`, `bamboo`, etc.). |
 | **ColoredIntroAndFlashbacks** |  bool  |  `true`  | Restore color to intro and flashback sequences.                       |
-| **EnableWarAbilityMod**       |  bool  |  `true`  | Enable war battle ability customization via`war_abilities.json`.      |
+| **EnableWarAbilityMod**       |  bool  |  `true`  | Enable war battle ability customization via`S2WarAbilities.json`.      |
 
 ## [Performance]
 

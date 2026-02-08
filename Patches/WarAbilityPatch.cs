@@ -52,8 +52,8 @@ namespace PKCore.Patches
             // Load configuration from JSON in the PKCore/Config directory
             var pkCoreDir = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore");
             var configDir = Path.Combine(pkCoreDir, "Config");
-            var legacyConfigPath = Path.Combine(pkCoreDir, "war_abilities.json");
-            var newConfigPath = Path.Combine(configDir, "war_abilities.json");
+            var legacyConfigPath = Path.Combine(pkCoreDir, "S2WarAbilities.json");
+            var newConfigPath = Path.Combine(configDir, "S2WarAbilities.json");
 
             // Create Config directory if it doesn't exist
             if (!Directory.Exists(configDir))
@@ -66,12 +66,12 @@ namespace PKCore.Patches
             {
                 try 
                 {
-                    Logger.LogInfo($"[WarAbilityPatch] Migrating war_abilities.json to {configDir}...");
+                    Logger.LogInfo($"[WarAbilityPatch] Migrating S2WarAbilities.json to {configDir}...");
                     File.Move(legacyConfigPath, newConfigPath);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Failed to migrate war_abilities.json: {ex.Message}");
+                    Logger.LogError($"Failed to migrate S2WarAbilities.json: {ex.Message}");
                     // Fallback to legacy path
                     Config = WarAbilityConfigLoader.LoadConfig(pkCoreDir, Logger);
                     return;
@@ -195,6 +195,8 @@ namespace PKCore.Patches
 
             try
             {
+                Logger.LogInfo($"[WarAbilityPatch] Modifying all war characters...");
+                
                 // Iterate through all 108 war characters
                 for (int i = 0; i < 108; i++)
                 {
@@ -212,6 +214,8 @@ namespace PKCore.Patches
                         continue;
                     }
                 }
+                
+                Logger.LogInfo($"[WarAbilityPatch] Finished modifying all characters");
             }
             catch (Exception ex)
             {
@@ -227,9 +231,16 @@ namespace PKCore.Patches
             {
                 int nameIndex = character.name;
                 
+                // Log character state
+                var currentAbilities = character.nouryoku;
+                var abilityString = FormatAbilities(currentAbilities);
+                Logger.LogInfo($"Character {nameIndex} - ATK: {character.attack}, DEF: {character.defense}, Abilities: {abilityString}");
+                
                 // Apply custom config
                 if (CharacterConfigs.TryGetValue(nameIndex, out var config))
                 {
+                    Logger.LogInfo($"Applying custom configuration to character {nameIndex}");
+                    
                     // Abilities
                     if (config.Abilities != null && config.Abilities.Count > 0)
                     {
@@ -270,6 +281,9 @@ namespace PKCore.Patches
             // Initialize usages
             var abilityList = abilities.Where(a => a != war_data_h.tagSPECIAL_ABILITY.SP_NONE).ToList();
             InitializeAbilityUsageCounts(character, abilityList);
+            
+            Logger.LogInfo($"✓ Initialized usage counts (9 uses each) for {abilityList.Count} abilities on character {character.name}");
+            Logger.LogInfo($"Replaced abilities: {FormatAbilities(newAbilityArray)}");
         }
 
         private static void AddAbilities(WAR_CHARA_TYPE character, war_data_h.tagSPECIAL_ABILITY[] abilitiesToAdd)
@@ -329,6 +343,15 @@ namespace PKCore.Patches
                 }
             }
             return null;
+        }
+
+        private static string FormatAbilities(Il2CppStructArray<war_data_h.tagSPECIAL_ABILITY> abilities)
+        {
+            if (abilities == null || abilities.Length == 0)
+                return "SP_NONE";
+            
+            var formatted = abilities.Take(3).Select(a => a.ToString()).ToList();
+            return string.Join(", ", formatted);
         }
     }
 }

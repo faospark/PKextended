@@ -40,7 +40,7 @@ namespace PKCore.Patches
     /// </summary>
     public static class WarAbilityConfigLoader
     {
-        private static readonly string ConfigFileName = "war_abilities.json";
+        private static readonly string ConfigFileName = "S2WarAbilities.json";
         private static ManualLogSource Logger;
 
         public static WarAbilityConfig LoadConfig(string configPath, ManualLogSource logger)
