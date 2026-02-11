@@ -53,6 +53,12 @@
     <Compile Remove="SuikoVA\**" />
     <EmbeddedResource Remove="SuikoVA\**" />
     <None Remove="SuikoVA\**" />
+    <Compile Remove="save\**" />
+    <EmbeddedResource Remove="save\**" />
+    <None Remove="save\**" />
+    <Compile Remove="study\**" />
+    <EmbeddedResource Remove="study\**" />
+    <None Remove="study\**" />
   </ItemGroup>
 
   <ItemGroup>
