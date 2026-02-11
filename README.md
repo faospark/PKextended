@@ -42,6 +42,7 @@ The **core DLL component** for **[Project Kyaro](https://www.nexusmods.com/suiko
 
 **[Baked In]**
 
+* Automatic Text Placeholder Replacement (protagonist/HQ names from save data)
 * Added Headquarters Signage (S1)
 * Fixed Backgrounds with Bad Baked DOF (S2)
 * Fixed Inconsistent Telescope on HQ (S2)
@@ -65,6 +66,7 @@ Replace game textures with custom PNG or DDS files in `BepInEx/plugins/PKCore/Te
 
 ### Advanced Customization
 
+- **Placeholder Text Replacement**: Automatic replacement of protagonist and HQ name placeholders in dialogs. See [Placeholder Text Guide](Documentation/PlaceholderText.md).
 - **NPC Portraits**: Inject custom high-resolution portraits for any NPC.
 - **War Battle Modding**: Customize character stats and abilities in Suikoden 2 war battles via JSON.
 - **UI Scaling**: Presets for dialog box size and menu layout scaling.
