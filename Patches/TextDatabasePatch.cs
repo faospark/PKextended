@@ -20,13 +20,13 @@ public class TextDatabasePatch
         if (!Plugin.Config.EnableDialogOverrides.Value)
             return true;
 
-        // Try to get an override from NPCPortraitPatch (which holds the dictionary)
+        // Try to get an override from PortraitSystemPatch (which holds the dictionary)
         // Format for ID key: "id:index" (e.g. "sys_01:5")
         string key = $"{id}:{index}";
         
-        // We access the dictionary via a public method on NPCPortraitPatch (we'll need to add this)
-        // Or we can move the dictionary to a shared location. For now, let's add a public accessor to NPCPortraitPatch.
-        string replacement = NPCPortraitPatch.GetDialogOverride(key);
+        // We access the dictionary via a public method on PortraitSystemPatch (we'll need to add this)
+        // Or we can move the dictionary to a shared location. For now, let's add a public accessor to PortraitSystemPatch.
+        string replacement = PortraitSystemPatch.GetDialogOverride(key);
         
         if (replacement != null)
         {
@@ -65,7 +65,7 @@ public class TextDatabasePatch
             
         // Check for Speaker Override by ID
         string speakerKey = $"{id}:{index}";
-        string speakerData = NPCPortraitPatch.GetSpeakerOverride(speakerKey);
+        string speakerData = PortraitSystemPatch.GetSpeakerOverride(speakerKey);
         
         if (!string.IsNullOrEmpty(speakerData))
         {
@@ -116,7 +116,7 @@ public class TextDatabasePatch
             return;
             
         string speakerKey = $"{id}:{index}";
-        string speakerData = NPCPortraitPatch.GetSpeakerOverride(speakerKey);
+        string speakerData = PortraitSystemPatch.GetSpeakerOverride(speakerKey);
         
         if (!string.IsNullOrEmpty(speakerData))
         {

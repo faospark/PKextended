@@ -40,7 +40,7 @@ public class Plugin : BasePlugin
         try
         {
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SavePointSpriteMonitor>();
-            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<ReactionMonitor>();
+            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<S2CookOffPortraitMonitor>();
 
 
         }
@@ -184,8 +184,8 @@ public class Plugin : BasePlugin
         if (Config.EnableNPCPortraits.Value)
         {
             Log.LogInfo("Applying NPC Portrait patches...");
-            harmony.PatchAll(typeof(NPCPortraitPatch));
-            NPCPortraitPatch.Initialize();
+            harmony.PatchAll(typeof(PortraitSystemPatch));
+            PortraitSystemPatch.Initialize();
             
             // Apply Dialog Text ID interceptor (if overrides or logging enabled)
             if (Config.EnableDialogOverrides.Value || Config.LogTextIDs.Value)
@@ -318,7 +318,7 @@ public class Plugin : BasePlugin
         }
 
         // Reaction Monitor (MapChara/r_action trigger)
-        ReactionMonitor.Initialize();
+        S2CookOffPortraitMonitor.Initialize();
 
     }
 }

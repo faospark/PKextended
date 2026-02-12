@@ -17,7 +17,7 @@ namespace PKCore.Patches;
 /// This allows adding portraits for NPCs that don't have them in the base game.
 /// </summary>
 [HarmonyPatch]
-public class NPCPortraitPatch
+public class PortraitSystemPatch
 {
     // Custom class to hold portrait data (IL2CPP doesn't handle tuples well with Unity objects)
     private class PortraitEntry

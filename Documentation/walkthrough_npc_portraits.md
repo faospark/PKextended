@@ -18,7 +18,7 @@ The NPC Portrait System allows custom portrait injection for NPCs that don't hav
 - Manages expression variants (angry, sad, happy, etc.)
 - Provides unified API for portrait path resolution
 
-**2. NPCPortraitPatch.cs** - Portrait injection and rendering
+**2. PortraitSystemPatch.cs** - Portrait injection and rendering
 - Patches dialogue/message window system
 - Loads textures and creates sprites on-demand
 - Handles dialog text replacement and speaker name injection
@@ -215,7 +215,7 @@ Replaces dialog text:
 
 ### On Game Launch
 1. `PortraitVariants.Initialize()` - Discovers all portrait directories
-2. `NPCPortraitPatch.Initialize()` - Creates default folders, preloads portraits
+2. `PortraitSystemPatch.Initialize()` - Creates default folders, preloads portraits
 3. Loads JSON configs (PortraitMappings, PortraitVariants, SpeakerOverrides, DialogOverrides)
 
 ### On Game Switch
@@ -321,7 +321,7 @@ LogTextIDs = true
 - Returns full file path or null
 - Handles all mapping, variants, and fallbacks
 
-**NPCPortraitPatch.LoadPortraitTexture(characterName, expression)**
+**PortraitSystemPatch.LoadPortraitTexture(characterName, expression)**
 - Loads PNG file as Texture2D
 - Calls PortraitVariants.GetPortraitPath() internally
 - Creates sprite with proper settings

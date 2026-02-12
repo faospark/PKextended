@@ -10,10 +10,10 @@ namespace PKCore.Patches
     /// Monitors the game for specific object activation ('r_action') 
     /// and triggers a custom UI reaction overlay.
     /// </summary>
-    public class ReactionMonitor : MonoBehaviour
+    public class S2CookOffPortraitMonitor : MonoBehaviour
     {
         private static ManualLogSource Logger => Plugin.Log;
-        private static ReactionMonitor instance;
+        private static S2CookOffPortraitMonitor instance;
 
         // Configuration
         private const string TRIGGER_OBJECT_PATH = "AppRoot/Map/MapChara/r_action";
@@ -37,12 +37,12 @@ namespace PKCore.Patches
             if (instance != null) return;
 
             // Create a hidden GameObject to host this script
-            GameObject host = new GameObject("PKCore_ReactionMonitor");
+            GameObject host = new GameObject("PKCore_S2CookOffPortraitMonitor");
             UnityEngine.Object.DontDestroyOnLoad(host);
             host.hideFlags = HideFlags.HideAndDontSave;
             
-            instance = host.AddComponent<ReactionMonitor>();
-            Logger.LogInfo("[ReactionMonitor] Initialized");
+            instance = host.AddComponent<S2CookOffPortraitMonitor>();
+            Logger.LogInfo("[S2CookOffPortraitMonitor] Initialized");
         }
 
         private void Update()
@@ -62,7 +62,7 @@ namespace PKCore.Patches
             {
                 triggerObject = GameObject.Find(TRIGGER_OBJECT_PATH);
                 if (triggerObject != null)
-                     Logger.LogInfo($"[ReactionMonitor] Found '{TRIGGER_OBJECT_PATH}' (Active: {triggerObject.activeInHierarchy})");
+                     Logger.LogInfo($"[S2CookOffPortraitMonitor] Found '{TRIGGER_OBJECT_PATH}' (Active: {triggerObject.activeInHierarchy})");
             }
 
             // 2. Check trigger active state
@@ -113,13 +113,13 @@ namespace PKCore.Patches
 
         private void OnTriggerActivated()
         {
-            Logger.LogInfo($"[ReactionMonitor] Trigger '{TRIGGER_OBJECT_PATH}' ACTIVATED! Showing overlay.");
+            Logger.LogInfo($"[S2CookOffPortraitMonitor] Trigger '{TRIGGER_OBJECT_PATH}' ACTIVATED! Showing overlay.");
             ShowOverlay();
         }
 
         private void OnTriggerDeactivated()
         {
-            // Logger.LogInfo($"[ReactionMonitor] Trigger Deactivated.");
+            // Logger.LogInfo($"[S2CookOffPortraitMonitor] Trigger Deactivated.");
             HideOverlay();
         }
 
@@ -160,7 +160,7 @@ namespace PKCore.Patches
                 GameObject canvasRoot = GameObject.Find("UI_Root/UI_Canvas_Root");
                 if (canvasRoot == null)
                 {
-                    Logger.LogWarning("[ReactionMonitor] Could not find UI_Root/UI_Canvas_Root");
+                    Logger.LogWarning("[S2CookOffPortraitMonitor] Could not find UI_Root/UI_Canvas_Root");
                     return; // Try again later
                 }
 
@@ -207,14 +207,14 @@ namespace PKCore.Patches
                 }
                 else
                 {
-                    Logger.LogWarning($"[ReactionMonitor] Could not load portrait '{PORTRAIT_NAME}'");
+                    Logger.LogWarning($"[S2CookOffPortraitMonitor] Could not load portrait '{PORTRAIT_NAME}'");
                 }
                 
-                Logger.LogInfo("[ReactionMonitor] Overlay UI created successfully.");
+                Logger.LogInfo("[S2CookOffPortraitMonitor] Overlay UI created successfully.");
             }
             catch (Exception ex)
             {
-                Logger.LogError($"[ReactionMonitor] Failed to create overlay: {ex.Message}");
+                Logger.LogError($"[S2CookOffPortraitMonitor] Failed to create overlay: {ex.Message}");
             }
         }
     }

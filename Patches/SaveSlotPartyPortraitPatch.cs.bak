@@ -1,0 +1,564 @@
+using HarmonyLib;
+using UnityEngine;
+using UnityEngine.UI;
+using System;
+using System.IO;
+using System.Text.Json;
+using System.Collections.Generic;
+
+namespace PKCore.Patches
+{
+    /// <summary>
+    /// Displays party member portraits in Suikoden 2 save slots
+    /// </summary>
+    [HarmonyPatch]
+    public class SaveSlotPartyPortraitPatch
+    {
+        private static Dictionary<UISaveLoadSlot, GameObject> slotPortraitContainers = new Dictionary<UISaveLoadSlot, GameObject>();
+        private static Dictionary<string, Sprite> portraitCache = new Dictionary<string, Sprite>();
+
+        /// <summary>
+        /// Hook into UISaveLoad2.Init to attach our monitor and debug initialization
+        /// </summary>
+        [HarmonyPatch(typeof(UISaveLoad2), nameof(UISaveLoad2.Init))]
+        [HarmonyPostfix]
+        public static void Init_Postfix(UISaveLoad2 __instance)
+        {
+            Plugin.Log.LogInfo($"[SaveSlotPortrait] UISaveLoad2.Init Postfix called! Instance ID: {__instance.GetInstanceID()}");
+            
+            if (!Plugin.Config.ShowSaveSlotPartyPortraits.Value || !GameDetection.IsGSD2())
+                return;
+
+            // Register the component type with Il2CppInterop if not already done
+            // This is safe to call multiple times as it checks internally, 
+            // but we can also use a static flag to be sure.
+            if (!_monitorRegistered)
+            {
+                Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SaveSlotPortraitMonitor>();
+                _monitorRegistered = true;
+                Plugin.Log.LogInfo("[SaveSlotPortrait] SaveSlotPortraitMonitor registered in IL2CPP domain.");
+            }
+
+            // Attach monitor if not present
+            var monitor = __instance.gameObject.GetComponent<SaveSlotPortraitMonitor>();
+            if (monitor == null)
+            {
+                Plugin.Log.LogInfo("[SaveSlotPortrait] Attaching SaveSlotPortraitMonitor...");
+                monitor = __instance.gameObject.AddComponent<SaveSlotPortraitMonitor>();
+            }
+        }
+        
+        private static bool _monitorRegistered = false;
+
+        // Monitor component that runs every frame to ensure portraits are present
+        public class SaveSlotPortraitMonitor : MonoBehaviour
+        {
+            private float _timer = 0f;
+            private const float UPDATE_INTERVAL = 0.5f; // Check every 0.5 seconds
+
+            public SaveSlotPortraitMonitor(IntPtr ptr) : base(ptr) { }
+
+            private void Update()
+            {
+                _timer += Time.deltaTime;
+                if (_timer >= UPDATE_INTERVAL)
+                {
+                    _timer = 0f;
+                    CheckAndRefreshSlots();
+                }
+            }
+
+            private void CheckAndRefreshSlots()
+            {
+                // Find all active SaveSlot components in children
+                var slots = GetComponentsInChildren<UISaveLoadSlot>(false); // false = only active
+                
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogInfo($"[SaveSlotPortraitMonitor] Found {slots.Count} active slots.");
+
+                for (int i = 0; i < slots.Count; i++)
+                {
+                    var slot = slots[i];
+                    
+                    // Simple check: do we have a container?
+                    if (!slotPortraitContainers.ContainsKey(slot))
+                    {
+                        // We need to know the index and info to process.
+                        // UISaveLoadSlot doesn't blatantly expose "Index" directly as a field we can read easily 
+                        // without reflection or if it's not public.
+                        // But wait, UpdateItem passed index.
+                        
+                        // Current issue: The monitor doesn't know the DATA for the slot without the UpdateItem call.
+                        // However, we can check if the slot has text populated. 
+                        // If standard UI has text, we should have portraits.
+                        
+                        // We can blindly trigger ProcessSaveSlot if we can deduce the slot number.
+                        // Unfortunately, deriving the slot number just from the UI object is hard.
+                        // BUT, UpdateItem *should* have populated our dictionary if it ran.
+                        
+                        // If UpdateItem didn't run, or didn't populate the dictionary, we are in trouble.
+                        // Strategy: We rely on UpdateItem to populate the dictionary initially? 
+                        // User says "Trigger is problem".
+                        
+                        // If UpdateItem NEVER runs, we have no index. 
+                        // Let's assume UpdateItem DOES run at least once (initial population), 
+                        // but maybe the GameObject gets disabled/re-enabled and we lose the portraits?
+                        // Or the portraits are destroyed?
+                        
+                        // Actually, looking at UpdateItem_Postfix, it calls ProcessSaveSlot.
+                    }
+                    else
+                    {
+                        // We have a container record. Check if it's still there and active.
+                        GameObject container = slotPortraitContainers[slot];
+                        if (container == null)
+                        {
+                            // It was destroyed! We need to rebuild it.
+                            // But we need the index!
+                            // We can try to recover the index from the game object name? usually "UI_System_SaveLoad_SetXX"
+                            // No, the slot is re-used.
+                        }
+                        else
+                        {
+                            // Container exists. FORCE LAYER.
+                            if (container.layer != 0)
+                            {
+                                container.layer = 0;
+                                foreach (Transform child in container.transform)
+                                    child.gameObject.layer = 0;
+                            }
+                            
+                            // Check active state
+                             if (!container.activeSelf)
+                                container.SetActive(true);
+                        }
+                    }
+                }
+                
+                // If we really want to be robust, we need to know the index even if UpdateItem didn't fire.
+            }
+        }
+
+        /// <summary>
+        /// Hook into UISaveLoadSlot.UpdateItem to catch when each slot is populated
+        /// This is called for each visible slot with the correct index
+        /// </summary>
+        [HarmonyPatch(typeof(UISaveLoadSlot), nameof(UISaveLoadSlot.UpdateItem))]
+        [HarmonyPostfix]
+        public static void UpdateItem_Postfix(UISaveLoadSlot __instance, int index, SaveDataSlotInfo info)
+        {
+            // Unconditional logging for debugging in-game issue
+            Plugin.Log.LogInfo($"[SaveSlotPortrait] UpdateItem_Postfix called for slot {index}. Config: {Plugin.Config.ShowSaveSlotPartyPortraits.Value}, IsGSD2: {GameDetection.IsGSD2()}");
+
+            if (!Plugin.Config.ShowSaveSlotPartyPortraits.Value)
+                return;
+                
+            // Only apply to Suikoden 2
+            if (!GameDetection.IsGSD2())
+            {
+                Plugin.Log.LogInfo("[SaveSlotPortrait] Not GSD2, skipping.");
+                return;
+            }
+            
+            try
+            {
+                // The index parameter is the actual save slot number
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] UpdateItem called for slot {index}");
+                
+                // --- DEBUG: HIERARCHY DUMP FOR SLOT 0 ---
+                if (index == 0)
+                {
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] --- DUMPING HIERARCHY FOR SLOT 0 (Instance: {__instance.GetInstanceID()}) ---");
+                    DumpHierarchy(__instance.gameObject, "", 3); // Depth 3
+                }
+                // ----------------------------------------
+                
+                // Find the Set01 object within this slot instance
+                GameObject set01 = __instance.objSet01;
+                if (set01 == null)
+                {
+                    // Use standard log here to be sure we see it
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] objSet01 not found for slot {index} (Instance: {__instance.GetInstanceID()})");
+                    return;
+                }
+                
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] Processing slot {index} on instance {__instance.GetInstanceID()} (active: {__instance.gameObject.activeInHierarchy})");
+                    
+                ProcessSaveSlot(__instance, index, set01);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[SaveSlotPortrait] Error in UpdateItem_Postfix: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+
+        private static void DumpHierarchy(GameObject go, string indent, int depth)
+        {
+            if (depth <= 0) return;
+            
+            Plugin.Log.LogInfo($"{indent}- {go.name} (Active: {go.activeSelf}, Layer: {go.layer})");
+            
+            for (int i = 0; i < go.transform.childCount; i++)
+            {
+                DumpHierarchy(go.transform.GetChild(i).gameObject, indent + "  ", depth - 1);
+            }
+        }
+
+        /// <summary>
+        /// Hook into UISaveLoadBase.OnUpdateItem to catch scroll updates
+        /// This is called when the scroll view reuses a slot UI for a new item
+        /// </summary>
+        [HarmonyPatch(typeof(UISaveLoadBase), nameof(UISaveLoadBase.OnUpdateItem))]
+        [HarmonyPostfix]
+        public static void OnUpdateItem_Postfix(UISaveLoadBase __instance, int itemCount, SaveDataSlotInfo info, GameObject obj)
+        {
+            if (!Plugin.Config.ShowSaveSlotPartyPortraits.Value || !GameDetection.IsGSD2())
+                return;
+
+            try
+            {
+                if (obj == null) return;
+
+                UISaveLoadSlot slotInstance = obj.GetComponent<UISaveLoadSlot>();
+                if (slotInstance == null) return;
+
+                // Process this slot update
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] OnUpdateItem called for slot {itemCount} on instance {slotInstance.GetInstanceID()}");
+
+                GameObject set01 = slotInstance.objSet01;
+                if (set01 != null)
+                {
+                    ProcessSaveSlot(slotInstance, itemCount, set01);
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[SaveSlotPortrait] Error in OnUpdateItem_Postfix: {ex.Message}");
+            }
+        }
+        
+        private static void ProcessSaveSlot(UISaveLoadSlot slotInstance, int slotNo, GameObject slotUI)
+        {
+            try
+            {
+                Plugin.Log.LogInfo($"[SaveSlotPortrait] Starting portrait update for slot {slotNo}");
+                
+                // Get save file path
+                string saveFilePath = GetSaveFilePath(slotNo);
+                
+                if (saveFilePath == null || !File.Exists(saveFilePath))
+                {
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] Save file not found for slot {slotNo}");
+                    return;
+                }
+                
+                // Parse save data
+                var partyData = ParseSaveFilePartyData(saveFilePath);
+                if (partyData == null)
+                {
+                    Plugin.Log.LogWarning($"[SaveSlotPortrait] Failed to parse party data for slot {slotNo}");
+                    return;
+                }
+                
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] Found slot UI: {slotUI.name}");
+                
+                // Create or update portrait display
+                CreateOrUpdatePortraits(slotInstance, slotNo, slotUI, partyData);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[SaveSlotPortrait] Error processing slot {slotNo}: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+        
+        /// <summary>
+        /// Get the save file path for a specific slot
+        /// </summary>
+        private static string GetSaveFilePath(int slotNo)
+        {
+            try
+            {
+                // Use decrypted save files from SuikodenFix
+                string gameDir = Path.GetDirectoryName(Application.dataPath);
+                string saveDir = Path.Combine(gameDir, "SuikodenFix", "Decrypted", "gsd2");
+                
+                // Save files are named Data{slotNo}.json (e.g., Data0.json, Data1.json)
+                string saveFile = Path.Combine(saveDir, $"Data{slotNo}.json");
+                
+                // Only log search if detailed
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] Looking for save file: {saveFile}");
+                
+                return saveFile;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[SaveSlotPortrait] Error getting save file path: {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Parse party data from save file JSON
+        /// </summary>
+        private static Models.SaveSlotPartyData ParseSaveFilePartyData(string filePath)
+        {
+            try
+            {
+                string jsonContent = File.ReadAllText(filePath);
+                using (JsonDocument doc = JsonDocument.Parse(jsonContent))
+                {
+                    JsonElement root = doc.RootElement;
+                    
+                    // Navigate to party_data
+                    if (!root.TryGetProperty("party_data", out JsonElement partyData))
+                    {
+                        // Some saves might not have party_data if empty or corrupt
+                        return null;
+                    }
+                    
+                    // Extract party_cha_no array
+                    if (!partyData.TryGetProperty("party_cha_no", out JsonElement partyChaNo))
+                    {
+                        return null;
+                    }
+                    
+                    // Convert JSON array to int array
+                    int[] characterIds = new int[8];
+                    int index = 0;
+                    foreach (JsonElement element in partyChaNo.EnumerateArray())
+                    {
+                        if (index < 8)
+                        {
+                            characterIds[index] = element.GetInt32();
+                            index++;
+                        }
+                    }
+                    
+                    // Get party_info
+                    int partyInfo = 0;
+                    if (partyData.TryGetProperty("party_info", out JsonElement partyInfoElement))
+                    {
+                        partyInfo = partyInfoElement.GetInt32();
+                    }
+                    
+                    var result = new Models.SaveSlotPartyData
+                    {
+                        PartyCharacterIds = characterIds,
+                        PartyInfo = partyInfo
+                    };
+                    
+                    if (Plugin.Config.DetailedLogs.Value)
+                    {
+                        string ids = string.Join(", ", result.PartyCharacterIds);
+                        Plugin.Log.LogInfo($"[SaveSlotPortrait] Parsed party IDs: [{ids}]");
+                    }
+                    
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[SaveSlotPortrait] Error parsing save file: {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Create or update portrait display for a save slot
+        /// </summary>
+        private static void CreateOrUpdatePortraits(UISaveLoadSlot slotInstance, int slotNo, GameObject slotUI, Models.SaveSlotPartyData partyData)
+        {
+            try
+            {
+                // Find Txt_Lv element (anchor point)
+                Transform txtLv = slotUI.transform.Find("Txt_Lv");
+                if (txtLv == null)
+                {
+                    Plugin.Log.LogWarning($"[SaveSlotPortrait] Could not find Txt_Lv in slot UI: {slotUI.name}");
+                    return;
+                }
+                
+                // Debug layout info
+                RectTransform txtLvRect = txtLv.GetComponent<RectTransform>();
+                if (Plugin.Config.DetailedLogs.Value)
+                     Plugin.Log.LogInfo($"[SaveSlotPortrait] Txt_Lv pos: {txtLvRect.anchoredPosition}, size: {txtLvRect.sizeDelta}, active: {txtLv.gameObject.activeInHierarchy}, layer: {txtLv.gameObject.layer}");
+
+                // Create or get portrait container
+                GameObject container;
+                if (slotPortraitContainers.TryGetValue(slotInstance, out GameObject existingContainer) && existingContainer != null)
+                {
+                    // Reuse existing container
+                    container = existingContainer;
+                    
+                    // Clear old portraits (IL2CPP-safe iteration)
+                    for (int i = container.transform.childCount - 1; i >= 0; i--)
+                    {
+                        UnityEngine.Object.Destroy(container.transform.GetChild(i).gameObject);
+                    }
+                }
+                else
+                {
+                    // Create new container
+                    container = new GameObject("PartyPortraits");
+                    // Force Layer 0 (Default) as in-game UI uses this
+                    container.layer = 0; 
+                    container.transform.SetParent(slotUI.transform, false);
+                    
+                    // Position next to Txt_Lv
+                    RectTransform containerRect = container.AddComponent<RectTransform>();
+                    
+                    // Position to the right of Txt_Lv
+                    containerRect.anchorMin = new Vector2(0, 0.5f);
+                    containerRect.anchorMax = new Vector2(0, 0.5f);
+                    containerRect.pivot = new Vector2(0, 0.5f);
+                    containerRect.anchoredPosition = new Vector2(
+                        txtLvRect.anchoredPosition.x + txtLvRect.sizeDelta.x + 10f, // 10px spacing
+                        txtLvRect.anchoredPosition.y
+                    );
+                    containerRect.sizeDelta = new Vector2(270f, 32f); // 8 portraits * 32px + spacing
+                    
+                    if (Plugin.Config.DetailedLogs.Value)
+                         Plugin.Log.LogInfo($"[SaveSlotPortrait] Container created at: {containerRect.anchoredPosition}, forced layer: {container.layer}");
+
+                    slotPortraitContainers[slotInstance] = container;
+                }
+                
+                // Create portrait images
+                for (int i = 0; i < partyData.PartyCharacterIds.Length && i < 8; i++)
+                {
+                    int charId = partyData.PartyCharacterIds[i];
+                    
+                    // Skip empty slots (ID 0)
+                    if (charId == 0)
+                        continue;
+                    
+                    CreatePortraitImage(container, i, charId);
+                }
+                
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogInfo($"[SaveSlotPortrait] Created portraits for slot {slotNo}");
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[SaveSlotPortrait] Error creating portraits: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Create a single portrait image
+        /// </summary>
+        private static void CreatePortraitImage(GameObject container, int index, int characterId)
+        {
+            try
+            {
+                // Create portrait GameObject
+                GameObject portraitObj = new GameObject($"Portrait_{index}");
+                portraitObj.layer = container.layer; // CRITICAL: Propagate layer
+                portraitObj.transform.SetParent(container.transform, false);
+                
+                // Setup RectTransform
+                RectTransform portraitRect = portraitObj.AddComponent<RectTransform>();
+                portraitRect.anchorMin = new Vector2(0, 0.5f);
+                portraitRect.anchorMax = new Vector2(0, 0.5f);
+                portraitRect.pivot = new Vector2(0, 0.5f);
+                portraitRect.anchoredPosition = new Vector2(index * 68f, 0); // 64px + 4px spacing
+                portraitRect.sizeDelta = new Vector2(64f, 64f);
+                
+                // Add Image component
+                Image portraitImage = portraitObj.AddComponent<Image>();
+                portraitImage.raycastTarget = false;
+                
+                // Load and set sprite
+                Sprite portraitSprite = LoadPortraitSprite(characterId);
+                if (portraitSprite != null)
+                {
+                    portraitImage.sprite = portraitSprite;
+                }
+                else
+                {
+                    // Fallback: use placeholder or hide
+                    portraitObj.SetActive(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[SaveSlotPortrait] Error creating portrait image: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Load portrait sprite by character ID
+        /// Pattern: fp_{ID:D3} (e.g., fp_035)
+        /// </summary>
+        private static Sprite LoadPortraitSprite(int characterId)
+        {
+            try
+            {
+                string portraitName = $"fp_{characterId:D3}";
+                
+                // Check cache first
+                if (portraitCache.TryGetValue(portraitName, out Sprite cachedSprite))
+                {
+                    return cachedSprite;
+                }
+                
+                // Try to load from game resources
+                Sprite sprite = UnityEngine.Resources.Load<Sprite>(portraitName);
+                
+                if (sprite != null)
+                {
+                    portraitCache[portraitName] = sprite;
+                    return sprite;
+                }
+                
+                // Try loading custom portrait if available
+                Texture2D customTexture = PortraitSystemPatch.LoadPortraitTexture(portraitName);
+                if (customTexture != null)
+                {
+                    sprite = Sprite.Create(
+                        customTexture,
+                        new Rect(0, 0, customTexture.width, customTexture.height),
+                        new Vector2(0.5f, 0.5f),
+                        100f,
+                        0,
+                        SpriteMeshType.FullRect
+                    );
+                    
+                    UnityEngine.Object.DontDestroyOnLoad(sprite);
+                    portraitCache[portraitName] = sprite;
+                    return sprite;
+                }
+                
+                // Only warn once per session/visit? Or controlled by logs.
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogWarning($"[SaveSlotPortrait] Portrait not found: {portraitName}");
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[SaveSlotPortrait] Error loading portrait: {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Cleanup when save/load UI is closed
+        /// </summary>
+        public static void Cleanup()
+        {
+            foreach (var container in slotPortraitContainers.Values)
+            {
+                if (container != null)
+                    UnityEngine.Object.Destroy(container);
+            }
+            
+            slotPortraitContainers.Clear();
+        }
+    }
+}

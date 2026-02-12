@@ -47,7 +47,7 @@
 
 | File | Description |
 |------|-------------|
-| `NPCPortraitPatch.cs` | Core logic for injecting and managing NPC portraits in dialogs. |
+| `PortraitSystemPatch.cs` | Core logic for injecting and managing NPC portraits in dialogs. |
 | `TextDatabasePatch.cs` | Intercepts text retrieval, often used in tandem with NPC portraits. |
 | `SavePointPatch.cs` | Enhancements to save point logic and interaction. |
 | `BathTexturePatch.cs` | Specific handling for bath background textures with preloading system. |
