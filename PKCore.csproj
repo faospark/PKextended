@@ -89,6 +89,7 @@
     <Reference Include="GSD1">
       <HintPath>$(GamePath)\BepInEx\interop\GSD1.dll</HintPath>
       <Private>false</Private>
+      <Aliases>global,GSD1</Aliases>
     </Reference>
     <Reference Include="GSDShare">
       <HintPath>$(GamePath)\BepInEx\interop\GSDShare.dll</HintPath>
@@ -97,6 +98,7 @@
     <Reference Include="GSD2">
       <HintPath>$(GamePath)\BepInEx\interop\GSD2.dll</HintPath>
       <Private>false</Private>
+      <Aliases>global,GSD2</Aliases>
     </Reference>
     <Reference Include="ShareUI">
       <HintPath>$(GamePath)\BepInEx\interop\ShareUI.dll</HintPath>

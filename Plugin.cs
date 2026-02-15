@@ -186,13 +186,17 @@ public class Plugin : BasePlugin
             Log.LogInfo("Applying NPC Portrait patches...");
             harmony.PatchAll(typeof(PortraitSystemPatch));
             PortraitSystemPatch.Initialize();
+        }
+        
+        // Dialog Text ID interceptor and placeholder replacement (independent of NPC portraits)
+        if (Config.EnableDialogOverrides.Value || Config.LogTextIDs.Value)
+        {
+            Log.LogInfo("Applying TextDatabase patches...");
+            harmony.PatchAll(typeof(TextDatabasePatch));
             
-            // Apply Dialog Text ID interceptor (if overrides or logging enabled)
-            if (Config.EnableDialogOverrides.Value || Config.LogTextIDs.Value)
-            {
-                Log.LogInfo("Applying TextDatabase patches...");
-                harmony.PatchAll(typeof(TextDatabasePatch));
-            }
+            // Apply SaveDataProcessor for protagonist/HQ name placeholder replacement
+            Log.LogInfo("Applying SaveDataProcessor patches...");
+            harmony.PatchAll(typeof(SaveDataProcessor));
         }
 
 
