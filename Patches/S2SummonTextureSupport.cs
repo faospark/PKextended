@@ -63,10 +63,10 @@ public partial class CustomTexturePatch
                     string name = texture2D.name;
                     if (string.IsNullOrEmpty(name) || name.EndsWith("_Custom")) continue;
 
-                    string cleanedName = CleanSactxName(name);
-                    if (summonTextureNames.Contains(cleanedName) || 
-                        cleanedName.StartsWith("m_gat", StringComparison.OrdinalIgnoreCase) ||
-                        cleanedName.StartsWith("Eff_tex_Summon_", StringComparison.OrdinalIgnoreCase))
+                    // Check if texture name matches summon patterns (m_gat, Eff_tex_Summon_)
+                    if (summonTextureNames.Contains(name) || 
+                        name.IndexOf("m_gat", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        name.IndexOf("Eff_tex_Summon_", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         if (ReplaceTextureInPlace(texture2D, name))
                         {
@@ -155,12 +155,10 @@ public partial class CustomTexturePatch
         // Skip if we just triggered a scan recently (avoid lag)
         if (Time.time - lastSummonTriggerTime < 0.5f) return;
 
-        // Clean name to handle sactx- patterns
-        string cleanedName = CleanSactxName(textureName);
-
-        bool isGateRuneTrigger = cleanedName.StartsWith("m_gat", StringComparison.OrdinalIgnoreCase);
-        bool isSummonTex = cleanedName.StartsWith("Eff_tex_Summon_", StringComparison.OrdinalIgnoreCase);
-        bool isAtlas = cleanedName.IndexOf("atlas", StringComparison.OrdinalIgnoreCase) >= 0;
+        // Check if this is a summon-related texture (m_gat, Eff_tex_Summon_)
+        bool isGateRuneTrigger = textureName.IndexOf("m_gat", StringComparison.OrdinalIgnoreCase) >= 0;
+        bool isSummonTex = textureName.IndexOf("Eff_tex_Summon_", StringComparison.OrdinalIgnoreCase) >= 0;
+        bool isAtlas = textureName.IndexOf("atlas", StringComparison.OrdinalIgnoreCase) >= 0;
 
         if ((isGateRuneTrigger && isAtlas) || isSummonTex)
         {
@@ -175,9 +173,9 @@ public partial class CustomTexturePatch
             HashSet<string> texturesToReplace = new HashSet<string>(summonTextureNames, StringComparer.OrdinalIgnoreCase);
             
             // Also include the trigger atlas itself if it's in our index
-            if (texturePathIndex.ContainsKey(cleanedName) && !textureName.EndsWith("_Custom"))
+            if (texturePathIndex.ContainsKey(textureName) && !textureName.EndsWith("_Custom"))
             {
-                texturesToReplace.Add(cleanedName);
+                texturesToReplace.Add(textureName);
             }
 
             // Perform a SINGLE scan of all textures
@@ -207,11 +205,11 @@ public partial class CustomTexturePatch
             string originalName = texture.name;
             if (string.IsNullOrEmpty(originalName) || originalName.EndsWith("_Custom")) continue;
 
-            string currentTexName = CleanSactxName(originalName);
-            bool isSummonTex = lookupNames.Contains(currentTexName) || 
-                               currentTexName.StartsWith("m_gat", StringComparison.OrdinalIgnoreCase) ||
-                               currentTexName.StartsWith("m_gate", StringComparison.OrdinalIgnoreCase) ||
-                               currentTexName.StartsWith("Eff_tex_Summon_", StringComparison.OrdinalIgnoreCase);
+            // Check if this is a summon-related texture
+            bool isSummonTex = lookupNames.Contains(originalName) || 
+                               originalName.IndexOf("m_gat", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                               originalName.IndexOf("m_gate", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                               originalName.IndexOf("Eff_tex_Summon_", StringComparison.OrdinalIgnoreCase) >= 0;
             
             if (isSummonTex)
             {

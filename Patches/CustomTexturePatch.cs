@@ -104,29 +104,6 @@ public partial class CustomTexturePatch
     }
 
     /// <summary>
-    /// Clean sactx- style texture names to their base names
-    /// e.g. sactx-0-128x128-Uncompressed-m_gat1_00_atlas-b4ac1ef3 -> m_gat1_00_atlas
-    /// </summary>
-    internal static string CleanSactxName(string name)
-    {
-        if (string.IsNullOrEmpty(name)) return name;
-        if (!name.StartsWith("sactx-")) return name;
-
-        string[] parts = name.Split('-');
-        if (parts.Length < 6) return name; // Basic sactx has at least 6 parts (sactx, layer, res, comp, name, hash)
-
-        // The texture name is everything after the first 4 parts and before the last part (the hash)
-        // Skip sactx, layer, resolution, compression
-        int nameStart = 4;
-        int nameEnd = parts.Length - 2;
-        
-        if (nameStart > nameEnd) return name;
-        
-        // Join the name parts back together in case the name contained hyphens
-        return string.Join("-", parts.Skip(nameStart).Take(nameEnd - nameStart + 1));
-    }
-
-    /// <summary>
     /// Clean texture names by removing (Clone), (Instance) suffixes
     /// </summary>
     public static string CleanTextureName(string name)
@@ -345,38 +322,6 @@ public partial class CustomTexturePatch
         if (targetKey == null && texturePathIndex.ContainsKey(lookupName))
             targetKey = lookupName;
 
-        // 2. FALLBACK: Clean name for sactx textures if no exact match found
-        if (targetKey == null && textureName.StartsWith("sactx-"))
-        {
-            string cleanedName = CleanSactxName(textureName);
-            if (cleanedName != textureName)
-            {
-                string cleanedLookup = TextureOptions.GetTextureNameWithVariant(cleanedName);
-                
-                if (currentGame == "GSD1" || currentGame == "GSD2")
-                {
-                    string gsCleaned = $"{currentGame}:{cleanedLookup}";
-                    if (texturePathIndex.ContainsKey(gsCleaned))
-                        targetKey = gsCleaned;
-                }
-                
-                if (targetKey == null && texturePathIndex.ContainsKey(cleanedLookup))
-                    targetKey = cleanedLookup;
-                
-                if (targetKey != null)
-                {
-                    // Also check if we already cached this under the CLEANED name
-                    if (customTextureCache.TryGetValue(cleanedLookup, out Texture2D cleanedCache))
-                    {
-                        // Cache it under the full name too to speed up next time
-                        customTextureCache[textureName] = cleanedCache;
-                        return cleanedCache;
-                    }
-                    lookupName = targetKey; // Use this for the rest of the function
-                }
-            }
-        }
-
         if (targetKey == null) return null;
 
         // Verify the resolved path is allowed for current game
@@ -422,23 +367,6 @@ public partial class CustomTexturePatch
 
         if (targetKey == null && texturePathIndex.ContainsKey(lookupName))
             targetKey = lookupName;
-
-        // 2. Try fallback to cleaned name for sactx textures
-        if (targetKey == null && textureName.StartsWith("sactx-"))
-        {
-            string cleanedName = CleanSactxName(textureName);
-            string cleanedLookup = TextureOptions.GetTextureNameWithVariant(cleanedName);
-            
-            if (currentGame == "GSD1" || currentGame == "GSD2")
-            {
-                string gameKey = $"{currentGame}:{cleanedLookup}";
-                if (texturePathIndex.ContainsKey(gameKey))
-                    targetKey = gameKey;
-            }
-
-            if (targetKey == null && texturePathIndex.ContainsKey(cleanedLookup))
-                targetKey = cleanedLookup;
-        }
 
         if (targetKey == null || !texturePathIndex.TryGetValue(targetKey, out string filePath))
         {
@@ -582,30 +510,6 @@ public partial class CustomTexturePatch
             {
                 texturePathIndex[key] = path;
                 filesIndexed++;
-
-                // Also index by cleaned name for sactx- style filenames
-                // This allows matching even if resolutions or hashes differ
-                string sactxPart = key;
-                string prefix = "";
-                if (key.Contains(":"))
-                {
-                    int idx = key.IndexOf(":");
-                    prefix = key.Substring(0, idx + 1);
-                    sactxPart = key.Substring(idx + 1);
-                }
-
-                if (sactxPart.StartsWith("sactx-"))
-                {
-                    string cleaned = CleanSactxName(sactxPart);
-                    if (cleaned != sactxPart)
-                    {
-                        string cleanedKey = prefix + cleaned;
-                        if (allowOverride || !texturePathIndex.ContainsKey(cleanedKey))
-                        {
-                            texturePathIndex[cleanedKey] = path;
-                        }
-                    }
-                }
             }
         }
 

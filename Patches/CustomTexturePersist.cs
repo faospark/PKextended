@@ -172,21 +172,7 @@ public static class CustomTexturePersist
                 CustomTexturePatch.customTextureCache[textureName] = texture;
                 CustomTexturePatch.customTextureCache[$"{gameId}:{textureName}"] = texture;
                 
-                // Also cache under cleaned sactx name (e.g., "shu_atlas" from the full sactx name)
-                string cleanedName = CustomTexturePatch.CleanSactxName(textureName);
-                if (!string.IsNullOrEmpty(cleanedName) && cleanedName != textureName)
-                {
-                    CustomTexturePatch.customTextureCache[cleanedName] = texture;
-                    CustomTexturePatch.customTextureCache[$"{gameId}:{cleanedName}"] = texture;
-                }
-                
-                // Register the cleaned name as a persistent pattern so it won't be cleared on scene change
-                if (!CustomTexturePatch.persistentTextures.Contains(cleanedName))
-                {
-                    CustomTexturePatch.persistentTextures.Add(cleanedName);
-                }
-                
-                // Also add the full texture name as persistent pattern
+                // Register the texture name as a persistent pattern so it won't be cleared on scene change
                 if (!CustomTexturePatch.persistentTextures.Contains(textureName))
                 {
                     CustomTexturePatch.persistentTextures.Add(textureName);
