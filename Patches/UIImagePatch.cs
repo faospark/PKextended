@@ -49,7 +49,7 @@ public partial class CustomTexturePatch
             return;
         
         // Log replaceable UI sprites if enabled
-        if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(originalName))
+        if (Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(originalName))
         {
             loggedTextures.Add(originalName);
             string objectPath = GetGameObjectPath(__instance.gameObject);

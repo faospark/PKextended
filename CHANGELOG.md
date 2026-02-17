@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note**: This changelog primarily documents changes specific to PK Core. Version numbers may not align with the Project Kyaro Suite releases on Nexus Mods, as PK Core development may progress independently.
 
-
 ## [2026.02.2] - 2026-02-17
 
 * Added parsing of text placeholders to reflect Custom Names of Protagonists and Head Quarters from a save file.
@@ -16,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Improved log reporting of custom texture patch to reflect actual file index names instead of indexed variants
 * Renamed NPCPortraits class to PotraitSytemPatch to reflect more how it functions as it now covers not only NPC Portraits.
 * Improved logging of Custom texture patch.
+* Re-expose LogReplaceableTexture as on option to toggle . this is to controll the number of logs under detailed logs as when paired with text logs can be very voluminous
+* Renamed DisableMask to  DisablePortraitDialogMask
+* deleted redundant ReactionMonitor
 
 ## [2026.02.0] - 2026-02-09
 
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Log Cleanup**: Suppressed `DisableMask` log spam; messages now only appear when `DetailedTextureLog` is enabled.
+- **Log Cleanup**: Suppressed `DisablePortraitDialogMask` log spam; messages now only appear when `DetailedTextureLog` is enabled.
 - **Sprite Logging**: Reduced log spam for `GRSpriteRenderer` by coalescing sprite variations (e.g. `person_vj10_01_XX`) into a single log entry.
 - **Jowy Disguise**: Reverted multi-character support for Jowy's disguise.
 
@@ -98,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Visual Improvements
 
-- **Portrait Mask Removal**: Option to disable the Face_Mask_01 overlay on character portraits (`DisableMaskPortraitDialog`), providing a cleaner look for custom portraits.
+- **Portrait Mask Removal**: Option to disable the Face_Mask_01 overlay on character portraits (`DisablePortraitDialogMaskPortraitDialog`), providing a cleaner look for custom portraits.
 - **Colored Intro and Flashbacks**: Restores full color to Suikoden 2's intro and flashback sequences by disabling the game's sepia/monochrome filter.
 - **Classic Save Window**: Mimic the feel of the PSX version with a simpler, fullscreen Save/Load interface for Suikoden 2.
 - **Save Point Customization**: Choose from 5 color variants and optionally disable the glow effect.

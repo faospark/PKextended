@@ -10,7 +10,7 @@ namespace PKCore.Patches
     /// Works by replacing _Mask_Map textures with blank versions from PKCore/Textures
     /// Supports any mask texture (Face_Mask_01, etc.) if a corresponding blank texture exists
     /// </summary>
-    public class DisableMask
+    public class DisablePortraitDialogMask
     {
         private static bool _initialized = false;
         private static System.Collections.Generic.HashSet<string> _excludedMasks = new System.Collections.Generic.HashSet<string>();
@@ -25,23 +25,23 @@ namespace PKCore.Patches
             
             if (_excludedMasks.Count > 0)
             {
-                // Modification: Suppress initialization log if the only exclusion is Face_Mask_01 resulting from DisableMaskPortraitDialog being disabled
+                // Modification: Suppress initialization log if the only exclusion is Face_Mask_01 resulting from DisablePortraitDialogMaskPortraitDialog being disabled
                 bool shouldLog = Plugin.Config.DetailedLogs.Value;
                 
-                // If DisableMaskPortraitDialog is FALSE, Face_Mask_01 is added to exclusions by default.
+                // If DisablePortraitDialogMaskPortraitDialog is FALSE, Face_Mask_01 is added to exclusions by default.
                 // We suppress the log in this specific case to reduce spam as per user request.
-                if (!Plugin.Config.DisableMaskPortraitDialog.Value && _excludedMasks.Count == 1 && _excludedMasks.Contains("Face_Mask_01"))
+                if (!Plugin.Config.DisablePortraitDialogMaskPortraitDialog.Value && _excludedMasks.Count == 1 && _excludedMasks.Contains("Face_Mask_01"))
                 {
                     shouldLog = false;
                 }
 
                 if (shouldLog)
-                    Plugin.Log.LogInfo($"[DisableMask] Initialized - will replace all mask textures EXCEPT: {string.Join(", ", _excludedMasks)}");
+                    Plugin.Log.LogInfo($"[DisablePortraitDialogMask] Initialized - will replace all mask textures EXCEPT: {string.Join(", ", _excludedMasks)}");
             }
             else
             {
                 if (Plugin.Config.DetailedLogs.Value)
-                    Plugin.Log.LogInfo("[DisableMask] Initialized - will replace all mask textures found in PKCore/Textures");
+                    Plugin.Log.LogInfo("[DisablePortraitDialogMask] Initialized - will replace all mask textures found in PKCore/Textures");
             }
         }
 
@@ -72,12 +72,12 @@ namespace PKCore.Patches
                     UnityEngine.Object.DontDestroyOnLoad(maskTexture);
                     _maskTextures[maskName] = maskTexture;
                     if (Plugin.Config.DetailedLogs.Value)
-                        Plugin.Log.LogInfo($"[DisableMask] Loaded replacement texture for '{maskName}': {maskTexture.width}x{maskTexture.height}");
+                        Plugin.Log.LogInfo($"[DisablePortraitDialogMask] Loaded replacement texture for '{maskName}': {maskTexture.width}x{maskTexture.height}");
                     return maskTexture;
                 }
                 else
                 {
-                    Plugin.Log.LogError($"[DisableMask] Failed to load texture data for '{maskName}'");
+                    Plugin.Log.LogError($"[DisablePortraitDialogMask] Failed to load texture data for '{maskName}'");
                 }
             }
 
@@ -90,11 +90,11 @@ namespace PKCore.Patches
         /// <summary>
         /// Search for and replace mask textures in Image materials
         /// </summary>
-        private static void DisableMaskInHierarchy(GameObject faceObject)
+        private static void DisablePortraitDialogMaskInHierarchy(GameObject faceObject)
         {
             if (faceObject == null)
             {
-                Plugin.Log.LogWarning("[DisableMask] faceObject is null!");
+                Plugin.Log.LogWarning("[DisablePortraitDialogMask] faceObject is null!");
                 return;
             }
 
@@ -103,7 +103,7 @@ namespace PKCore.Patches
 
             if (detailedLog && !_loggedItems.Contains($"Search:{faceObject.name}"))
             {
-                Plugin.Log.LogInfo($"[DisableMask] Searching in: {faceObject.name}");
+                Plugin.Log.LogInfo($"[DisablePortraitDialogMask] Searching in: {faceObject.name}");
                 _loggedItems.Add($"Search:{faceObject.name}");
             }
 
@@ -120,7 +120,7 @@ namespace PKCore.Patches
 
                     if (detailedLog && !_loggedItems.Contains($"Img:{imageKey}"))
                     {
-                        Plugin.Log.LogInfo($"[DisableMask] Image '{image.gameObject.name}' uses material: {materialName}");
+                        Plugin.Log.LogInfo($"[DisablePortraitDialogMask] Image '{image.gameObject.name}' uses material: {materialName}");
                         _loggedItems.Add($"Img:{imageKey}");
                     }
                     
@@ -150,7 +150,7 @@ namespace PKCore.Patches
                                     {
                                         if (detailedLog && !_loggedItems.Contains($"Skip:{maskTextureName}"))
                                         {
-                                            Plugin.Log.LogInfo($"[DisableMask] Skipping excluded mask: '{maskTextureName}'");
+                                            Plugin.Log.LogInfo($"[DisablePortraitDialogMask] Skipping excluded mask: '{maskTextureName}'");
                                             _loggedItems.Add($"Skip:{maskTextureName}");
                                         }
                                         continue;
@@ -167,7 +167,7 @@ namespace PKCore.Patches
                                         // but only once per image instance to avoid spam on re-enable
                                         if (detailedLog && !_loggedItems.Contains($"Replace:{replacementKey}"))
                                         {
-                                            Plugin.Log.LogInfo($"[DisableMask] ✓ Replaced '{maskTextureName}' in property '{propName}' for {image.gameObject.name}");
+                                            Plugin.Log.LogInfo($"[DisablePortraitDialogMask] ✓ Replaced '{maskTextureName}' in property '{propName}' for {image.gameObject.name}");
                                             _loggedItems.Add($"Replace:{replacementKey}");
                                         }
                                     }
@@ -175,7 +175,7 @@ namespace PKCore.Patches
                                     {
                                         if (detailedLog && !_loggedItems.Contains($"Missing:{maskTextureName}"))
                                         {
-                                            Plugin.Log.LogInfo($"[DisableMask] No replacement texture found for '{maskTextureName}'");
+                                            Plugin.Log.LogInfo($"[DisablePortraitDialogMask] No replacement texture found for '{maskTextureName}'");
                                             _loggedItems.Add($"Missing:{maskTextureName}");
                                         }
                                     }
@@ -195,11 +195,11 @@ namespace PKCore.Patches
         public static void Initialize_Postfix(UIMessage __instance)
         {
             if (Plugin.Config.DetailedLogs.Value)
-                Plugin.Log.LogInfo("[DisableMask] UIMessage.Initialize called");
+                Plugin.Log.LogInfo("[DisablePortraitDialogMask] UIMessage.Initialize called");
             
             if (__instance.windowObject != null)
             {
-                DisableMaskInHierarchy(__instance.windowObject);
+                DisablePortraitDialogMaskInHierarchy(__instance.windowObject);
             }
         }
 
@@ -212,13 +212,13 @@ namespace PKCore.Patches
         {
             if (Plugin.Config.DetailedLogs.Value && !_loggedItems.Contains("SetFaceImage"))
             {
-                Plugin.Log.LogInfo("[DisableMask] SetFaceImage called (logging suppressed for future calls)");
+                Plugin.Log.LogInfo("[DisablePortraitDialogMask] SetFaceImage called (logging suppressed for future calls)");
                 _loggedItems.Add("SetFaceImage");
             }
             
             if (__instance.windowObject != null)
             {
-                DisableMaskInHierarchy(__instance.windowObject);
+                DisablePortraitDialogMaskInHierarchy(__instance.windowObject);
             }
         }
 
@@ -231,13 +231,13 @@ namespace PKCore.Patches
         {
             if (Plugin.Config.DetailedLogs.Value && !_loggedItems.Contains("SetFaceImageClassic"))
             {
-                Plugin.Log.LogInfo("[DisableMask] SetFaceImageClassic called (logging suppressed for future calls)");
+                Plugin.Log.LogInfo("[DisablePortraitDialogMask] SetFaceImageClassic called (logging suppressed for future calls)");
                 _loggedItems.Add("SetFaceImageClassic");
             }
             
             if (__instance.windowObject != null)
             {
-                DisableMaskInHierarchy(__instance.windowObject);
+                DisablePortraitDialogMaskInHierarchy(__instance.windowObject);
             }
         }
 
@@ -250,13 +250,13 @@ namespace PKCore.Patches
         {
             if (Plugin.Config.DetailedLogs.Value && !_loggedItems.Contains("PlayOpenAnimation"))
             {
-                Plugin.Log.LogInfo("[DisableMask] PlayOpenAnimation called (logging suppressed for future calls)");
+                Plugin.Log.LogInfo("[DisablePortraitDialogMask] PlayOpenAnimation called (logging suppressed for future calls)");
                 _loggedItems.Add("PlayOpenAnimation");
             }
             
             if (__instance.windowObject != null)
             {
-                DisableMaskInHierarchy(__instance.windowObject);
+                DisablePortraitDialogMaskInHierarchy(__instance.windowObject);
             }
         }
     }

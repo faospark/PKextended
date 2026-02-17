@@ -15,7 +15,7 @@ public sealed class ModConfiguration
 
     // Visual Settings
     public ConfigEntry<bool> DisableSpritePostProcessing { get; private set; }
-    public ConfigEntry<bool> DisableMaskPortraitDialog { get; private set; }
+    public ConfigEntry<bool> DisablePortraitDialogMaskPortraitDialog { get; private set; }
 
     // Display Settings
     public ConfigEntry<bool> EnableBorderlessWindow { get; private set; }
@@ -85,7 +85,7 @@ public sealed class ModConfiguration
     public HiddenConfigEntry<bool> LogExistingMapObjects { get; private set; }
     public HiddenConfigEntry<bool> EnableDialogOverrides { get; private set; }
     public HiddenConfigEntry<float> SpriteMipmapBias { get; private set; }
-    public HiddenConfigEntry<bool> LogReplaceableTextures { get; private set; }
+    public ConfigEntry<bool> LogReplaceableTextures { get; private set; }
 
 
     public ModConfiguration(ConfigFile config)
@@ -160,9 +160,9 @@ public sealed class ModConfiguration
             "Mimics the feel of the PSX version of Save/Load window for Both Games giving the save/load window a more nostalgic feel instead of the very generic looking window"
         );
 
-        DisableMaskPortraitDialog = _config.Bind(
+        DisablePortraitDialogMaskPortraitDialog = _config.Bind(
             "02 User Interface",
-            "DisableMaskPortraitDialog",
+            "DisablePortraitDialogMaskPortraitDialog",
             false,
             "Disable the Face_Mask_01 texture overlay on character portraits in dialog windows. This removes the mask effect that appears on portrait displays during conversations."
         );
@@ -313,6 +313,13 @@ public sealed class ModConfiguration
             "Enable detailed texture logging (replacement confirmations and full texture list on startup). Disable for silent operation (only errors will be logged)."
         );
 
+        LogReplaceableTextures = _config.Bind(
+            "zz - Diagnostics",
+            "LogReplaceableTextures",
+            false,
+            "Log all replaceable texture names discovered during gameplay. Useful for identifying texture names to create custom replacements. Independent of DetailedLogs setting."
+        );
+
         // ========================================
         // EXPERIMENTAL FEATURES
         // ========================================
@@ -338,7 +345,6 @@ public sealed class ModConfiguration
         DebugCustomObjects = new HiddenConfigEntry<bool>(false);
         LogExistingMapObjects = new HiddenConfigEntry<bool>(false);
         SpriteMipmapBias = new HiddenConfigEntry<float>(-0.5f);
-        LogReplaceableTextures = new HiddenConfigEntry<bool>(true);
         ForceControllerPrompts = new HiddenConfigEntry<bool>(true);
         EnableCustomTextures = new HiddenConfigEntry<bool>(true);
 

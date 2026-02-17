@@ -45,7 +45,7 @@ public class UnitySpriteRendererPatch
         }
         
         // Log replaceable sprite if enabled
-        if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value && !CustomTexturePatch.IsTextureLogged(spriteName))
+        if (Plugin.Config.LogReplaceableTextures.Value && !CustomTexturePatch.IsTextureLogged(spriteName))
         {
             CustomTexturePatch.LogReplaceableTexture(spriteName, "Sprite - UnitySpriteRenderer");
         }

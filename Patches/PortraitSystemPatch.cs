@@ -504,7 +504,7 @@ public class PortraitSystemPatch
     [HarmonyPrefix]
     public static void OpenMessageWindow_Prefix(ref Sprite faceImage, ref string name, ref string message)
     {
-        if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value)
+        if (Plugin.Config.DetailedLogs.Value)
             Plugin.Log.LogInfo($"[PotraitSystem] OpenMessageWindow called - Name: '{name}', HasFaceImage: {faceImage != null}");
         
 
@@ -553,7 +553,7 @@ public class PortraitSystemPatch
         // If there's an existing portrait, capture it for reuse!
         if (faceImage != null)
         {
-            if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value)
+            if (Plugin.Config.DetailedLogs.Value)
                 Plugin.Log.LogInfo($"[PotraitSystem] Capturing portrait sprite: {faceImage.name}, texture: {faceImage.texture.name}");
             cachedPortraitSprite = faceImage;
             return;
@@ -672,7 +672,7 @@ public class PortraitSystemPatch
         // Only try to inject if there's no existing portrait
         if (faceImage != null)
         {
-            if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value)
+            if (Plugin.Config.DetailedLogs.Value)
                 Plugin.Log.LogInfo($"[PotraitSystem] Postfix - '{name}' already has portrait, skipping");
             return;
         }

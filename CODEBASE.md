@@ -61,7 +61,7 @@
 | File | Description |
 |------|-------------|
 | `SMAAPatch.cs` | Injectable SMAA anti-aliasing. |
-| `DisableMask.cs` | System for replacing or disabling specific UI/Texture masks. |
+| `DisablePortraitDialogMask.cs` | System for replacing or disabling specific UI/Texture masks. |
 | `DisableSpritePostProcessing.cs`| Disables native post-processing on sprites for cleaner visuals. |
 | `DisableCustomPostEffect.cs` | Removes specific color grading/effects (e.g., historical filters). |
 

@@ -31,7 +31,7 @@ namespace PKCore.Patches
                     string textureName = mat.mainTexture.name;
                     
                     // Log replaceable textures if enabled
-                    if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(textureName))
+                    if (Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(textureName))
                     {
                         loggedTextures.Add(textureName);
                         Plugin.Log.LogInfo($"[Replaceable Texture - MapSpriteHD] {textureName}");

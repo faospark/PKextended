@@ -98,7 +98,7 @@ public partial class CustomTexturePatch
         }
         
         // Log replaceable textures if enabled (only once per texture)
-        if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(originalName))
+        if (Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(originalName))
         {
             string context = null;
             if (isBathBackground || isBgManager)
@@ -126,7 +126,7 @@ public partial class CustomTexturePatch
                 
                 if (!shouldSkipReplacementLog)
                 {
-                    if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value)
+                    if (Plugin.Config.LogReplaceableTextures.Value)
                     {
                         // Include GameObject path in detailed logs or if explicitly enabled
                         Plugin.Log.LogInfo($"[SpriteRendererPatch] Replaced sprite: {originalName} (from {objectPath})");

@@ -300,9 +300,9 @@ public class Plugin : BasePlugin
         // Build exclusion list based on config
         var excludedMasks = new System.Collections.Generic.HashSet<string>();
         
-        if (!Config.DisableMaskPortraitDialog.Value)
+        if (!Config.DisablePortraitDialogMaskPortraitDialog.Value)
         {
-            // If DisableMaskPortraitDialog is OFF, exclude Face_Mask_01
+            // If DisablePortraitDialogMaskPortraitDialog is OFF, exclude Face_Mask_01
             excludedMasks.Add("Face_Mask_01");
         }
         
@@ -310,8 +310,8 @@ public class Plugin : BasePlugin
         {
             Log.LogInfo("Applying Mask Replacement System...");
         }
-        DisableMask.Initialize(excludedMasks);
-        harmony.PatchAll(typeof(DisableMask));
+        DisablePortraitDialogMask.Initialize(excludedMasks);
+        harmony.PatchAll(typeof(DisablePortraitDialogMask));
         // Enable DebugMenu2 (Experimental)
         if (Config.EnableDebugMenu2.Value)
         {

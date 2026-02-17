@@ -25,7 +25,7 @@ This document outlines all available configuration options for PKCore layout in 
 | **LoadLauncherUITextures**    |  bool  |    `true`    | Load custom launcher UI textures based on unused game assets.                 |
 | **MinimalUI**                 |  bool  |    `true`    | Load minimal UI textures.                                                     |
 | **ClassicSaveWindow**         |  bool  |    `true`    | Use PSX-style Save/Load window for a nostalgic feel.                          |
-| **DisableMaskPortraitDialog** |  bool  |    `false`    | Remove the`Face_Mask_01` overlay on portraits in dialog windows.              |
+| **DisablePortraitDialogMaskPortraitDialog** |  bool  |    `false`    | Remove the`Face_Mask_01` overlay on portraits in dialog windows.              |
 | **ScaleDownDialogBox**        |  bool  |    `true`    | Compact dialog box (80% size) with adjusted position.                         |
 | **ScaledDownMenu**            | string |    `true`    | Main menu layout scaled down to 80% with adjusted position.                   |
 
