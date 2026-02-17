@@ -17,7 +17,8 @@ public class S1WorldMapScaleUIPatch
             return;
         }
         
-        Plugin.Log.LogInfo("[S1WorldMapScaleUI] Initialized - will scale world map UI on next open");
+        if (Plugin.Config.DetailedLogs.Value)
+            Plugin.Log.LogInfo("[S1WorldMapScaleUI] Initialized - will scale world map UI on next open");
     }
 
     /// <summary>

@@ -82,7 +82,7 @@ public static class CustomTexturePersist
         SceneManager.sceneLoaded += (Action<Scene, LoadSceneMode>)OnSceneLoaded;
         isInitialized = true;
         
-        Plugin.Log.LogInfo("[CustomTexturePersist] Initialized - will preload persistent textures on game scene load");
+        Plugin.Log.LogInfo("Applying CustomTexturePersist Patches ");
     }
     
     /// <summary>

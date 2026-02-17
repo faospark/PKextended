@@ -258,7 +258,7 @@ public class Plugin : BasePlugin
         // Apply Dialog Patch (Dialog Box Scaling)
         if (Config.ScaleDownDialogBox.Value)
         {
-            Log.LogInfo("Applying Dialog patches (size: Medium)...");
+            Log.LogInfo("Applying DialogBoxScale patches ...");
             harmony.PatchAll(typeof(DialogBoxScalePatch));
         }
 
@@ -276,7 +276,7 @@ public class Plugin : BasePlugin
         // Apply Menu Scale Patch (Menu Scaling)
         if (Config.ScaledDownMenu.Value.Equals("true", System.StringComparison.OrdinalIgnoreCase))
         {
-            Log.LogInfo($"Applying Menu Scale patches (mode: {Config.ScaledDownMenu.Value})...");
+            Log.LogInfo($"Applying MenuScale patches (mode: {Config.ScaledDownMenu.Value})...");
             harmony.PatchAll(typeof(MenuScalePatch));
         }
 
