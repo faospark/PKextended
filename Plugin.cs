@@ -49,6 +49,26 @@ public class Plugin : BasePlugin
             Log.LogError($"Failed to register custom monitors: {ex.Message}");
         }
         
+        // Create a MonoBehaviour to handle the Update loop (since BasePlugin doesn't have Update)
+        // Initialize early so patches can use it
+        try
+        {
+            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<PkCoreMainLoop>();
+            
+            var obj = new GameObject("PkCoreMainLoop");
+            GameObject.DontDestroyOnLoad(obj);
+            var component = obj.AddComponent<PkCoreMainLoop>();
+            obj.hideFlags = HideFlags.HideAndDontSave;
+            
+            PkCoreMainLoop.Instance = component;
+            
+            Log.LogInfo("Initialized PkCoreMainLoop for Update events.");
+        }
+        catch (System.Exception ex)
+        {
+            Log.LogError($"Failed to register PkCoreMainLoop: {ex.Message}");
+        }
+        
         ApplyPatches();
 
         Log.LogInfo("PKCore loaded successfully!");
@@ -94,6 +114,8 @@ public class Plugin : BasePlugin
         // Borderless Window Mode
         if (Config.EnableBorderlessWindow.Value)
         {
+            Log.LogInfo("Applying BorderlessWindow patches...");
+            harmony.PatchAll(typeof(BorderlessWindowPatch));
             BorderlessWindowPatch.Initialize();
         }
 
@@ -168,7 +190,7 @@ public class Plugin : BasePlugin
         // World Map Effects patch
         if (Config.DisableWorldMapClouds.Value)
         {
-            Log.LogInfo("Applying World Map Effects patches (Disable Clouds)...");
+            Log.LogInfo("Applying WorldMapEffects Patch (Disable Clouds)...");
             harmony.PatchAll(typeof(WorldMapEffectsPatch));
         }
 
@@ -183,7 +205,7 @@ public class Plugin : BasePlugin
         // NPC Portrait Injection
         if (Config.EnablePortraitSystem.Value)
         {
-            Log.LogInfo("Applying NPC Portrait patches...");
+            Log.LogInfo("Applying PortraitSystem Patch...");
             harmony.PatchAll(typeof(PortraitSystemPatch));
             PortraitSystemPatch.Initialize();
         }
@@ -304,22 +326,7 @@ public class Plugin : BasePlugin
             WarAbilityPatch.Initialize(Log);
         }
 
-        // Create a MonoBehaviour to handle the Update loop (since BasePlugin doesn't have Update)
-        try
-        {
-            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<PkCoreMainLoop>();
-            
-            var obj = new GameObject("PkCoreMainLoop");
-            GameObject.DontDestroyOnLoad(obj);
-            obj.AddComponent<PkCoreMainLoop>();
-            obj.hideFlags = HideFlags.HideAndDontSave;
-            
-            Log.LogInfo("Initialized PkCoreMainLoop for Update events.");
-        }
-        catch (System.Exception ex)
-        {
-            Log.LogError($"Failed to register PkCoreMainLoop: {ex.Message}");
-        }
+
 
         // Reaction Monitor (MapChara/r_action trigger)
         S2CookOffPortraitMonitor.Initialize();
@@ -332,11 +339,18 @@ public class Plugin : BasePlugin
 /// </summary>
 public class PkCoreMainLoop : MonoBehaviour
 {
+    public static PkCoreMainLoop Instance { get; set; }
+
     public void Update()
     {
         if (Plugin.Instance != null)
         {
             Plugin.Instance.Update();
         }
+    }
+
+    public void ApplyBorderlessStyle()
+    {
+        PKCore.Patches.BorderlessWindowPatch.ApplyBorderlessStyle();
     }
 }

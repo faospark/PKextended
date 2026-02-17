@@ -25,7 +25,17 @@ namespace PKCore.Patches
             
             if (_excludedMasks.Count > 0)
             {
-                if (Plugin.Config.DetailedLogs.Value)
+                // Modification: Suppress initialization log if the only exclusion is Face_Mask_01 resulting from DisableMaskPortraitDialog being disabled
+                bool shouldLog = Plugin.Config.DetailedLogs.Value;
+                
+                // If DisableMaskPortraitDialog is FALSE, Face_Mask_01 is added to exclusions by default.
+                // We suppress the log in this specific case to reduce spam as per user request.
+                if (!Plugin.Config.DisableMaskPortraitDialog.Value && _excludedMasks.Count == 1 && _excludedMasks.Contains("Face_Mask_01"))
+                {
+                    shouldLog = false;
+                }
+
+                if (shouldLog)
                     Plugin.Log.LogInfo($"[DisableMask] Initialized - will replace all mask textures EXCEPT: {string.Join(", ", _excludedMasks)}");
             }
             else

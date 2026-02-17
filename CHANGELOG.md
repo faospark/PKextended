@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note**: This changelog primarily documents changes specific to PK Core. Version numbers may not align with the Project Kyaro Suite releases on Nexus Mods, as PK Core development may progress independently.
 
+
+## [2026.02.2] - 2026-02-17
+
+* Added parsing of text placeholders to reflect Custom Names of Protagonists and Head Quarters from a save file.
+* Removed texture file name sanitation. This was somehow both github copilot and anti-gravity thought as a form of optimization when it reality it causes collisions with files that have identitical names when stripped with hash and prefix on their names.
+* Improved Borderless window patch to have a true borderless windowed mode . seperating its identity from render scaling patch activator.
+* Improved log reporting of custom texture patch to reflect actual file index names instead of indexed variants
+* Renamed NPCPortraits class to PotraitSytemPatch to reflect more how it functions as it now covers not only NPC Portraits.
+* Improved logging of Custom texture patch.
+
 ## [2026.02.0] - 2026-02-09
 
 ### Added

@@ -498,7 +498,7 @@ public partial class CustomTexturePatch
         string gsd1Folder = Path.Combine(customTexturesPath, "GSD1");
         string gsd2Folder = Path.Combine(customTexturesPath, "GSD2");
         
-        int filesIndexed = 0;
+
         
         // Helper to add texture to index with priority
         void AddToIndex(string path, string key, bool allowOverride)
@@ -509,7 +509,6 @@ public partial class CustomTexturePatch
             if (allowOverride || !texturePathIndex.ContainsKey(key))
             {
                 texturePathIndex[key] = path;
-                filesIndexed++;
             }
         }
 
@@ -591,7 +590,9 @@ public partial class CustomTexturePatch
         sw.Stop();
         if (Plugin.Config.DetailedLogs.Value)
         {
-            Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} textures from {allFiles.Length} files in {sw.ElapsedMilliseconds}ms");
+            //({texturePathIndex.Count} variants) if you want variants reported
+            int uniqueFiles = texturePathIndex.Values.Distinct().Count();
+            Plugin.Log.LogInfo($"Indexed {uniqueFiles} files in {sw.ElapsedMilliseconds}ms");
         }
         
         // Only save cache if caching is enabled
@@ -624,7 +625,7 @@ public partial class CustomTexturePatch
         
         if (Plugin.Config.DetailedLogs.Value)
         {
-            Plugin.Log.LogInfo($"Indexed {texturePathIndex.Count} custom texture(s) ready to use");
+            Plugin.Log.LogInfo($"Custom texture system ready ({texturePathIndex.Count} variants available)");
         }
         
         // Register for scene loaded to clear caches
