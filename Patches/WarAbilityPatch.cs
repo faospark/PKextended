@@ -152,7 +152,8 @@ namespace PKCore.Patches
                 }
                 
                 isPatched = true;
-                Logger.LogInfo("[WarAbilityPatch] Applied successfully for GSD2");
+                if (Plugin.Config.DetailedLogs.Value)
+                    Logger.LogInfo("[WarAbilityPatch] Applied successfully for GSD2");
             }
             catch (Exception ex)
             {

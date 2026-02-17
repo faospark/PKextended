@@ -16,7 +16,6 @@ Added
 
 Improved
 
-* Borderless window patch now provides a true borderless windowed mode, distinct from the render scaling patch activator.
 * Suikoden 1 Dialog Scaling implementation
 * Log reporting for the custom texture patch now displays actual file index names instead of indexed variants.
 * Logging for the custom texture patch has been further refined for clarity.
@@ -30,6 +29,7 @@ Removed
 
 * Texture file name sanitation, which previously caused collisions with files that had identical names once stripped with hash and prefix.
 * Redundant`ReactionMonitor`
+* Borderless Patch now replaced by a recommendation to use -popupwindow 
 
 ## [2026.02.0] - 2026-02-09
 

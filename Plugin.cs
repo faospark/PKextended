@@ -111,14 +111,6 @@ public class Plugin : BasePlugin
             SpriteFilteringPatch.Initialize();
        }
 
-        // Borderless Window Mode
-        if (Config.EnableBorderlessWindow.Value)
-        {
-            Log.LogInfo("Applying BorderlessWindow patches...");
-            harmony.PatchAll(typeof(BorderlessWindowPatch));
-            BorderlessWindowPatch.Initialize();
-        }
-
         // Mouse Cursor Visibility (for debugging)
         if (Config.ShowMouseCursor.Value)
         {
@@ -322,7 +314,8 @@ public class Plugin : BasePlugin
         // War Ability Modification (Experimental)
         if (Config.EnableWarAbilityMod.Value)
         {
-            Log.LogInfo("Initializing War Ability Modification...");
+            if (Config.DetailedLogs.Value)
+                Log.LogInfo("Initializing War Ability Modification...");
             WarAbilityPatch.Initialize(Log);
         }
 
@@ -349,8 +342,5 @@ public class PkCoreMainLoop : MonoBehaviour
         }
     }
 
-    public void ApplyBorderlessStyle()
-    {
-        PKCore.Patches.BorderlessWindowPatch.ApplyBorderlessStyle();
-    }
+
 }

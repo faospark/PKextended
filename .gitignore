@@ -31,5 +31,8 @@ project.fragment.lock.json
 artifacts/
 /save
 
+# Helper scripts (not for distribution)
+*.bat
+
 # Agent
 #.agent/

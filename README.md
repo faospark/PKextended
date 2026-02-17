@@ -49,9 +49,12 @@ The **core DLL component** for **[Project Kyaro](https://www.nexusmods.com/suiko
 * Replaced Low‑Quality Upscaled Doors in the Inn Area (S2)
 
 **[Utility]**
-
-* Borderless Mode
 * Show Mouse Cursor
+* Clean Exit on ALT+F4 (Force immediate shutdown instead of hanging)
+
+> **Borderless Mode**: For borderless fullscreen window, use Unity's native `-popupwindow` launch argument:
+> - **Steam**: Right-click game → Properties → Launch Options → Add `-popupwindow`
+> - **Epic Games**: Create a shortcut to the game executable and add `-popupwindow` to the Target field
 
 **[Additionals from Nexus Bundle]**
 

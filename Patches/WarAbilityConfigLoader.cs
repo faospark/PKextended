@@ -86,7 +86,9 @@ namespace PKCore.Patches
                     return new WarAbilityConfig();
                 }
 
-                Logger.LogInfo($"[WarAbilityConfigLoader] Loading war abilities from: {fullPath}");
+                if (Plugin.Config.DetailedLogs.Value)
+                    Logger.LogInfo($"[WarAbilityConfigLoader] Loading war abilities from: {fullPath}");
+                
                 var json = File.ReadAllText(fullPath);
                 
                 // Parse with comments support
@@ -105,8 +107,11 @@ namespace PKCore.Patches
                     return new WarAbilityConfig();
                 }
 
-                Logger.LogInfo($"[WarAbilityConfigLoader] Loaded {config.CharacterAbilities.Count} character configurations");
-                Logger.LogInfo($"[WarAbilityConfigLoader] Global abilities: {config.GlobalAbilities.Count}");
+                if (Plugin.Config.DetailedLogs.Value)
+                {
+                    Logger.LogInfo($"[WarAbilityConfigLoader] Loaded {config.CharacterAbilities.Count} character configurations");
+                    Logger.LogInfo($"[WarAbilityConfigLoader] Global abilities: {config.GlobalAbilities.Count}");
+                }
 
                 return config;
             }
