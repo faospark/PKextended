@@ -5,19 +5,31 @@ All notable changes to PKCore (formerly PKextended) will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> **Note**: This changelog primarily documents changes specific to PK Core. Version numbers may not align with the Project Kyaro Suite releases on Nexus Mods, as PK Core development may progress independently.
+> **Note**: This changelog primarily documents changes specific to PKCore. Version numbers may not align with the Project Kyaro Suite releases on NexusMods, as PKCore development may progress independently.
 
 ## [2026.02.2] - 2026-02-17
 
-* Added parsing of text placeholders to reflect Custom Names of Protagonists and Head Quarters from a save file.
-* Removed texture file name sanitation. This was somehow both github copilot and anti-gravity thought as a form of optimization when it reality it causes collisions with files that have identitical names when stripped with hash and prefix on their names.
-* Improved Borderless window patch to have a true borderless windowed mode . seperating its identity from render scaling patch activator.
-* Improved log reporting of custom texture patch to reflect actual file index names instead of indexed variants
-* Renamed NPCPortraits class to PotraitSytemPatch to reflect more how it functions as it now covers not only NPC Portraits.
-* Improved logging of Custom texture patch.
-* Re-expose LogReplaceableTexture as on option to toggle . this is to controll the number of logs under detailed logs as when paired with text logs can be very voluminous
-* Renamed DisableMask to  DisablePortraitDialogMask
-* deleted redundant ReactionMonitor
+Added
+
+* Parsing of text placeholders to reflect custom names of protagonists and headquarters from save files.
+* Restored option to toggle`LogReplaceableTexture`, allowing control over detailed log volume when paired with text logs.
+
+Improved
+
+* Borderless window patch now provides a true borderless windowed mode, distinct from the render scaling patch activator.
+* Suikoden 1 Dialog Scaling implementation
+* Log reporting for the custom texture patch now displays actual file index names instead of indexed variants.
+* Logging for the custom texture patch has been further refined for clarity.
+
+Renamed
+
+* `NPCPortraits` class →`PortraitSystemPatch` to better reflect its expanded functionality beyond NPC portraits.
+* `DisableMask` →`DisablePortraitDialogMask` for clearer naming consistency.
+
+Removed
+
+* Texture file name sanitation, which previously caused collisions with files that had identical names once stripped with hash and prefix.
+* Redundant`ReactionMonitor`
 
 ## [2026.02.0] - 2026-02-09
 
