@@ -86,7 +86,6 @@ public sealed class ModConfiguration
     public HiddenConfigEntry<bool> EnableDialogOverrides { get; private set; }
     public HiddenConfigEntry<float> SpriteMipmapBias { get; private set; }
     public HiddenConfigEntry<bool> LogReplaceableTextures { get; private set; }
-    public HiddenConfigEntry<bool> LogTexturePaths { get; private set; }
 
 
     public ModConfiguration(ConfigFile config)
@@ -340,7 +339,6 @@ public sealed class ModConfiguration
         LogExistingMapObjects = new HiddenConfigEntry<bool>(false);
         SpriteMipmapBias = new HiddenConfigEntry<float>(-0.5f);
         LogReplaceableTextures = new HiddenConfigEntry<bool>(true);
-        LogTexturePaths = new HiddenConfigEntry<bool>(true);
         ForceControllerPrompts = new HiddenConfigEntry<bool>(true);
         EnableCustomTextures = new HiddenConfigEntry<bool>(true);
 

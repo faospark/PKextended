@@ -72,7 +72,7 @@ public partial class CustomTexturePatch
     /// </summary>
     internal static void LogReplaceableTexture(string textureName, string category, string context = null)
     {
-        if (!Plugin.Config.LogReplaceableTextures.Value)
+        if (!Plugin.Config.DetailedLogs.Value || !Plugin.Config.LogReplaceableTextures.Value)
             return;
 
         string dedupKey = GetLogDedupKey(textureName);

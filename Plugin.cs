@@ -197,7 +197,6 @@ public class Plugin : BasePlugin
             // Apply SaveDataProcessor for protagonist/HQ name placeholder replacement
             Log.LogInfo("Applying SaveDataProcessor patches...");
             harmony.PatchAll(typeof(SaveDataProcessor));
-            SaveDataProcessor.Initialize();
         }
 
 

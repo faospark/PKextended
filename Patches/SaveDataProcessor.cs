@@ -6,7 +6,8 @@ using System.Text.Json;
 using System.Linq;
 using BepInEx;
 
-namespace PKCore.Patches
+namespace PKCore.
+Patches
 {
     /// <summary>
     /// Extracts and caches protagonist and HQ names from save data for use in text placeholder replacement.
@@ -21,6 +22,12 @@ namespace PKCore.Patches
         private static string s_s2HQName = null;
         private static string s_s1HQName = null;
         
+        // Track previous values to detect actual loads vs menu enumeration
+        private static string s_previousS2Name = null;
+        private static string s_previousS1Name = null;
+        private static string s_previousS2HQ = null;
+        private static string s_previousS1HQ = null;
+        
         private static bool? s_isSuikodenFixActive = null;
 
         // Default fallback names
@@ -28,25 +35,6 @@ namespace PKCore.Patches
         private const string DEFAULT_S1_PROTAGONIST = "Tir";
         private const string DEFAULT_S2_HQ = "Dunan";
         private const string DEFAULT_S1_HQ = "Liberation";
-
-        /// <summary>
-        /// Initialize SaveDataProcessor and subscribe to game change events.
-        /// </summary>
-        public static void Initialize()
-        {
-            GameDetection.OnGameChanged += OnGameSceneChanged;
-        }
-
-        /// <summary>
-        /// Called when the game scene changes (entering GSD1/GSD2 gameplay).
-        /// </summary>
-        private static void OnGameSceneChanged(string gameId)
-        {
-            if (gameId == "GSD1" || gameId == "GSD2")
-            {
-                Plugin.Log.LogInfo($"[SaveDataProcessor] Names: S2='{s_s2ProtagonistName}', S1='{s_s1ProtagonistName}', S2HQ='{s_s2HQName}', S1HQ='{s_s1HQName}'");
-            }
-        }
 
         /// <summary>
         /// Check if Suikoden Fix's EditSavePatch is active.
@@ -125,6 +113,7 @@ namespace PKCore.Patches
                     string decryptedPath = Path.Combine(Paths.GameRootPath, "SuikodenFix", "Decrypted", "gsd2");
                     if (TryLoadFromDecryptedSaves(decryptedPath))
                     {
+                        CheckAndLogIfNamesChanged();
                         return;
                     }
                     
@@ -136,6 +125,7 @@ namespace PKCore.Patches
                     string pkcoreFallbackPath = Path.Combine(Paths.GameRootPath, "PKCore", "Fallback_save", "gsd2");
                     if (TryLoadFromDecryptedSaves(pkcoreFallbackPath))
                     {
+                        CheckAndLogIfNamesChanged();
                         return;
                     }
 
@@ -143,6 +133,7 @@ namespace PKCore.Patches
                     string nativeSavePath = Path.Combine(Paths.GameRootPath, "Save");
                     if (TryDecryptNativeSavesToFallback(nativeSavePath, pkcoreFallbackPath))
                     {
+                        CheckAndLogIfNamesChanged();
                         return;
                     }
                 }
@@ -154,6 +145,28 @@ namespace PKCore.Patches
             {
                 Plugin.Log.LogError($"[SaveDataProcessor] Failed to refresh names: {ex.Message}");
                 ResetToDefaults();
+            }
+        }
+
+        /// <summary>
+        /// Check if names changed and log once if they did (indicates actual gameplay load, not menu enumeration)
+        /// </summary>
+        private static void CheckAndLogIfNamesChanged()
+        {
+            bool changed = s_s2ProtagonistName != s_previousS2Name ||
+                          s_s1ProtagonistName != s_previousS1Name ||
+                          s_s2HQName != s_previousS2HQ ||
+                          s_s1HQName != s_previousS1HQ;
+
+            if (changed)
+            {
+                Plugin.Log.LogInfo($"[SaveDataProcessor] Loaded save data - Names: S2='{s_s2ProtagonistName}', S1='{s_s1ProtagonistName}', S2HQ='{s_s2HQName}', S1HQ='{s_s1HQName}'");
+                
+                // Update previous values
+                s_previousS2Name = s_s2ProtagonistName;
+                s_previousS1Name = s_s1ProtagonistName;
+                s_previousS2HQ = s_s2HQName;
+                s_previousS1HQ = s_s1HQName;
             }
         }
 
@@ -178,7 +191,6 @@ namespace PKCore.Patches
                 string json = File.ReadAllText(latestSaveFile);
                 if (ParseGameData(json, Path.GetFileName(latestSaveFile)))
                 {
-                    Plugin.Log.LogInfo($"[SaveDataProcessor] Loaded from Suikoden Fix decrypted save: {Path.GetFileName(latestSaveFile)}");
                     return true;
                 }
             }
@@ -301,7 +313,6 @@ namespace PKCore.Patches
                             ? GetValidName(mbase.GetString(), DEFAULT_S1_HQ) 
                             : DEFAULT_S1_HQ;
 
-                        Plugin.Log.LogInfo($"[SaveDataProcessor] Names: S2='{s_s2ProtagonistName}', S1='{s_s1ProtagonistName}', S2HQ='{s_s2HQName}', S1HQ='{s_s1HQName}'");
                         return true;
                     }
                 }
@@ -372,13 +383,12 @@ namespace PKCore.Patches
             return s_s1HQName ?? DEFAULT_S1_HQ;
         }
 
-        // Harmony patch to refresh names when save is loaded
+        // Harmony patch - hook for when save is loaded
         [HarmonyPatch(typeof(SystemSave), nameof(SystemSave.Load))]
         [HarmonyPostfix]
         public static void OnSaveLoaded()
         {
-            Plugin.Log.LogDebug("[SaveDataProcessor] Save loaded, refreshing names...");
-            RefreshNames();
+            // Patch applied - RefreshNames() will be called when needed via getter methods
         }
     }
 }

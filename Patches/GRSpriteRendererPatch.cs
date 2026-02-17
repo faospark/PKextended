@@ -34,7 +34,7 @@ public class GRSpriteRendererPatch
         }
         
         // Log replaceable sprite if enabled
-        if (Plugin.Config.LogReplaceableTextures.Value && !CustomTexturePatch.IsTextureLogged(spriteName))
+        if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value && !CustomTexturePatch.IsTextureLogged(spriteName))
         {
             CustomTexturePatch.LogReplaceableTexture(spriteName, "Sprite - GRSpriteRenderer");
         }
@@ -74,7 +74,7 @@ public class GRSpriteRendererPatch
         string spriteName = spr.name;
         
         // Log replaceable sprite if enabled
-        if (Plugin.Config.LogReplaceableTextures.Value && !CustomTexturePatch.IsTextureLogged(spriteName))
+        if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value && !CustomTexturePatch.IsTextureLogged(spriteName))
         {
             CustomTexturePatch.LogReplaceableTexture(spriteName, "Sprite - ForceSet");
         }

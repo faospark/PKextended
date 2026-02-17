@@ -98,7 +98,7 @@ public partial class CustomTexturePatch
         }
         
         // Log replaceable textures if enabled (only once per texture)
-        if (Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(originalName))
+        if (Plugin.Config.DetailedLogs.Value && Plugin.Config.LogReplaceableTextures.Value && !loggedTextures.Contains(originalName))
         {
             string context = null;
             if (isBathBackground || isBgManager)
