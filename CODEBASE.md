@@ -36,7 +36,7 @@
 | File | Description |
 |------|-------------|
 | `MenuScale.cs` | Logic for scaling UI menus (referenced in "ScaledDownMenu" config). |
-| `DialogPatch.cs` | Adjusts dialog box sizing and layout. |
+| `DialogBoxScalePatch.cs` | Adjusts dialog box sizing and layout. |
 | `GlobalControllerPromptPatch.cs` | Custom controller prompts (Xbox, PS, etc.) and texture replacements. |
 | `MouseCursorPatch.cs` | Logic to force mouse cursor visibility. |
 | `BorderlessWindowPatch.cs` | Implementation of borderless window mode. |

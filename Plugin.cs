@@ -267,7 +267,7 @@ public class Plugin : BasePlugin
         if (Config.ScaleDownDialogBox.Value)
         {
             Log.LogInfo("Applying Dialog patches (size: Medium)...");
-            harmony.PatchAll(typeof(DialogPatch));
+            harmony.PatchAll(typeof(DialogBoxScalePatch));
         }
 
         // Apply Suikoden 1 World Map Scale Patch
