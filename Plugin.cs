@@ -42,6 +42,7 @@ public class Plugin : BasePlugin
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<SavePointSpriteMonitor>();
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<S2CookOffPortraitMonitor>();
             Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<CovertMissionPortraitMonitor>();
+            Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<WarRoomBGPatch>();
 
 
         }
@@ -328,6 +329,9 @@ public class Plugin : BasePlugin
         // Covert Mission Portrait Monitor
         harmony.PatchAll(typeof(CovertMissionPortraitMonitor));
         CovertMissionPortraitMonitor.Initialize();
+        
+        // War Room BG Patch
+        WarRoomBGPatch.Initialize();
 
     }
 }
