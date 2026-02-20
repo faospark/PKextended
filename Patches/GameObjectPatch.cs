@@ -30,13 +30,13 @@ public partial class CustomTexturePatch
 
         // Get the full path of the activated object
         string objectPath = GetGameObjectPath(__instance);
-        
+
         // Check if this is a background manager object
         // Suikoden 2: bgManagerHD
         // Suikoden 1: MapBackGround
         // Also scan 3D objects (contains FieldObject MeshRenderers) HDEffect
         bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround") || objectPath.Contains("3D") || objectPath.Contains("HDEffect") || objectPath.Contains("HDFishingBG") || objectPath.Contains("M_GATE");
-        
+
         // Handle background manager activation - scan for sprites to replace
         if (isBgManager)
         {
@@ -44,7 +44,13 @@ public partial class CustomTexturePatch
             {
                 Plugin.Log.LogInfo($"Background manager activated: {objectPath}");
             }
-            
+
+            // If this is a map clone (e.g. vk07_01(Clone)) under bgManagerHD, trigger object creation/discovery
+            if (__instance.name.EndsWith("(Clone)") && (Plugin.Config.EnableCustomObjects.Value || Plugin.Config.LogExistingMapObjects.Value))
+            {
+                CustomObjectInsertion.TryCreateCustomObjects(__instance);
+            }
+
             // Check for MeshRenderers and replace their textures
             var meshRenderers = __instance.GetComponentsInChildren<MeshRenderer>(true);
             foreach (var mr in meshRenderers)
@@ -67,10 +73,10 @@ public partial class CustomTexturePatch
                     }
                 }
             }
-            
+
             // Check main instance for Suikozu
             SuikozuPatch.CheckAndAttachMonitor(__instance);
-            
+
             // Scan for SpriteRenderers (Unity standard)
             var spriteRenderers = __instance.GetComponentsInChildren<SpriteRenderer>(true);
             foreach (var sr in spriteRenderers)
@@ -78,29 +84,29 @@ public partial class CustomTexturePatch
                 if (sr.sprite != null)
                 {
                     int instanceId = sr.GetInstanceID();
-                    
+
                     // Skip if already processed
                     if (_processedSpriteInstances.Contains(instanceId))
                         continue;
-                    
+
                     string spriteName = sr.sprite.name;
-                    
+
                     // Check and attach Dragon monitor if applicable
                     DragonPatch.CheckAndAttachMonitor(sr.gameObject);
-                    
+
                     // Check and attach Cow monitor if applicable
                     CowTexturePatch.CheckAndAttachMonitor(sr.gameObject);
-                    
+
                     // Skip save point sprites - they're handled in SavePointPatch.cs
                     if (spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase))
                         continue;
-                    
+
                     Sprite customSprite = LoadCustomSprite(spriteName, sr.sprite);
                     if (customSprite != null)
                     {
                         sr.sprite = customSprite;
                         _processedSpriteInstances.Add(instanceId);
-                        
+
                         if (Plugin.Config.DetailedLogs.Value)
                         {
                             Plugin.Log.LogInfo($"Replaced sprite on activation: {spriteName} (from {objectPath})");
@@ -108,7 +114,7 @@ public partial class CustomTexturePatch
                     }
                 }
             }
-            
+
             // Scan for GRSpriteRenderers (game's custom renderer - used in S1)
             var grSpriteRenderers = __instance.GetComponentsInChildren<GRSpriteRenderer>(true);
             foreach (var gr in grSpriteRenderers)
@@ -116,23 +122,23 @@ public partial class CustomTexturePatch
                 if (gr.sprite != null)
                 {
                     int instanceId = gr.GetInstanceID();
-                    
+
                     // Skip if already processed
                     if (_processedSpriteInstances.Contains(instanceId))
                         continue;
-                    
+
                     string spriteName = gr.sprite.name;
-                    
+
                     // Check and attach Dragon monitor if applicable
                     DragonPatch.CheckAndAttachMonitor(gr.gameObject);
-                    
+
                     // Check and attach Cow monitor if applicable
                     CowTexturePatch.CheckAndAttachMonitor(gr.gameObject);
-                    
+
                     _processedSpriteInstances.Add(instanceId);
                 }
             }
-            
+
         }
     }
 
@@ -146,7 +152,7 @@ public partial class CustomTexturePatch
     {
         // Only process if custom textures are enabled
         if (!Plugin.Config.EnableCustomTextures.Value) return;
-        
+
         // Find and refresh TopMenuPartyList to force texture replacement
         var topMenuPartyList = FindTopMenuPartyList(__instance.gameObject);
         if (topMenuPartyList != null)
@@ -168,7 +174,7 @@ public partial class CustomTexturePatch
             if (topMenuPartyList != null)
                 return topMenuPartyList.gameObject;
         }
-        
+
         // Fallback: search all children
         var allTransforms = uiMainMenu.GetComponentsInChildren<Transform>(true);
         foreach (var transform in allTransforms)
@@ -176,7 +182,7 @@ public partial class CustomTexturePatch
             if (transform.name == "TopMenuPartyList")
                 return transform.gameObject;
         }
-        
+
         return null;
     }
 
@@ -188,7 +194,7 @@ public partial class CustomTexturePatch
         // Toggle the entire TopMenuPartyList
         topMenuPartyList.SetActive(false);
         topMenuPartyList.SetActive(true);
-        
+
         // Also refresh individual Img_BG objects with MenuTopPartyStatus
         var allImages = topMenuPartyList.GetComponentsInChildren<UnityEngine.UI.Image>(true);
         foreach (var image in allImages)
@@ -197,15 +203,15 @@ public partial class CustomTexturePatch
             {
                 // Check if this image has MenuTopPartyStatus texture
                 bool hasMenuTopPartyStatus = false;
-                
-                if (image.sprite?.texture?.name == "MenuTopPartyStatus" || 
+
+                if (image.sprite?.texture?.name == "MenuTopPartyStatus" ||
                     image.sprite?.name.Contains("MenuTopPartyStatus") == true)
                     hasMenuTopPartyStatus = true;
-                    
+
                 if (image.overrideSprite?.texture?.name == "MenuTopPartyStatus" ||
                     image.overrideSprite?.name.Contains("MenuTopPartyStatus") == true)
                     hasMenuTopPartyStatus = true;
-                
+
                 if (hasMenuTopPartyStatus)
                 {
                     image.gameObject.SetActive(false);

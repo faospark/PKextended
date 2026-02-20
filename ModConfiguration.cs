@@ -340,10 +340,10 @@ public sealed class ModConfiguration
         // If you need to enable them for development, replace these with _config.Bind() calls
 
         EnableDialogOverrides = new HiddenConfigEntry<bool>(true);
-        EnableObjectDiagnostics = new HiddenConfigEntry<bool>(false);
-        EnableCustomObjects = new HiddenConfigEntry<bool>(false);
-        DebugCustomObjects = new HiddenConfigEntry<bool>(false);
-        LogExistingMapObjects = new HiddenConfigEntry<bool>(false);
+        EnableObjectDiagnostics = new HiddenConfigEntry<bool>(true);
+        EnableCustomObjects = new HiddenConfigEntry<bool>(true);
+        DebugCustomObjects = new HiddenConfigEntry<bool>(true);
+        LogExistingMapObjects = new HiddenConfigEntry<bool>(true);
         SpriteMipmapBias = new HiddenConfigEntry<float>(-0.5f);
         ForceControllerPrompts = new HiddenConfigEntry<bool>(true);
         EnableCustomTextures = new HiddenConfigEntry<bool>(true);

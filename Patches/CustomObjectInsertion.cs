@@ -63,6 +63,7 @@ public class CustomObjectInsertion
         // Apply patches
         harmony.PatchAll(typeof(RefleshObjectPatch));
         harmony.PatchAll(typeof(MapBGManagerHDCachePatch));
+        harmony.PatchAll(typeof(MapBGManagerHDSetMapPatch));
     }
 
     // Called by MapBGManagerHDCachePatch to cache the instance
@@ -78,20 +79,24 @@ public class CustomObjectInsertion
             string configPath = GetConfigPath();
             if (string.IsNullOrEmpty(configPath))
             {
-                // ... (keep fallback logic)
+                Plugin.Log.LogWarning("[Custom Objects] No objects.json found. Searched: GameRoot/PKCore/CustomObjects/objects.json");
                 return;
             }
 
-            // Load configuration using AssetLoader (Sync for initialization)
-            var fullConfig = AssetLoader.LoadJsonAsync<CustomObjectsConfig>(configPath).Result;
-            if (fullConfig?.Maps != null)
+            // objects.json format: { "mapId": [ {...}, {...} ], "mapId2": [...] }
+            // Load as flat dictionary directly
+            var rawDict = AssetLoader.LoadJsonAsync<Dictionary<string, List<DiscoveredObject>>>(configPath).Result;
+            if (rawDict != null && rawDict.Count > 0)
             {
-                _loadedObjects = new Dictionary<string, List<DiscoveredObject>>();
-                foreach (var kvp in fullConfig.Maps)
-                {
-                    _loadedObjects[kvp.Key] = kvp.Value.Objects;
-                }
+                _loadedObjects = rawDict;
                 _configLoaded = true;
+                Plugin.Log.LogInfo($"[Custom Objects] Loaded {rawDict.Count} map(s) from {System.IO.Path.GetFileName(configPath)}");
+                foreach (var kvp in rawDict)
+                    Plugin.Log.LogInfo($"[Custom Objects]  → {kvp.Key}: {kvp.Value.Count} object(s)");
+            }
+            else
+            {
+                Plugin.Log.LogWarning($"[Custom Objects] objects.json loaded but no maps found or empty: {configPath}");
             }
         }
         catch (System.Exception ex)
@@ -108,7 +113,13 @@ public class CustomObjectInsertion
     {
         try
         {
-            // Only create once per scene instance
+            // Run discovery first if enabled — outputs ExistingMapObjects.json
+            if (Plugin.Config.LogExistingMapObjects.Value)
+            {
+                ObjectDiscovery.DiscoverObjectsInScene(sceneRoot);
+            }
+
+            // Only create custom objects once per scene instance
             if (_processedScenes.Contains(sceneRoot.GetInstanceID()))
             {
                 return;
@@ -317,17 +328,22 @@ public class CustomObjectInsertion
 
         desiredRotation = Quaternion.Euler(0, 0, data.Rotation);
 
+        // Log native EVENT_OBJ fields if specified (for modder verification)
+        if (Plugin.Config.DetailedLogs.Value && (data.NativeX != 0 || data.NativeY != 0 || data.ObjectType != 0 || data.FaceNo != 0))
+        {
+            Plugin.Log.LogInfo($"[Custom Objects] Native fields for '{data.Name}': " +
+                $"otyp={data.ObjectType} wt={data.WalkType} ityp={data.InteractType} " +
+                $"fpno={data.FaceNo} disp={data.Disp} " +
+                $"x={data.NativeX} y={data.NativeY} w={data.NativeW} h={data.NativeH}");
+        }
+
         // Apply transform initially (will be re-applied later)
         customObj.transform.localPosition = desiredPosition;
         customObj.transform.localScale = desiredScale;
         customObj.transform.localRotation = desiredRotation;
 
-        // Sorting & Layer
-        if (data.Layer != 0) customObj.layer = data.Layer;
-        if (!string.IsNullOrEmpty(data.Tag) && data.Tag != "Untagged" && !data.Tag.StartsWith("NativeID"))
-        {
-            try { customObj.tag = data.Tag; } catch { } // Ignore invalid tags
-        }
+
+        // (Layer and Tag are not stored; custom objects use default layer/tag)
 
         // SpriteRenderer
         SpriteRenderer sr = null;
@@ -501,7 +517,7 @@ public class CustomObjectInsertion
 
             // Use AssetLoader for unified and optimized loading
             Texture2D texture = AssetLoader.LoadTextureSync(textureName, "CustomObject");
-            
+
             if (texture != null)
             {
                 Sprite sprite = Sprite.Create(
@@ -817,24 +833,66 @@ public static class RefleshObjectPatch
     [HarmonyPostfix]
     public static void Postfix(int id, Vector2 pos, bool isVisible, int an, int eventMapNo, bool isInitVisible)
     {
-        // Diagnostic hook - currently silent
-        if (Plugin.Config.EnableObjectDiagnostics.Value)
-        {
-            // Uncomment for debugging
-            // Plugin.Log.LogInfo($"[RefleshObject Hook] ID={id}, Pos={pos}...");
-        }
+        // Reserved for per-object diagnostic hooks
     }
 }
 
-// Patch to capture the MapBGManagerHD instance after scene load completes
+// Patch to cache the MapBGManagerHD instance after Load() completes
 [HarmonyPatch(typeof(MapBGManagerHD), "Load")]
 public static class MapBGManagerHDCachePatch
 {
     [HarmonyPostfix]
     public static void Postfix(object __instance)
     {
-        // Cache the MapBGManagerHD instance AFTER Load() completes - sprites list should be initialized
         CustomObjectInsertion.SetMapBGManagerInstance(__instance);
-        Plugin.Log.LogInfo($"[Custom Objects] Cached MapBGManagerHD instance from Load() Postfix");
+        if (Plugin.Config.DetailedLogs.Value)
+            Plugin.Log.LogInfo($"[Custom Objects] Cached MapBGManagerHD instance from Load() Postfix");
+
+        // Trigger object creation/discovery using the map clone child of bgManagerHD
+        try
+        {
+            var component = __instance as UnityEngine.Component;
+            if (component != null)
+            {
+                // The map clone (e.g. vk07_01(Clone)) is a child of bgManagerHD, not the manager itself
+                GameObject sceneRoot = null;
+                var t = component.transform;
+                for (int i = 0; i < t.childCount; i++)
+                {
+                    var child = t.GetChild(i);
+                    if (child.name.EndsWith("(Clone)"))
+                    {
+                        sceneRoot = child.gameObject;
+                        break;
+                    }
+                }
+
+                if (sceneRoot != null)
+                    CustomObjectInsertion.TryCreateCustomObjects(sceneRoot);
+                else
+                    Plugin.Log.LogWarning("[Custom Objects] Load() postfix: no (Clone) child found on bgManagerHD");
+            }
+        }
+        catch (Exception ex)
+        {
+            Plugin.Log.LogError($"[Custom Objects] Error in Load postfix: {ex.Message}");
+        }
+    }
+}
+
+
+// Patch SetMap — fires after Load, has the scene root GameObject directly
+[HarmonyPatch(typeof(MapBGManagerHD), "SetMap")]
+public static class MapBGManagerHDSetMapPatch
+{
+    [HarmonyPostfix]
+    public static void Postfix(object map, GameObject obj)
+    {
+        if (obj == null) return;
+
+        if (Plugin.Config.DetailedLogs.Value)
+            Plugin.Log.LogInfo($"[Custom Objects] SetMap fired for: {obj.name}");
+
+        CustomObjectInsertion.TryCreateCustomObjects(obj);
     }
 }

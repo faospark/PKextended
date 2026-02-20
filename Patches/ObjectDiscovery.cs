@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Reflection;
 using UnityEngine;
 using PKCore.Models;
 using BepInEx;
@@ -11,65 +12,55 @@ using Il2CppInterop.Runtime;
 namespace PKCore.Utils;
 
 /// <summary>
-/// Discovers and logs existing map objects to help users copy object configurations
+/// Discovers and logs existing map objects (both Unity visual and native EVENT_OBJ data)
+/// to help users copy object configurations for modding.
 /// </summary>
 public static class ObjectDiscovery
 {
     private static HashSet<string> _discoveredMaps = new HashSet<string>();
     private static Dictionary<string, List<DiscoveredObject>> _discoveredObjects = new Dictionary<string, List<DiscoveredObject>>();
-    
+
     public static void DiscoverObjectsInScene(GameObject sceneRoot)
     {
         try
         {
             string mapId = sceneRoot.name.Replace("(Clone)", "");
-            
-            // Skip if already discovered
+
             if (_discoveredMaps.Contains(mapId))
                 return;
-                
+
+            Plugin.Log.LogInfo($"[ObjectDiscovery] Processing '{sceneRoot.name}' as MapID: '{mapId}'");
             Plugin.Log.LogInfo($"[ObjectDiscovery] Discovering objects in map: {mapId}");
-            
-            // Find the "object" folder
+
+            List<DiscoveredObject> objects = new List<DiscoveredObject>();
+
+            // 1. Discover Unity visual objects from the "object" folder
             Transform objectFolder = FindObjectFolder(sceneRoot.transform);
-            if (objectFolder == null)
+            if (objectFolder != null)
+            {
+                // Scan all descendants recursively — objects are often grouped (Table → Table_Top, Table_Legs, etc.)
+                DiscoverUnityObjectsRecursive(objectFolder, objects);
+            }
+            else
             {
                 Plugin.Log.LogWarning($"[ObjectDiscovery] No 'object' folder found in {mapId}");
-                return;
-            }
-            
-            List<DiscoveredObject> objects = new List<DiscoveredObject>();
-            
-            // Discover all children in the object folder (use GetChild for IL2CPP compatibility)
-            for (int i = 0; i < objectFolder.childCount; i++)
-            {
-                Transform child = objectFolder.GetChild(i);
-                var discovered = DiscoverObject(child.gameObject);
-                if (discovered != null)
-                {
-                    objects.Add(discovered);
-                }
             }
 
-            // [NEW] Discover native event objects from MapBGManagerHD
-            // Temporarily disabled due to missing GSD2 types
-            /*
-            try 
+            // 2. Discover native EVENT_OBJ entries from MAPEVDAT
+            try
             {
-                LogNativeEventObjects(objects);
+                DiscoverNativeEventObjects(sceneRoot, objects);
             }
             catch (Exception ex)
             {
-                Plugin.Log.LogWarning($"[ObjectDiscovery] Failed to log native objects: {ex.Message}");
+                Plugin.Log.LogWarning($"[ObjectDiscovery] Failed to read native event objects: {ex.Message}");
             }
-            */
-            
+
             _discoveredObjects[mapId] = objects;
             _discoveredMaps.Add(mapId);
-            
+
             Plugin.Log.LogInfo($"[ObjectDiscovery] Discovered {objects.Count} objects in {mapId}");
-            
-            // Save to file
+
             SaveDiscoveredObjects();
         }
         catch (Exception ex)
@@ -77,18 +68,33 @@ public static class ObjectDiscovery
             Plugin.Log.LogError($"[ObjectDiscovery] Error discovering objects: {ex}");
         }
     }
-    
-    private static DiscoveredObject DiscoverObject(GameObject obj)
+
+    // ─── Unity Object Discovery ─────────────────────────────────────────────────
+
+    private static void DiscoverUnityObjectsRecursive(Transform parent, List<DiscoveredObject> objects)
+    {
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform child = parent.GetChild(i);
+            var discovered = DiscoverUnityObject(child.gameObject);
+            if (discovered != null)
+                objects.Add(discovered);
+
+            // Recurse into children (e.g. Table → Table_Top, Table_Legs)
+            if (child.childCount > 0)
+                DiscoverUnityObjectsRecursive(child, objects);
+        }
+    }
+
+    private static DiscoveredObject DiscoverUnityObject(GameObject obj)
     {
         try
         {
-            // Get SpriteRenderer if it exists (but don't require it)
             var spriteRenderer = obj.GetComponent<SpriteRenderer>();
             bool hasSpriteRenderer = spriteRenderer != null;
             string textureName = spriteRenderer?.sprite?.texture?.name ?? "none";
             int sortingOrder = spriteRenderer?.sortingOrder ?? 0;
-            
-            // Check for collision, movement, and interactable components by name
+
             bool hasCollision = false;
             string colliderType = null;
             bool isMovable = false;
@@ -96,155 +102,45 @@ public static class ObjectDiscovery
             bool isInteractable = false;
             string interactableType = null;
             string dialogText = null;
-            
-            // Get all components and check their types
+
             var components = obj.GetComponents<Component>();
             foreach (var component in components)
             {
                 if (component == null) continue;
-                
                 string typeName = component.GetType().Name;
-                
-                // Check for collision components
+
                 if (typeName.Contains("Collider"))
                 {
                     hasCollision = true;
-                    if (colliderType == null)
-                        colliderType = typeName;
+                    colliderType ??= typeName;
                 }
-                
-                // Check for Rigidbody (movable)
+
                 if (typeName.Contains("Rigidbody"))
                 {
                     isMovable = true;
-                    rigidbodyType = typeName;
+                    rigidbodyType ??= typeName;
                 }
-                
-                // Check for interactable patterns
+
                 if (typeName.Contains("Interact", StringComparison.OrdinalIgnoreCase) ||
                     typeName.Contains("Event", StringComparison.OrdinalIgnoreCase) ||
                     typeName.Contains("Action", StringComparison.OrdinalIgnoreCase) ||
                     typeName.Contains("Trigger", StringComparison.OrdinalIgnoreCase))
                 {
                     isInteractable = true;
-                    if (interactableType == null)
-                        interactableType = typeName;
+                    interactableType ??= typeName;
                 }
-                
-                // Check if component has OpenMessageWindow method (indicates dialog/NPC)
-                if (!isInteractable)
-                {
-                    try
-                    {
-                        var methods = component.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                        foreach (var method in methods)
-                        {
-                            if (method.Name.Contains("OpenMessageWindow", StringComparison.OrdinalIgnoreCase) ||
-                                method.Name.Contains("ShowDialog", StringComparison.OrdinalIgnoreCase) ||
-                                method.Name.Contains("Talk", StringComparison.OrdinalIgnoreCase))
-                            {
-                                isInteractable = true;
-                                interactableType = $"{typeName} (has {method.Name})";
-                                break;
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore reflection errors
-                    }
-                }
-                
-                // Try to find dialog/text content
+
                 if (dialogText == null)
-                {
-                    try
-                    {
-                        var type = component.GetType();
-                        
-                        // Look for common text/dialog field names
-                        var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                        foreach (var field in fields)
-                        {
-                            string fieldName = field.Name.ToLower();
-                            
-                            // Check for text/dialog/message fields
-                            if (fieldName.Contains("text") || fieldName.Contains("dialog") || 
-                                fieldName.Contains("message") || fieldName.Contains("remark") ||
-                                fieldName.Contains("messageid") || fieldName.Contains("msg"))
-                            {
-                                var value = field.GetValue(component);
-                                if (value != null)
-                                {
-                                    // Handle string values
-                                    if (value is string textValue && !string.IsNullOrEmpty(textValue))
-                                    {
-                                        dialogText = textValue;
-                                        break;
-                                    }
-                                    // Handle int message IDs
-                                    else if (value is int intValue && intValue > 0)
-                                    {
-                                        dialogText = $"[MessageID: {intValue}]";
-                                        break;
-                                    }
-                                    // Handle arrays of strings
-                                    else if (value is string[] stringArray && stringArray.Length > 0)
-                                    {
-                                        dialogText = string.Join(" | ", stringArray.Where(s => !string.IsNullOrEmpty(s)));
-                                        if (!string.IsNullOrEmpty(dialogText))
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Also check properties
-                        if (dialogText == null)
-                        {
-                            var properties = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                            foreach (var prop in properties)
-                            {
-                                string propName = prop.Name.ToLower();
-                                if (propName.Contains("text") || propName.Contains("dialog") || 
-                                    propName.Contains("message") || propName.Contains("remark") ||
-                                    propName.Contains("messageid") || propName.Contains("msg"))
-                                {
-                                    if (prop.CanRead)
-                                    {
-                                        var value = prop.GetValue(component);
-                                        if (value != null)
-                                        {
-                                            if (value is string textValue && !string.IsNullOrEmpty(textValue))
-                                            {
-                                                dialogText = textValue;
-                                                break;
-                                            }
-                                            else if (value is int intValue && intValue > 0)
-                                            {
-                                                dialogText = $"[MessageID: {intValue}]";
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore reflection errors
-                    }
-                }
+                    dialogText = TryExtractDialogText(component);
             }
-                
+
             return new DiscoveredObject
             {
                 Name = obj.name,
                 Texture = textureName,
                 HasSpriteRenderer = hasSpriteRenderer,
-                Position = new Vector3Config 
-                { 
+                Position = new Vector3Config
+                {
                     X = obj.transform.localPosition.x,
                     Y = obj.transform.localPosition.y,
                     Z = obj.transform.localPosition.z
@@ -257,8 +153,6 @@ public static class ObjectDiscovery
                 },
                 Rotation = obj.transform.localEulerAngles.z,
                 SortingOrder = sortingOrder,
-                Layer = obj.layer,
-                Tag = obj.tag,
                 Active = obj.activeSelf,
                 HasCollision = hasCollision,
                 ColliderType = colliderType,
@@ -267,7 +161,6 @@ public static class ObjectDiscovery
                 IsInteractable = isInteractable,
                 InteractableType = interactableType,
                 DialogText = dialogText,
-                ComponentCount = components.Length
             };
         }
         catch (Exception ex)
@@ -276,44 +169,178 @@ public static class ObjectDiscovery
             return null;
         }
     }
-    
+
+    // ─── Native EVENT_OBJ Discovery via MAPEVDAT ────────────────────────────────
+
+    private static void DiscoverNativeEventObjects(GameObject sceneRoot, List<DiscoveredObject> objects)
+    {
+        // Find MAPEVDAT component anywhere on the scene root or its children.
+        // The game stores it as a MonoBehaviour component, accessible via reflection.
+        MAPEVDAT mapEvDat = FindMapEvDat(sceneRoot);
+
+        if (mapEvDat == null)
+        {
+            Plugin.Log.LogWarning($"[ObjectDiscovery] No MAPEVDAT component found on '{sceneRoot.name}'. Native object discovery skipped.");
+            return;
+        }
+
+        var eventObjs = mapEvDat.eventobj;
+        if (eventObjs == null)
+        {
+            Plugin.Log.LogWarning($"[ObjectDiscovery] MAPEVDAT.eventobj is null.");
+            return;
+        }
+
+        Plugin.Log.LogInfo($"[ObjectDiscovery] Reading {eventObjs.Length} native EVENT_OBJ entries from MAPEVDAT...");
+
+        for (int i = 0; i < eventObjs.Length; i++)
+        {
+            EVENT_OBJ e = eventObjs[i];
+            if (e == null) continue;
+
+            string label = GetObjectTypeLabel(e.otyp);
+
+            objects.Add(new DiscoveredObject
+            {
+                Name = $"Native_{i:D3}_{label}",
+                NativeIndex = i,
+                ObjectType = e.otyp,
+                Disp = e.disp,
+                Speed = e.spd,
+                WalkType = e.wt,
+                AnimationNo = e.ano,
+                InteractType = e.ityp,
+                FaceNo = e.fpno,
+                RenderGroup = e.ozok,
+                Priority = e.pri,
+                NativeX = e.x,
+                NativeY = e.y,
+                NativeW = e.w,
+                NativeH = e.h,
+                // Mark as native (no Unity position or texture)
+                Position = new Vector3Config { X = e.x, Y = e.y, Z = 0 },
+                IsInteractable = e.ityp > 0,
+            });
+        }
+
+        Plugin.Log.LogInfo($"[ObjectDiscovery] Added {eventObjs.Length} native objects.");
+    }
+
+    /// <summary>
+    /// Finds the MAPEVDAT component by searching the scene hierarchy.
+    /// MAPEVDAT may be on a MonoBehaviour attached to the root or a child GameObject.
+    /// </summary>
+    private static MAPEVDAT FindMapEvDat(GameObject sceneRoot)
+    {
+        // Try directly on the root first
+        var direct = TryGetMAPEVDAT(sceneRoot);
+        if (direct != null) return direct;
+
+        // Walk all children (broad search)
+        for (int i = 0; i < sceneRoot.transform.childCount; i++)
+        {
+            var child = sceneRoot.transform.GetChild(i);
+            var result = TryGetMAPEVDAT(child.gameObject);
+            if (result != null) return result;
+
+            // One level deeper (e.g. "MapRoot/data/MAPEVDAT")
+            for (int j = 0; j < child.childCount; j++)
+            {
+                var grandchild = child.GetChild(j);
+                result = TryGetMAPEVDAT(grandchild.gameObject);
+                if (result != null) return result;
+            }
+        }
+
+        return null;
+    }
+
+    private static MAPEVDAT TryGetMAPEVDAT(GameObject go)
+    {
+        try
+        {
+            return go.GetComponent<MAPEVDAT>();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    // ─── Helpers ────────────────────────────────────────────────────────────────
+
+    private static string GetObjectTypeLabel(byte otyp) => otyp switch
+    {
+        1 => "NPC",
+        2 => "Prop",
+        3 => "Chest",
+        4 => "Trigger",
+        _ => $"Type{otyp}"
+    };
+
+    private static string TryExtractDialogText(Component component)
+    {
+        try
+        {
+            var type = component.GetType();
+
+            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (var field in fields)
+            {
+                string fieldName = field.Name.ToLower();
+                if (fieldName.Contains("text") || fieldName.Contains("dialog") ||
+                    fieldName.Contains("message") || fieldName.Contains("remark") ||
+                    fieldName.Contains("messageid") || fieldName.Contains("msg"))
+                {
+                    var value = field.GetValue(component);
+                    if (value is string s && !string.IsNullOrEmpty(s)) return s;
+                    if (value is int intVal && intVal > 0) return $"[MessageID: {intVal}]";
+                }
+            }
+
+            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var prop in props)
+            {
+                string propName = prop.Name.ToLower();
+                if (propName.Contains("text") || propName.Contains("dialog") ||
+                    propName.Contains("message") || propName.Contains("msg"))
+                {
+                    if (!prop.CanRead) continue;
+                    var value = prop.GetValue(component);
+                    if (value is string s && !string.IsNullOrEmpty(s)) return s;
+                    if (value is int intVal && intVal > 0) return $"[MessageID: {intVal}]";
+                }
+            }
+        }
+        catch { /* Ignore reflection errors */ }
+
+        return null;
+    }
+
     private static Transform FindObjectFolder(Transform parent)
     {
-        if (parent.name == "object")
-            return parent;
-            
+        if (parent.name == "object") return parent;
         for (int i = 0; i < parent.childCount; i++)
         {
             var result = FindObjectFolder(parent.GetChild(i));
-            if (result != null)
-                return result;
+            if (result != null) return result;
         }
-        
         return null;
     }
-    
+
     private static void SaveDiscoveredObjects()
     {
         try
         {
-            // Save to game root PKCore folder
             string outputPath = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore", "CustomObjects", "ExistingMapObjects.json");
-            
-            // Ensure directory exists
             string directory = Path.GetDirectoryName(outputPath);
             if (!Directory.Exists(directory))
-            {
                 Directory.CreateDirectory(directory);
-            }
-            
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true
-            };
-            
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
             string json = JsonSerializer.Serialize(_discoveredObjects, options);
             File.WriteAllText(outputPath, json);
-            
+
             Plugin.Log.LogInfo($"[ObjectDiscovery] Saved discovered objects to {outputPath}");
         }
         catch (Exception ex)
@@ -321,61 +348,4 @@ public static class ObjectDiscovery
             Plugin.Log.LogError($"[ObjectDiscovery] Error saving discovered objects: {ex}");
         }
     }
-    /* Temporarily disabled due to missing GSD2 types
-    private static void LogNativeEventObjects(List<DiscoveredObject> objects)
-    {
-        // Fix: Use m_instance and cast to MapBGManagerHD
-        var managerBase = GSD2.MapBGManager.m_instance;
-        if (managerBase == null) return;
-        
-        var manager = managerBase.TryCast<GSD2.MapBGManagerHD>();
-        if (manager == null) return;
-        
-        var eventObjects = manager.eventObjects;
-        if (eventObjects == null) return;
-        
-        Plugin.Log.LogInfo($"[ObjectDiscovery] Found {eventObjects.Count} native event objects");
-        
-        for (int i = 0; i < eventObjects.Count; i++)
-        {
-            var evt = eventObjects[i];
-            if (evt == null) continue;
-            
-            objects.Add(new DiscoveredObject
-            {
-                Name = $"Native_Event_Unknown", // Name = $"Native_Event_{evt.id}",
-                Texture = "Native",
-                HasSpriteRenderer = true, // Assumed
-                Position = new Vector3Config 
-                { 
-                    X = 0, // evt.pos.x,
-                    Y = 0, // evt.pos.y,
-                    Z = 0 // 2D map
-                },
-                Scale = new Vector3Config { X = 1, Y = 1, Z = 1 },
-                Rotation = 0,
-                SortingOrder = 0,
-                Layer = 0,
-                Tag = "NativeID:Unknown", // Tag = $"NativeID:{evt.id}",
-                Active = true, // evt.isVisible,
-                HasCollision = true,
-                ColliderType = "NativeBox",
-                IsMovable = false,
-                RigidbodyType = null,
-                IsInteractable = true,
-                InteractableType = $"NativeEvent", // InteractableType = $"NativeEvent (EventMapNo: {evt.eventMapNo}, AN: {evt.an})",
-                DialogText = null,
-                ComponentCount = 0,
-                // Custom fields
-                NativeID = -1, // evt.id,
-                EventMapNo = -1 // evt.eventMapNo
-            });
-            
-            // TODO: Use Reflection to dump properties once and find correct names
-            // Plugin.Log.LogInfo($"[Reflection] EventObject Props: {string.Join(", ", evt.GetType().GetProperties().Select(p => p.Name))}");
-        }
-    }
-    */
 }
-
-
