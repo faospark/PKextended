@@ -30,7 +30,7 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 /save
-
+/study
 # Helper scripts (not for distribution)
 *.bat
 
