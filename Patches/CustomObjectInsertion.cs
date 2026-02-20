@@ -847,39 +847,8 @@ public static class MapBGManagerHDCachePatch
         CustomObjectInsertion.SetMapBGManagerInstance(__instance);
         if (Plugin.Config.DetailedLogs.Value)
             Plugin.Log.LogInfo($"[Custom Objects] Cached MapBGManagerHD instance from Load() Postfix");
-
-        // Trigger object creation/discovery using the map clone child of bgManagerHD
-        try
-        {
-            var component = __instance as UnityEngine.Component;
-            if (component != null)
-            {
-                // The map clone (e.g. vk07_01(Clone)) is a child of bgManagerHD, not the manager itself
-                GameObject sceneRoot = null;
-                var t = component.transform;
-                for (int i = 0; i < t.childCount; i++)
-                {
-                    var child = t.GetChild(i);
-                    if (child.name.EndsWith("(Clone)"))
-                    {
-                        sceneRoot = child.gameObject;
-                        break;
-                    }
-                }
-
-                if (sceneRoot != null)
-                    CustomObjectInsertion.TryCreateCustomObjects(sceneRoot);
-                else
-                    Plugin.Log.LogWarning("[Custom Objects] Load() postfix: no (Clone) child found on bgManagerHD");
-            }
-        }
-        catch (Exception ex)
-        {
-            Plugin.Log.LogError($"[Custom Objects] Error in Load postfix: {ex.Message}");
-        }
     }
 }
-
 
 // Patch SetMap — fires after Load, has the scene root GameObject directly
 [HarmonyPatch(typeof(MapBGManagerHD), "SetMap")]

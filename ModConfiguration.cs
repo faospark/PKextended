@@ -49,7 +49,7 @@ public sealed class ModConfiguration
 
     // War Ability Mod
     public ConfigEntry<bool> EnableWarAbilityMod { get; private set; }
-    
+
     // World Map Settings
     public ConfigEntry<bool> DisableWorldMapClouds { get; private set; }
     public ConfigEntry<bool> DisableWorldMapSunrays { get; private set; }
@@ -79,7 +79,7 @@ public sealed class ModConfiguration
         public HiddenConfigEntry(T defaultValue) { _value = defaultValue; }
     }
 
-    public HiddenConfigEntry<bool> EnableObjectDiagnostics { get; private set; }
+
     public HiddenConfigEntry<bool> EnableCustomObjects { get; private set; }
     public HiddenConfigEntry<bool> DebugCustomObjects { get; private set; }
     public HiddenConfigEntry<bool> LogExistingMapObjects { get; private set; }
@@ -138,7 +138,7 @@ public sealed class ModConfiguration
             "- Switch: 'Switch', 'Nintendo' (_04 suffix - use with custom textures)\n" +
             "Only applies if ForceControllerPrompts is enabled."
         );
-        
+
         LoadLauncherUITextures = _config.Bind(
             "02 User Interface",
             "LoadLauncherUITextures",
@@ -340,7 +340,7 @@ public sealed class ModConfiguration
         // If you need to enable them for development, replace these with _config.Bind() calls
 
         EnableDialogOverrides = new HiddenConfigEntry<bool>(true);
-        EnableObjectDiagnostics = new HiddenConfigEntry<bool>(true);
+
         EnableCustomObjects = new HiddenConfigEntry<bool>(true);
         DebugCustomObjects = new HiddenConfigEntry<bool>(true);
         LogExistingMapObjects = new HiddenConfigEntry<bool>(true);
