@@ -11,6 +11,8 @@ namespace PKCore.Patches;
 /// </summary>
 public partial class CustomTexturePatch
 {
+    private static bool _loggedSavePointColor = false;
+
     /// <summary>
     /// Intercept Resources.Load<Sprite>() to replace save point animation frames
     /// The Animator loads sprite frames via Resources.Load, not through sprite property setters
@@ -53,7 +55,7 @@ public partial class CustomTexturePatch
         }
     }
 
-    
+
 
     /// <summary>
     /// Intercept GameObject.SetActive to replace save point sprites when bgManagerHD activates
@@ -71,7 +73,7 @@ public partial class CustomTexturePatch
         string objectPath = GetGameObjectPath(__instance);
         bool isBgManager = objectPath.Contains("bgManagerHD") || objectPath.Contains("MapBackGround");
         bool isSavePointObj = __instance.name.Contains("savePoint", StringComparison.OrdinalIgnoreCase);
-        
+
         if (!isBgManager && !isSavePointObj)
             return;
 
@@ -82,7 +84,7 @@ public partial class CustomTexturePatch
             if (sr.sprite != null)
             {
                 string spriteName = sr.sprite.name;
-                
+
                 // Only process save point sprites
                 bool isSavePoint = spriteName.Contains("savePoint", StringComparison.OrdinalIgnoreCase);
                 if (!isSavePoint)
@@ -92,7 +94,7 @@ public partial class CustomTexturePatch
                 {
                     Plugin.Log.LogInfo($"[SavePoint GameObject] Found sprite: {spriteName} in {objectPath}");
                 }
-                
+
                 Sprite customSprite = LoadCustomSprite(spriteName, sr.sprite);
                 if (customSprite != null)
                 {
@@ -101,7 +103,7 @@ public partial class CustomTexturePatch
                     {
                         Plugin.Log.LogInfo($"[SavePoint GameObject] ✓ SET custom sprite: {spriteName}");
                     }
-                    
+
                     // Add monitor component for animated save point ball
                     if (spriteName.StartsWith("t_obj_savePoint_ball_"))
                     {
@@ -167,11 +169,7 @@ public partial class CustomTexturePatch
         if (!int.TryParse(frameNumStr, out int frameNum))
             return null;
 
-        if (Plugin.Config.DetailedLogs.Value)
-        {
-            Plugin.Log.LogInfo($"[SavePoint] Creating sprite from atlas for: {spriteName} (frame {frameNum})");
-        }
-        
+        // Removed individual frame logging
         // Load the atlas texture
         Texture2D atlasTexture = LoadCustomTexture("t_obj_savePoint_ball");
         if (atlasTexture == null)
@@ -184,16 +182,16 @@ public partial class CustomTexturePatch
         int frameWidth = 100;
         int frameHeight = 100;
         int columns = 4;
-        
+
         // Calculate frame position (cycle through 8 frames if more than 8)
         int frameIndex = frameNum % 8;
         int col = frameIndex % columns;
         int row = frameIndex / columns;
-        
+
         // Calculate rect (flip Y for Unity's bottom-left origin)
         float x = col * frameWidth;
         float y = atlasTexture.height - (row + 1) * frameHeight;
-        
+
         // Preserve original sprite properties if available
         Vector2 customPivot = originalSprite != null ? originalSprite.pivot / originalSprite.rect.size : new Vector2(0.5f, 0.5f);
         float customPPU = originalSprite != null ? originalSprite.pixelsPerUnit : 100f;
@@ -205,11 +203,8 @@ public partial class CustomTexturePatch
             customPPU = originalSprite.pixelsPerUnit * scaleRatio;
         }
 
-        if (Plugin.Config.DetailedLogs.Value)
-        {
-            Plugin.Log.LogInfo($"[SavePoint] Creating sprite: rect=({x},{y},{frameWidth},{frameHeight}) from atlas {atlasTexture.width}x{atlasTexture.height} PPU:{customPPU} Pivot:{customPivot}");
-        }
-        
+        // Removed individual sprite creation logging
+
         Sprite customSprite = Sprite.Create(
             atlasTexture,
             new Rect(x, y, frameWidth, frameHeight),
@@ -218,15 +213,17 @@ public partial class CustomTexturePatch
             0,
             SpriteMeshType.FullRect
         );
-        
+
         if (customSprite != null)
         {
             UnityEngine.Object.DontDestroyOnLoad(customSprite);
             UnityEngine.Object.DontDestroyOnLoad(atlasTexture);
-            
-            if (Plugin.Config.DetailedLogs.Value)
+
+            if (Plugin.Config.DetailedLogs.Value && !_loggedSavePointColor)
             {
-                Plugin.Log.LogInfo($"[SavePoint] ✓ Created and cached sprite: {spriteName}");
+                string color = Plugin.Config.SavePointColor.Value;
+                Plugin.Log.LogInfo($"[SavePoint] Custom {color} created and cached");
+                _loggedSavePointColor = true;
             }
             return customSprite;
         }
@@ -234,7 +231,7 @@ public partial class CustomTexturePatch
         {
             Plugin.Log.LogError($"[SavePoint] Sprite.Create returned null for: {spriteName}");
         }
-        
+
         return null;
     }
 }

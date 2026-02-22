@@ -108,7 +108,7 @@ public class Plugin : BasePlugin
         // Apply Sprite Filtering patch independently
         if (Config.SpriteFilteringEnabled.Value)
         {
-            Log.LogInfo($"Applying Sprite Filtering patches (Enabled: {Config.SpriteFilteringEnabled.Value})...");
+            Log.LogInfo($"Applying Sprite Filtering patch (Enabled: {Config.SpriteFilteringEnabled.Value})...");
             harmony.PatchAll(typeof(SpriteFilteringPatch));
             SpriteFilteringPatch.Initialize();
         }
@@ -123,7 +123,7 @@ public class Plugin : BasePlugin
         // Controller Prompt Override
         if (Config.ForceControllerPrompts.Value)
         {
-            Log.LogInfo($"Applying Global Controller Prompt patches (type: {Config.ControllerPromptType.Value})...");
+            Log.LogInfo($"Applying Controller Prompt patch (type: {Config.ControllerPromptType.Value})...");
             harmony.PatchAll(typeof(GlobalControllerPromptPatch));
         }
 
@@ -132,11 +132,11 @@ public class Plugin : BasePlugin
         {
             if (Config.EnableCustomTextures.Value)
             {
-                Log.LogInfo("Applying Custom Texture patches...");
+                Log.LogInfo("Applying Custom Texture patch...");
             }
             else
             {
-                Log.LogInfo("Applying Custom Texture patches (logging only)...");
+                Log.LogInfo("Applying Custom Texture patch (logging only)...");
             }
 
             harmony.PatchAll(typeof(CustomTexturePatch));
@@ -164,7 +164,7 @@ public class Plugin : BasePlugin
 
             if (Config.DetailedLogs.Value)
             {
-                Log.LogInfo("Applying Native Map Texture patches...");
+                Log.LogInfo("Applying Native Map Texture patch...");
             }
             harmony.PatchAll(typeof(MapTexturePatch));
 
@@ -176,7 +176,7 @@ public class Plugin : BasePlugin
         // Resolution patch
         if (Config.EnableResolutionScaling.Value && Config.ResolutionScale.Value != 1.0f)
         {
-            Log.LogInfo("Applying Resolution patches...");
+            Log.LogInfo("Applying Resolution patch...");
             harmony.PatchAll(typeof(ResolutionPatch));
             ResolutionPatch.Initialize();
         }
@@ -207,11 +207,11 @@ public class Plugin : BasePlugin
         // Dialog Text ID interceptor and placeholder replacement (independent of NPC portraits)
         if (Config.EnableDialogOverrides.Value || Config.LogTextIDs.Value)
         {
-            Log.LogInfo("Applying TextDatabase patches...");
+            Log.LogInfo("Applying TextDatabase patch...");
             harmony.PatchAll(typeof(TextDatabasePatch));
 
             // Apply SaveDataProcessor for protagonist/HQ name placeholder replacement
-            Log.LogInfo("Applying SaveDataProcessor patches...");
+            Log.LogInfo("Applying SaveDataProcessor patch...");
             harmony.PatchAll(typeof(SaveDataProcessor));
         }
 
@@ -229,7 +229,7 @@ public class Plugin : BasePlugin
         // Enable at your own risk for testing/development
         if (Config.EnableCustomObjects.Value)
         {
-            Log.LogInfo("Applying Custom Object Insertion patches...");
+            Log.LogInfo("Applying Custom Object Insertion patch...");
             CustomObjectInsertion.Initialize(Config.EnableCustomObjects.Value, harmony);
         }
 
@@ -237,7 +237,7 @@ public class Plugin : BasePlugin
         {
             if (Config.DetailedLogs.Value)
             {
-                Log.LogInfo("Applying Animated Texture patches...");
+                Log.LogInfo("Applying Animated Texture patch...");
             }
             AnimatedTexturePatch.Initialize();
         }
@@ -251,14 +251,14 @@ public class Plugin : BasePlugin
         // Apply Dialog Patch (Dialog Box Scaling)
         if (Config.ScaleDownDialogBox.Value)
         {
-            Log.LogInfo("Applying DialogBoxScale patches ...");
+            Log.LogInfo("Applying DialogBoxScale patch ...");
             harmony.PatchAll(typeof(DialogBoxScalePatch));
         }
 
         // Apply Suikoden 1 World Map Scale Patch
         if (Config.S1ScaledDownWorldMap.Value)
         {
-            Log.LogInfo("Applying S1WorldMapScaleUI patches...");
+            Log.LogInfo("Applying S1WorldMapScaleUI patch...");
             S1WorldMapScaleUIPatch.Initialize();
             harmony.PatchAll(typeof(S1WorldMapScaleUIPatch));
         }
@@ -269,14 +269,14 @@ public class Plugin : BasePlugin
         // Apply Menu Scale Patch (Menu Scaling)
         if (Config.ScaledDownMenu.Value.Equals("true", System.StringComparison.OrdinalIgnoreCase))
         {
-            Log.LogInfo($"Applying MenuScale patches (mode: {Config.ScaledDownMenu.Value})...");
+            Log.LogInfo($"Applying MenuScale patch (mode: {Config.ScaledDownMenu.Value})...");
             harmony.PatchAll(typeof(MenuScalePatch));
         }
 
         // Apply SMAA patches
         if (!Config.SMAAQuality.Value.Equals("Off", System.StringComparison.OrdinalIgnoreCase))
         {
-            Log.LogInfo($"Applying SMAA patches (quality: {Config.SMAAQuality.Value})...");
+            Log.LogInfo($"Applying SMAA patch (quality: {Config.SMAAQuality.Value})...");
             harmony.PatchAll(typeof(SMAAPatch));
         }
 
