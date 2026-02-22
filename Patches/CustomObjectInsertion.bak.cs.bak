@@ -67,7 +67,7 @@ public class CustomObjectInsertion
         harmony.PatchAll(typeof(MachiLoader_Load_Patch));
     }
 
-    // Called by MapBGManagerHDSetMapPostfix to cache the instance
+    // Called by MapBGManagerHDCachePatch to cache the instance
     internal static void SetMapBGManagerInstance(object instance)
     {
         _currentMapBGManager = instance;
@@ -114,8 +114,8 @@ public class CustomObjectInsertion
     }
 
     /// <summary>
-    /// Inject custom objects as native EVENT_OBJ entries into the MACHIDAT eventobj arrays.
-    /// Called from MachiLoader_Load_Patch after EventInit() returns a live EVENTCON.
+    /// Try to create custom objects in the given scene GameObject
+    /// Called from GameObjectPatch when a scene clone is activated
     /// </summary>
     internal static void InjectNativeEventObjects(string mapId, List<DiscoveredObject> customObjects, MACHIDAT machi)
     {
@@ -183,10 +183,6 @@ public class CustomObjectInsertion
         Plugin.Log.LogInfo($"[Custom Objects] Natively injected {customObjects.Count} EVENT_OBJ instances into {mapId} MACHIDAT.");
     }
 
-    /// <summary>
-    /// Try to create custom objects in the given scene GameObject.
-    /// Called from MapBGManagerHDSetMapPostfix when SetMap fires.
-    /// </summary>
     public static void TryCreateCustomObjects(GameObject sceneRoot)
     {
         try
@@ -229,35 +225,8 @@ public class CustomObjectInsertion
                 Plugin.Log.LogWarning($"[Custom Objects] No 'object' folder found in {sceneRoot.name} — parenting to scene root.");
             }
 
-            // Try to find the MapBGManagerHD directly from the scene root's parent
-            object activeManager = _currentMapBGManager;
-            if (activeManager == null)
-            {
-                var managerType = FindMapBGManagerType();
-                if (managerType != null)
-                {
-                    var il2cppType = Il2CppType.From(managerType);
-                    var comp = UnityEngine.Object.FindObjectOfType(il2cppType);
-                    if (comp != null)
-                    {
-                        var ptrProperty = comp.GetType().GetProperty("Pointer");
-                        if (ptrProperty != null)
-                        {
-                            var ptr = (IntPtr)ptrProperty.GetValue(comp);
-                            activeManager = System.Activator.CreateInstance(managerType, ptr);
-                            if (Plugin.Config.DetailedLogs.Value)
-                                Plugin.Log.LogInfo($"[Custom Objects] Extracted MapBGManagerHD using FindObjectOfType");
-                        }
-                    }
-                    else
-                    {
-                        Plugin.Log.LogWarning($"[Custom Objects] Failed to find MapBGManagerHD in the scene!");
-                    }
-                }
-            }
-
             // Spawn visual GameObjects for all custom objects in this map
-            CreateCustomObjectsForMap(mapId, objectFolder, activeManager);
+            CreateCustomObjectsForMap(mapId, objectFolder, null);
 
             _processedScenes.Add(sceneRoot.GetInstanceID());
         }
@@ -310,6 +279,11 @@ public class CustomObjectInsertion
         int successCount = 0;
         foreach (var objData in objects)
         {
+            // Skip native objects (id != -1) unless explicitly overridden?
+            // For now, allow everything from JSON. User is responsible for not duplicating natives if they don't want to.
+            // Usually we filter out ones with NativeID != -1 if we only want purely custom ones, 
+            // but the user might want to clone native objects. 
+
             try
             {
                 var (obj, sprite, position, scale, rotation) = CreateSingleObject(objData, objectFolder);
@@ -343,14 +317,13 @@ public class CustomObjectInsertion
                         RegisterWithMapBGManager(obj, mapBGManager);
                     }
 
-                    // Re-apply Y-based sortingOrder after MapSpriteHD.Awake() may have overridden it.
-                    // Use pixel-space Y (NativeY if set, else Position.Y × HDScale) to match
-                    // the same formula the game uses for characters in RefleshObject/SetSpriteSortingOrder.
+                    // Re-apply our sortingOrder after MapSpriteHD.Awake() may have overridden it.
+                    // Once registration succeeds, MapBGManagerHD.SetSpriteSortingOrder(py) takes over.
                     var srFinal = obj.GetComponent<SpriteRenderer>();
                     if (srFinal != null && objData.SortingOrder != 0)
                         srFinal.sortingOrder = objData.SortingOrder;
                     else if (srFinal != null)
-                        srFinal.sortingOrder = -(int)(GetPixelY(objData, objData.Position.Y) / 3.25f);
+                        srFinal.sortingOrder = -(int)(objData.Position.Y / 3.25f);
 
                     // RE-ASSIGN SPRITE AFTER ALL INITIALIZATION
                     // This is the final fix - sprite gets cleared somewhere, so we re-assign it last
@@ -496,20 +469,17 @@ public class CustomObjectInsertion
                     Plugin.Log.LogInfo($"[Custom Objects] No sibling found, using Sprites/Default");
             }
 
-            // Use the SortingOrder from the JSON. If 0, derive from pixel-space Y using the
-            // same formula the game uses (verified: char at pixelY≈1200 → sortingOrder=-369
-            // matching -(int)(pixelY / 3.25)).
-            // IMPORTANT: desiredPosition.y is in Unity world units — multiply by HDScale to get
-            // pixel Y so our depth is comparable to character sortingOrders from RefleshObject.
-            float pixelY = GetPixelY(data, desiredPosition.y);
+            // Use the SortingOrder from the JSON. If 0, derive from Y using OPDSprite's formula.
+            // Verified from Unity Explorer: character at Y≈1200 → SortingGroup.sortingOrder=-369
+            // which matches -(int)(Y / 3.25). This ensures correct depth relative to the character.
             if (data.SortingOrder != 0)
                 sr.sortingOrder = data.SortingOrder;
             else
-                sr.sortingOrder = -(int)(pixelY / 3.25f);
+                sr.sortingOrder = -(int)(desiredPosition.y / 3.25f);
 
             // Y-based Z: negative so objects are pushed behind the camera plane.
             // Positive Z brings things closer to camera (on top); negative pushes them back.
-            // Native objects use Z=0 or very slightly negative (-0.1, -0.2).
+            // Native objects use Z=0 or very slightly negative (-0.1, -0.2). 
             // We use a stronger offset so the character (Z~0) always renders in front.
             var pos = customObj.transform.localPosition;
             customObj.transform.localPosition = new Vector3(pos.x, pos.y, pos.y * -0.01f);
@@ -593,35 +563,26 @@ public class CustomObjectInsertion
             if (mapSpriteHDType != null)
             {
                 var il2cppType = Il2CppType.From(mapSpriteHDType);
-
-                // Component 1: visual sprite — linked to MapBGManagerHD.sprites
                 var mapSpriteComponent = obj.AddComponent(il2cppType);
+
+                // Set all required properties for game integration
                 SetProperty(mapSpriteComponent, "hasSpriteRenderer", true);
                 SetProperty(mapSpriteComponent, "spriteRenderer", sr);
+
+                // Set Size (approximating from scale/collider)
                 SetProperty(mapSpriteComponent, "Size", new Vector3(100, 100, 0.2f));
+
+                // Set gameObject and transform references (may be needed by game)
                 SetProperty(mapSpriteComponent, "gameObject", obj);
                 SetProperty(mapSpriteComponent, "transform", obj.transform);
-            }
-
-            var mapEventObjectHDType = FindMapEventObjectHDType();
-            if (mapEventObjectHDType != null)
-            {
-                var il2cppTypeEvent = Il2CppType.From(mapEventObjectHDType);
-
-                // Component 2: event/collision object — linked to MapBGManagerHD.eventObjects
-                var mapEventComponent = obj.AddComponent(il2cppTypeEvent);
-                SetProperty(mapEventComponent, "positionSync", true);
-                SetProperty(mapEventComponent, "visibleSync", true);
-                SetProperty(mapEventComponent, "gameObject", obj);
-                SetProperty(mapEventComponent, "transform", obj.transform);
 
                 if (Plugin.Config.DetailedLogs.Value)
-                    Plugin.Log.LogInfo($"[Custom Objects] Added MapSpriteHD + MapEventObjectHD components to {obj.name}");
+                    Plugin.Log.LogInfo($"[Custom Objects] Added MapSpriteHD component to {obj.name}");
             }
         }
         catch (System.Exception ex)
         {
-            Plugin.Log.LogWarning($"[Custom Objects] Error adding Map components: {ex.Message}");
+            Plugin.Log.LogWarning($"[Custom Objects] Error adding MapSpriteHD: {ex.Message}");
         }
     }
 
@@ -666,27 +627,26 @@ public class CustomObjectInsertion
 
     private static System.Type FindMapSpriteHDType()
     {
-        return FindTypeInGameAssemblies("MapSpriteHD");
-    }
-
-    private static System.Type FindMapEventObjectHDType()
-    {
-        return FindTypeInGameAssemblies("MapEventObjectHD");
+        foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == "GSD2" || assemblyName == "GSDShare" || assemblyName == "GSD1")
+            {
+                var type = assembly.GetType("MapSpriteHD");
+                if (type != null) return type;
+            }
+        }
+        return null;
     }
 
     private static System.Type FindMapBGManagerType()
-    {
-        return FindTypeInGameAssemblies("MapBGManagerHD");
-    }
-
-    private static System.Type FindTypeInGameAssemblies(string typeName)
     {
         foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
         {
             var assemblyName = assembly.GetName().Name;
             if (assemblyName == "GSD2" || assemblyName == "GSDShare" || assemblyName == "GSD1")
             {
-                var type = assembly.GetType(typeName);
+                var type = assembly.GetType("MapBGManagerHD");
                 if (type != null) return type;
             }
         }
@@ -775,112 +735,153 @@ public class CustomObjectInsertion
             if (Plugin.Config.DetailedLogs.Value)
                 Plugin.Log.LogInfo($"[Custom Objects] MapBGManager type: {managerType.FullName}");
 
+            // Get the MapSpriteHD component from our custom object
             var mapSpriteHDType = FindMapSpriteHDType();
-            var mapEventObjectHDType = FindMapEventObjectHDType();
-
-            if (mapSpriteHDType == null || mapEventObjectHDType == null)
+            if (mapSpriteHDType == null)
             {
-                Plugin.Log.LogWarning($"[Custom Objects] Could not find MapSpriteHD or MapEventObjectHD types");
+                Plugin.Log.LogWarning($"[Custom Objects] Could not find MapSpriteHD type");
                 return;
             }
 
-            // --- 1. Register to sprites list (visual) ---
-            var spriteIl2cppType = Il2CppType.From(mapSpriteHDType);
-            var spriteComponentPtr = customObj.GetComponent(spriteIl2cppType);
+            var il2cppType = Il2CppType.From(mapSpriteHDType);
+            var componentPtr = customObj.GetComponent(il2cppType);
 
-            if (spriteComponentPtr != null)
+            if (componentPtr == null)
             {
-                try
-                {
-                    var ptrProperty = spriteComponentPtr.GetType().GetProperty("Pointer");
-                    if (ptrProperty != null)
-                    {
-                        var ptr = (IntPtr)ptrProperty.GetValue(spriteComponentPtr);
-                        var mapSpriteHD = System.Activator.CreateInstance(mapSpriteHDType, ptr);
-
-                        var spritesProp = managerType.GetProperty("sprites");
-                        if (spritesProp != null)
-                        {
-                            var sprites = spritesProp.GetValue(mapBGManager);
-                            if (sprites != null)
-                            {
-                                var addMethod = sprites.GetType().GetMethod("Add");
-                                if (addMethod != null)
-                                {
-                                    addMethod.Invoke(sprites, new object[] { mapSpriteHD });
-                                    var countProp = sprites.GetType().GetProperty("Count");
-                                    var count = countProp?.GetValue(sprites) ?? 0;
-                                    if (Plugin.Config.DetailedLogs.Value)
-                                        Plugin.Log.LogInfo($"[Custom Objects] ✓ Registered {customObj.name} in sprites list (total: {count})");
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    Plugin.Log.LogError($"[Custom Objects] Failed to register to sprites list: {ex.Message}");
-                }
+                Plugin.Log.LogWarning($"[Custom Objects] No MapSpriteHD component on {customObj.name}");
+                return;
             }
 
-            // --- 2. Register to eventObjects list (physics/tangibility) ---
-            var eventIl2cppType = Il2CppType.From(mapEventObjectHDType);
-            var eventComponentPtr = customObj.GetComponent(eventIl2cppType);
-
-            if (eventComponentPtr != null)
+            // Create a properly typed IL2CPP object from the component pointer
+            // The component is a Component type, but we need MapSpriteHD type
+            object mapSpriteHD;
+            try
             {
-                try
+                // Use the IL2CPP pointer to create a properly typed instance
+                var ptrProperty = componentPtr.GetType().GetProperty("Pointer");
+                if (ptrProperty != null)
                 {
-                    var ptrProperty = eventComponentPtr.GetType().GetProperty("Pointer");
-                    if (ptrProperty != null)
+                    var ptr = (IntPtr)ptrProperty.GetValue(componentPtr);
+                    // Create instance using the constructor that takes IntPtr
+                    mapSpriteHD = System.Activator.CreateInstance(mapSpriteHDType, ptr);
+                    if (Plugin.Config.DetailedLogs.Value)
+                        Plugin.Log.LogInfo($"[Custom Objects] Created typed MapSpriteHD instance from pointer");
+                }
+                else
+                {
+                    Plugin.Log.LogError($"[Custom Objects] Could not get Pointer property from component");
+                    return;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Plugin.Log.LogError($"[Custom Objects] Failed to create typed MapSpriteHD: {ex.Message}");
+                return;
+            }
+
+            // Try property first (IL2CPP wrapper exposes as property)
+            var spritesProp = managerType.GetProperty("sprites");
+            if (spritesProp != null)
+            {
+                if (Plugin.Config.DetailedLogs.Value)
+                    Plugin.Log.LogInfo($"[Custom Objects] Found 'sprites' property");
+                var sprites = spritesProp.GetValue(mapBGManager);
+
+                if (sprites == null)
+                {
+                    Plugin.Log.LogWarning($"[Custom Objects] 'sprites' list is null - initializing it ourselves");
+
+                    // The game hasn't initialized the list yet, so we'll create it
+                    // Use Il2CppSystem.Collections.Generic.List<MapSpriteHD>
+                    try
                     {
-                        var ptr = (IntPtr)ptrProperty.GetValue(eventComponentPtr);
-                        var mapEventObjectHD = System.Activator.CreateInstance(mapEventObjectHDType, ptr);
+                        var listType = typeof(Il2CppSystem.Collections.Generic.List<>).MakeGenericType(mapSpriteHDType);
+                        sprites = System.Activator.CreateInstance(listType);
 
-                        System.Reflection.MemberInfo eventObjectsProp = (System.Reflection.MemberInfo)managerType.GetField("eventObjects") ?? managerType.GetProperty("eventObjects");
-                        if (eventObjectsProp != null)
+                        spritesProp.SetValue(mapBGManager, sprites);
+
+                        if (Plugin.Config.DetailedLogs.Value)
+                            Plugin.Log.LogInfo($"[Custom Objects] ✓ Created new sprites list");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Plugin.Log.LogError($"[Custom Objects] Failed to create sprites list: {ex.Message}");
+                        return;
+                    }
+                }
+
+                if (sprites != null)
+                {
+                    // Don't cast to IList - IL2CPP types don't implement .NET interfaces
+                    // Use reflection to call Add method directly
+                    try
+                    {
+                        var addMethod = sprites.GetType().GetMethod("Add");
+                        if (addMethod != null)
                         {
-                            object eventObjects = null;
-                            if (eventObjectsProp is System.Reflection.PropertyInfo pi)
-                                eventObjects = pi.GetValue(mapBGManager);
-                            else if (eventObjectsProp is System.Reflection.FieldInfo fi)
-                                eventObjects = fi.GetValue(mapBGManager);
+                            var countProp = sprites.GetType().GetProperty("Count");
+                            var currentCount = countProp?.GetValue(sprites) ?? 0;
 
-                            if (eventObjects == null)
-                            {
-                                Plugin.Log.LogInfo($"[Custom Objects] 'eventObjects' list is null - initializing it ourselves");
-                                var listType = typeof(Il2CppSystem.Collections.Generic.List<>).MakeGenericType(mapEventObjectHDType);
-                                eventObjects = System.Activator.CreateInstance(listType);
+                            Plugin.Log.LogInfo($"[Custom Objects] About to add to sprites list (current count: {currentCount})");
 
-                                if (eventObjectsProp is System.Reflection.PropertyInfo piSet)
-                                    piSet.SetValue(mapBGManager, eventObjects);
-                                else if (eventObjectsProp is System.Reflection.FieldInfo fiSet)
-                                    fiSet.SetValue(mapBGManager, eventObjects);
-                            }
+                            // The mapSpriteHD is a Component, but we need to pass it as the IL2CPP object
+                            // Don't wrap it - just pass the object directly since it's already an IL2CPP object
+                            if (Plugin.Config.DetailedLogs.Value)
+                                Plugin.Log.LogInfo($"[Custom Objects] mapSpriteHD type: {mapSpriteHD.GetType().FullName}");
+                            addMethod.Invoke(sprites, new object[] { mapSpriteHD });
 
-                            if (eventObjects != null)
-                            {
-                                var addMethod = eventObjects.GetType().GetMethod("Add");
-                                if (addMethod != null)
-                                {
-                                    addMethod.Invoke(eventObjects, new object[] { mapEventObjectHD });
-                                    var countProp = eventObjects.GetType().GetProperty("Count");
-                                    var count = countProp?.GetValue(eventObjects) ?? 0;
-                                    if (Plugin.Config.DetailedLogs.Value)
-                                        Plugin.Log.LogInfo($"[Custom Objects] ✓ Registered {customObj.name} in eventObjects list (total: {count})");
-                                }
-                            }
+                            var newCount = countProp?.GetValue(sprites) ?? 0;
+                            if (Plugin.Config.DetailedLogs.Value)
+                                Plugin.Log.LogInfo($"[Custom Objects] ✓ Registered {customObj.name} with MapBGManagerHD (sprites list, total: {newCount})");
                         }
                         else
                         {
-                            Plugin.Log.LogWarning($"[Custom Objects] 'eventObjects' field/property not found on MapBGManagerHD");
+                            Plugin.Log.LogError($"[Custom Objects] Could not find Add method on sprites list");
                         }
                     }
+                    catch (System.Exception ex)
+                    {
+                        Plugin.Log.LogError($"[Custom Objects] Failed to add to sprites list: {ex.Message}");
+                        Plugin.Log.LogError($"[Custom Objects] Stack trace: {ex.StackTrace}");
+                    }
                 }
-                catch (System.Exception ex)
+                else
                 {
-                    Plugin.Log.LogError($"[Custom Objects] Failed to register to eventObjects list: {ex.Message}");
+                    Plugin.Log.LogError($"[Custom Objects] sprites is STILL NULL after creation attempt!");
                 }
+
+                return;
+            }
+
+            // Try field as fallback
+            var spritesField = managerType.GetField("sprites", BindingFlags.Public | BindingFlags.Instance);
+            if (spritesField != null)
+            {
+                Plugin.Log.LogInfo($"[Custom Objects] Found 'sprites' field");
+                var sprites = spritesField.GetValue(mapBGManager) as System.Collections.IList;
+
+                if (sprites == null)
+                {
+                    Plugin.Log.LogWarning($"[Custom Objects] 'sprites' field returned null");
+                    return;
+                }
+
+                sprites.Add(mapSpriteHD);
+                Plugin.Log.LogInfo($"[Custom Objects] ✓ Registered {customObj.name} with MapBGManagerHD (sprites list, total: {sprites.Count})");
+                return;
+            }
+
+            // Diagnostic: List all available members
+            Plugin.Log.LogWarning($"[Custom Objects] 'sprites' not found as property or field!");
+            Plugin.Log.LogInfo($"[Custom Objects] Available properties:");
+            foreach (var prop in managerType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                Plugin.Log.LogInfo($"  - Property: {prop.Name} ({prop.PropertyType.Name})");
+            }
+            Plugin.Log.LogInfo($"[Custom Objects] Available fields:");
+            foreach (var field in managerType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                Plugin.Log.LogInfo($"  - Field: {field.Name} ({field.FieldType.Name})");
             }
         }
         catch (System.Exception ex)
@@ -892,6 +893,7 @@ public class CustomObjectInsertion
             }
         }
     }
+
     private static void SetProperty(object obj, string propertyName, object value)
     {
         var property = obj.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
@@ -899,40 +901,6 @@ public class CustomObjectInsertion
         {
             property.SetValue(obj, value);
         }
-    }
-
-    /// <summary>
-    /// Returns the game's HD scale factor (world units → pixel conversion).
-    /// HDScale is a static int on MapBGManagerHD. Falls back to 4 if unavailable.
-    /// </summary>
-    private static int _cachedHDScale = -1;
-    private static int GetHDScale()
-    {
-        if (_cachedHDScale > 0) return _cachedHDScale;
-        try
-        {
-            var type = FindMapBGManagerType();
-            if (type != null)
-            {
-                var prop = type.GetProperty("HDScale", BindingFlags.Public | BindingFlags.Static);
-                if (prop != null) { _cachedHDScale = (int)prop.GetValue(null); return _cachedHDScale; }
-                var field = type.GetField("HDScale", BindingFlags.Public | BindingFlags.Static);
-                if (field != null) { _cachedHDScale = (int)field.GetValue(null); return _cachedHDScale; }
-            }
-        }
-        catch { }
-        _cachedHDScale = 4;
-        return _cachedHDScale;
-    }
-
-    /// <summary>
-    /// Converts a DiscoveredObject's position to pixel-space Y for depth sorting.
-    /// Prefers NativeY (directly in pixel coords). Falls back to Position.Y × HDScale.
-    /// </summary>
-    private static float GetPixelY(DiscoveredObject data, float worldY)
-    {
-        if (data.NativeY != 0) return data.NativeY;
-        return worldY * GetHDScale();
     }
 }
 
@@ -1045,7 +1013,7 @@ public static class MachiLoader_Load_Patch
         var customObjects = CustomObjectInsertion.GetObjectsForMap(mapId);
         if (customObjects != null && customObjects.Count > 0)
         {
-            Plugin.Log.LogInfo($"[Custom Objects] ➔ EventInit intercepted for {mapId}. Injecting {customObjects.Count} native objects...");
+            Plugin.Log.LogInfo($"[Custom Objects] \u2794 EventInit intercepted for {mapId}. Injecting {customObjects.Count} native objects...");
             CustomObjectInsertion.InjectNativeEventObjects(mapId, customObjects, __result.mdat);
         }
     }

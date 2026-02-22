@@ -174,13 +174,14 @@ public static class ObjectDiscovery
 
     private static void DiscoverNativeEventObjects(GameObject sceneRoot, List<DiscoveredObject> objects)
     {
-        var mdat = PKCore.Patches.MachiLoader_Load_Patch.LastLoadedMachiDat;
-        if (mdat == null)
+        var machi = PKCore.Patches.MachiLoader_Load_Patch.LastLoadedMachiDat;
+        if (machi == null)
         {
-            Plugin.Log.LogWarning($"[ObjectDiscovery] MACHIDAT not yet cached (MachiLoader_Load_Patch). Native object discovery skipped.");
+            Plugin.Log.LogWarning($"[ObjectDiscovery] No MACHIDAT cached yet. Native object discovery skipped.");
             return;
         }
 
+        var mdat = machi;
         if (mdat.eventdata == null || mdat.eventdata.mapeventdat == null)
         {
             Plugin.Log.LogWarning($"[ObjectDiscovery] Cached MACHIDAT has no valid EVENTDAT.");
