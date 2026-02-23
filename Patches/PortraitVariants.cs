@@ -14,19 +14,19 @@ public static class PortraitVariants
 {
     // Character name → Portrait filename mapping (e.g., "Luc" → "fp_053")
     private static Dictionary<string, string> portraitMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    
+
     // Portrait filename → Expression variants (e.g., "fp_053" → {"angry": "fp_053_angry.png"})
     private static Dictionary<string, Dictionary<string, string>> portraitVariants = new Dictionary<string, Dictionary<string, string>>();
-    
+
     private static string configDir;
     private static string portraitMappingsPath;
     private static string portraitVariantsPath;
-    
+
     // All portrait directories to search (in priority order)
     private static List<string> portraitDirectories = new List<string>();
-    
+
     private static bool isInitialized = false;
-    
+
     /// <summary>
     /// Initialize the variant portrait system
     /// </summary>
@@ -34,18 +34,18 @@ public static class PortraitVariants
     {
         if (isInitialized)
             return;
-        
+
         configDir = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore", "Config");
         Directory.CreateDirectory(configDir);
-        
+
         portraitMappingsPath = Path.Combine(configDir, "PortraitMappings.json");
         portraitVariantsPath = Path.Combine(configDir, "PortraitVariants.json");
-        
+
         // Discover all portrait directories under Textures (searches recursively)
         string texturesPath = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore", "Textures");
-        
+
         portraitDirectories.Clear();
-        
+
         // Add all subdirectories under Textures/ that could contain portraits
         // Priority: GSD1 folders first, then GSD2, then root-level folders
         if (Directory.Exists(texturesPath))
@@ -59,7 +59,7 @@ public static class PortraitVariants
                     portraitDirectories.Add(dir);
                 }
             }
-            
+
             // GSD2 folders (medium priority)
             string gsd2Path = Path.Combine(texturesPath, "GSD2");
             if (Directory.Exists(gsd2Path))
@@ -69,7 +69,7 @@ public static class PortraitVariants
                     portraitDirectories.Add(dir);
                 }
             }
-            
+
             // Root-level folders (lowest priority)
             foreach (var dir in Directory.GetDirectories(texturesPath, "*", SearchOption.TopDirectoryOnly))
             {
@@ -83,18 +83,18 @@ public static class PortraitVariants
                     }
                 }
             }
-            
+
             // Also add Textures root itself
             portraitDirectories.Add(texturesPath);
         }
-        
+
         LoadPortraitMappings();
         LoadPortraitVariants();
-        
+
         isInitialized = true;
-        Plugin.Log.LogInfo($"[PortraitVariants] System initialized - searching {portraitDirectories.Count} directories");
+        // Plugin.Log.LogInfo($"[PortraitVariants] System initialized - searching {portraitDirectories.Count} directories");
     }
-    
+
     /// <summary>
     /// Load character name → portrait filename mappings
     /// </summary>
@@ -105,14 +105,14 @@ public static class PortraitVariants
             CreateMappingsTemplate();
             return;
         }
-        
+
         try
         {
             var loaded = AssetLoader.LoadJsonAsync<Dictionary<string, string>>(portraitMappingsPath).Result;
             if (loaded != null)
             {
                 portraitMappings = new Dictionary<string, string>(loaded, StringComparer.OrdinalIgnoreCase);
-                Plugin.Log.LogInfo($"[PortraitVariants] Loaded {portraitMappings.Count} portrait mappings");
+                // Plugin.Log.LogInfo($"[PortraitVariants] Loaded {portraitMappings.Count} portrait mappings");
             }
         }
         catch (Exception ex)
@@ -120,7 +120,7 @@ public static class PortraitVariants
             Plugin.Log.LogError($"[PortraitVariants] Error loading portrait mappings: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Load portrait filename → expression variants mappings
     /// </summary>
@@ -131,14 +131,14 @@ public static class PortraitVariants
             CreateVariantsTemplate();
             return;
         }
-        
+
         try
         {
             var loaded = AssetLoader.LoadJsonAsync<Dictionary<string, Dictionary<string, string>>>(portraitVariantsPath).Result;
             if (loaded != null)
             {
                 portraitVariants = loaded;
-                Plugin.Log.LogInfo($"[PortraitVariants] Loaded {portraitVariants.Count} portrait variant sets");
+                // Plugin.Log.LogInfo($"[PortraitVariants] Loaded {portraitVariants.Count} portrait variant sets");
             }
         }
         catch (Exception ex)
@@ -146,7 +146,7 @@ public static class PortraitVariants
             Plugin.Log.LogError($"[PortraitVariants] Error loading portrait variants: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Create template PortraitMappings.json file
     /// </summary>
@@ -159,15 +159,15 @@ public static class PortraitVariants
             { "Flik", "fp_002" },
             { "Nanami", "fp_019" }
         };
-        
+
         try
         {
-            var options = new System.Text.Json.JsonSerializerOptions 
-            { 
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
                 WriteIndented = true,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
-            
+
             File.WriteAllText(portraitMappingsPath, System.Text.Json.JsonSerializer.Serialize(template, options));
             Plugin.Log.LogInfo($"[PortraitVariants] Created template: {portraitMappingsPath}");
         }
@@ -176,7 +176,7 @@ public static class PortraitVariants
             Plugin.Log.LogError($"[PortraitVariants] Error creating mappings template: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Create template PortraitVariants.json file
     /// </summary>
@@ -202,15 +202,15 @@ public static class PortraitVariants
                 }
             }
         };
-        
+
         try
         {
-            var options = new System.Text.Json.JsonSerializerOptions 
-            { 
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
                 WriteIndented = true,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
-            
+
             File.WriteAllText(portraitVariantsPath, System.Text.Json.JsonSerializer.Serialize(template, options));
             Plugin.Log.LogInfo($"[PortraitVariants] Created template: {portraitVariantsPath}");
         }
@@ -219,7 +219,7 @@ public static class PortraitVariants
             Plugin.Log.LogError($"[PortraitVariants] Error creating variants template: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Convert character name to portrait filename using mappings
     /// Falls back to using the name itself if no mapping exists
@@ -228,14 +228,14 @@ public static class PortraitVariants
     {
         if (string.IsNullOrEmpty(characterName))
             return null;
-        
+
         if (portraitMappings.TryGetValue(characterName, out var mappedFile))
             return mappedFile;
-        
+
         // Fallback: use character name as filename (backwards compatibility)
         return characterName;
     }
-    
+
     /// <summary>
     /// Get variant filename for a portrait and expression
     /// Returns null if variant doesn't exist
@@ -244,16 +244,16 @@ public static class PortraitVariants
     {
         if (string.IsNullOrEmpty(portraitFile) || string.IsNullOrEmpty(expression))
             return null;
-        
+
         if (portraitVariants.TryGetValue(portraitFile, out var variants) &&
             variants.TryGetValue(expression, out var variantFileName))
         {
             return variantFileName;
         }
-        
+
         return null;
     }
-    
+
     /// <summary>
     /// Find portrait file path across all portrait directories
     /// Searches recursively in ALL folders under PKCore/Textures/
@@ -263,17 +263,17 @@ public static class PortraitVariants
     {
         if (string.IsNullOrEmpty(filename))
             return null;
-        
+
         // Ensure .png extension
         if (!filename.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
             filename += ".png";
-        
+
         // Search all directories in priority order
         foreach (var dir in portraitDirectories)
         {
             if (!Directory.Exists(dir))
                 continue;
-            
+
             string fullPath = Path.Combine(dir, filename);
             if (File.Exists(fullPath))
             {
@@ -285,10 +285,10 @@ public static class PortraitVariants
                 return fullPath;
             }
         }
-        
+
         return null;
     }
-    
+
     /// <summary>
     /// Get portrait path with full variant support
     /// Handles character name mapping, expression variants, and directory searching
@@ -300,12 +300,12 @@ public static class PortraitVariants
     {
         if (string.IsNullOrEmpty(characterName))
             return null;
-        
+
         // Step 1: Convert character name to portrait filename
         string portraitFile = GetPortraitFilename(characterName);
         if (portraitFile == null)
             return null;
-        
+
         // Step 2: Try variant first if expression specified
         if (!string.IsNullOrEmpty(expression))
         {
@@ -325,7 +325,7 @@ public static class PortraitVariants
                 }
             }
         }
-        
+
         // Step 3: Fall back to default portrait
         string defaultPath = FindPortraitPath(portraitFile);
         if (defaultPath != null)
@@ -334,23 +334,23 @@ public static class PortraitVariants
                 Plugin.Log.LogInfo($"[PortraitVariants] Using default: {characterName} -> {portraitFile}");
             return defaultPath;
         }
-        
+
         // FALLBACK: If default is missing (e.g. vanilla asset), try to find fp_219 (Question Mark) from Textures
         // This handles cases where user defined a variant but the file is missing
         string fallbackPath = FindPortraitPath("fp_219");
         if (fallbackPath != null)
         {
-             if (Plugin.Config.DetailedLogs.Value)
+            if (Plugin.Config.DetailedLogs.Value)
                 Plugin.Log.LogWarning($"[PortraitVariants] Portrait file missing for {characterName}, falling back to fp_219 (Question Mark)");
-             return fallbackPath;
+            return fallbackPath;
         }
 
         if (Plugin.Config.DetailedLogs.Value)
             Plugin.Log.LogWarning($"[PortraitVariants] Portrait not found and fallback failed: {characterName} (mapped to {portraitFile})");
-        
+
         return null;
     }
-    
+
     /// <summary>
     /// Parse speaker string with optional expression
     /// Format: "CharacterName" or "CharacterName|expression"
@@ -359,17 +359,17 @@ public static class PortraitVariants
     {
         if (string.IsNullOrEmpty(speakerData))
             return (null, null);
-        
+
         // Check if format includes expression: "SpeakerName|expression"
         if (speakerData.Contains("|"))
         {
             var parts = speakerData.Split('|');
             return (parts[0].Trim(), parts[1].Trim());
         }
-        
+
         return (speakerData, null);
     }
-    
+
     /// <summary>
     /// Reload configuration files (useful after editing JSON files)
     /// </summary>
