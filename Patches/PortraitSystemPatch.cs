@@ -47,6 +47,10 @@ public class PortraitSystemPatch
     private static Dictionary<string, string> speakerOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     private static string speakerOverridesPath;
 
+    // --- S1 Specific Configuration ---
+    private static Dictionary<string, string> s1Portraits = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    private static string s1PortraitsPath;
+
     private static void LoadDialogOverrides()
     {
         string baseDir = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore");
@@ -57,8 +61,16 @@ public class PortraitSystemPatch
 
         dialogOverridesPath = Path.Combine(configDir, "DialogOverrides.json");
         speakerOverridesPath = Path.Combine(configDir, "SpeakerOverrides.json");
+        s1PortraitsPath = Path.Combine(configDir, "S1Portrait.json");
 
         // Migration logic omitted for brevity in this refactor, assuming it's already handled or moved to AssetLoader
+
+        // Load S1 Portraits Overrides
+        var loadedS1 = AssetLoader.LoadJsonAsync<Dictionary<string, string>>(s1PortraitsPath).Result;
+        if (loadedS1 != null)
+        {
+            s1Portraits = new Dictionary<string, string>(loadedS1, StringComparer.OrdinalIgnoreCase);
+        }
 
         // Load Dialog Overrides using AssetLoader (Sync for initialization)
         var loaded = AssetLoader.LoadJsonAsync<Dictionary<string, string>>(dialogOverridesPath).Result;
@@ -91,6 +103,20 @@ public class PortraitSystemPatch
 
         if (dialogReplacements.TryGetValue(key, out string replacement))
             return replacement;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Get an S1 portrait override by text ID key
+    /// </summary>
+    public static string GetS1PortraitOverride(string key)
+    {
+        if (s1Portraits == null || s1Portraits.Count == 0)
+            return null;
+
+        if (s1Portraits.TryGetValue(key, out string portraitValue))
+            return portraitValue;
 
         return null;
     }
@@ -688,13 +714,98 @@ public class PortraitSystemPatch
         var (characterName, expression) = PortraitVariants.ParseSpeakerString(fullName);
         string key = characterName.ToLower();
 
-        Plugin.Log.LogInfo($"[PotraitSystem] Postfix - Attempting to inject portrait for '{characterName}'{(expression != null ? $" ({expression})" : "")} directly into Img_Face");
+        InjectPortraitIntoWindow(__instance, characterName, expression);
+    }
+
+    /// <summary>
+    /// Suikoden 1: if Face_Pos is inactive when a dialog opens, activate it and inject a portrait.
+    /// If already active (native portrait present), do nothing.
+    /// </summary>
+    [HarmonyPatch(typeof(UIMessageWindow), nameof(UIMessageWindow.OpenMessageWindow))]
+    [HarmonyPatch(new[] { typeof(Vector3) })]
+    [HarmonyPostfix]
+    public static void OpenMessageWindow_S1_Postfix(UIMessageWindow __instance)
+    {
+        try
+        {
+            Transform uiSet = __instance.transform.Find("UI_Set");
+            if (uiSet == null) return;
+
+            Transform facePos = uiSet.Find("All_Select/Img_BG/Command_Layout/Face_Pos");
+            if (facePos == null)
+            {
+                Plugin.Log.LogWarning("[PotraitSystem] S1: Face_Pos not found");
+                return;
+            }
+
+            // If Face_Pos is already active, a native portrait is shown — do nothing
+            if (facePos.gameObject.activeSelf)
+            {
+                Plugin.Log.LogInfo("[PotraitSystem] S1: Face_Pos already active, leaving it alone");
+                return;
+            }
+
+            // Face_Pos is inactive — only inject if there's a mapping for this message ID
+            string textId = TextDatabasePatch.LastTextId;
+            string mapped = null;
+            s1Portraits?.TryGetValue(textId ?? "", out mapped);
+
+            if (string.IsNullOrEmpty(mapped))
+            {
+                Plugin.Log.LogInfo($"[PotraitSystem] S1: no mapping for '{textId}', leaving Face_Pos inactive");
+                return;
+            }
+
+            Plugin.Log.LogInfo($"[PotraitSystem] S1: matched '{textId}' -> '{mapped}'");
+
+            Texture2D tex = LoadPortraitTexture(mapped);
+            if (tex == null)
+            {
+                Plugin.Log.LogWarning($"[PotraitSystem] S1: texture '{mapped}' not found, aborting");
+                return;
+            }
+
+            // Activate Face_Pos + Img_Face
+            facePos.gameObject.SetActive(true);
+            Transform imgFaceTransform = facePos.Find("Img_Face");
+            if (imgFaceTransform == null)
+            {
+                Plugin.Log.LogWarning("[PotraitSystem] S1: Img_Face not found");
+                return;
+            }
+            imgFaceTransform.gameObject.SetActive(true);
+
+            var imgFace = imgFaceTransform.GetComponent<UnityEngine.UI.Image>();
+            if (imgFace == null) return;
+
+            Vector2 pivot = cachedPortraitSprite != null ? cachedPortraitSprite.pivot : new Vector2(0.5f, 0.5f);
+            float ppu = cachedPortraitSprite != null ? cachedPortraitSprite.pixelsPerUnit : 100f;
+
+            Sprite newSprite = Sprite.Create(tex,
+                new Rect(0, 0, tex.width, tex.height),
+                pivot, ppu, 0, SpriteMeshType.FullRect);
+
+            UnityEngine.Object.DontDestroyOnLoad(newSprite);
+            UnityEngine.Object.DontDestroyOnLoad(tex);
+
+            imgFace.sprite = newSprite;
+            Plugin.Log.LogInfo($"[PotraitSystem] S1: ✓ Injected '{mapped}'");
+        }
+        catch (Exception ex)
+        {
+            Plugin.Log.LogError($"[PotraitSystem] S1: injection failed - {ex.Message}");
+        }
+    }
+
+
+    private static void InjectPortraitIntoWindow(UIMessageWindow __instance, string characterName, string expression = null)
+    {
+        Plugin.Log.LogInfo($"[PotraitSystem] Attempting to inject portrait for '{characterName}'{(expression != null ? $" ({expression})" : "")} directly into Img_Face");
 
         try
         {
-            // Find the Img_Face component in the hierarchy
-            // Path: UI_Set/All_Select/Img_BG/Command_Layout/Face_Pos/Img_Face
             Transform uiSet = __instance.transform.Find("UI_Set");
+
             if (uiSet == null)
             {
                 Plugin.Log.LogWarning("[PotraitSystem] UI_Set not found");
@@ -849,7 +960,7 @@ public class PortraitSystemPatch
             // Set the sprite
             imgFace.sprite = newSprite;
 
-            Plugin.Log.LogInfo($"[PotraitSystem] ✓✓✓ Successfully injected portrait into Img_Face for '{name}'!");
+            Plugin.Log.LogInfo($"[PotraitSystem] ✓✓✓ Successfully injected portrait into Img_Face for '{characterName}'!");
         }
 
         catch (System.Exception ex)
@@ -961,6 +1072,49 @@ public class PortraitSystemPatch
     {
         string speakerName = __instance.speakerName;
         Plugin.Log.LogInfo($"[PotraitSystem] SetCharacterFace called - SpeakerName: '{speakerName}', HasSprite: {sprite != null}");
+
+        // Suikoden 1 mapping override (takes priority since S1 passes placeholder sprites)
+        string textId = TextDatabasePatch.LastTextId;
+        string s1MappedPortrait = GetS1PortraitOverride(textId);
+
+        if (!string.IsNullOrEmpty(s1MappedPortrait))
+        {
+            Plugin.Log.LogInfo($"[PotraitSystem] S1 Matched TextId '{textId}' to portrait '{s1MappedPortrait}'");
+
+            Texture2D customTexture = LoadPortraitTexture(s1MappedPortrait);
+            if (customTexture != null)
+            {
+                Vector2 spritePivot = cachedPortraitSprite != null ? cachedPortraitSprite.pivot : new Vector2(0.5f, 0.5f);
+                float pixelsPerUnit = cachedPortraitSprite != null ? cachedPortraitSprite.pixelsPerUnit : 100f;
+
+                Sprite newSprite = Sprite.Create(
+                    customTexture,
+                    new Rect(0, 0, customTexture.width, customTexture.height),
+                    spritePivot,
+                    pixelsPerUnit,
+                    0,
+                    SpriteMeshType.FullRect
+                );
+
+                UnityEngine.Object.DontDestroyOnLoad(newSprite);
+                UnityEngine.Object.DontDestroyOnLoad(customTexture);
+
+                sprite = newSprite;
+                Plugin.Log.LogInfo($"[PotraitSystem] ✓ Injected mapped portrait '{s1MappedPortrait}' directly to sprite parameter");
+                return;
+            }
+            else
+            {
+                // Fallback direct load
+                Sprite nativeSprite = UnityEngine.Resources.Load<Sprite>(s1MappedPortrait);
+                if (nativeSprite != null)
+                {
+                    sprite = nativeSprite;
+                    Plugin.Log.LogInfo($"[PotraitSystem] ✓ Injected NATIVE mapped portrait '{s1MappedPortrait}'");
+                    return;
+                }
+            }
+        }
 
         // If there's already a sprite, don't override it
         if (sprite != null)
