@@ -44,7 +44,7 @@ public static class PSPLauncherPatch
         {
             var soundList = GameObject.Find("UI_Root/UI_Canvas_Root/GalleryParent/UI_SoundList_01(Clone)/Window01");
             if (soundList != null)
-                TryInsertGalleryBg(soundList, "PSPGallerySoundsBg", ref _soundsBgCreated, new Vector2(1920, 1080));
+                TryInsertGalleryBg(soundList, "PSPGallerySoundsBg", ref _soundsBgCreated, new Vector2(1920, 1080), new Vector2(0, 54));
         }
 
         {
@@ -68,7 +68,7 @@ public static class PSPLauncherPatch
                         if (old != null) UnityEngine.Object.Destroy(old.gameObject);
                     }
                     bool dummy = false;
-                    TryInsertGalleryBg(galleryMovies, desired, ref dummy, new Vector2(1920, 1080));
+                    TryInsertGalleryBg(galleryMovies, desired, ref dummy, new Vector2(1920, 1080), new Vector2(0, 11f));
                     _currentMoviesBgName = desired;
                 }
             }
@@ -125,13 +125,45 @@ public static class PSPLauncherPatch
             Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled screen/frame.");
         }
 
-        // Reposition and scale screen/title
+        // Disable screen/title
         Transform screenTitle = launcherRoot.transform.Find("screen/title");
         if (screenTitle != null)
         {
-            screenTitle.localScale = new Vector3(2f, 2f, 1f);
-            screenTitle.localPosition = new Vector3(35.0683f, 354.713f, 0f);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Applied scale/position to screen/title.");
+            screenTitle.gameObject.SetActive(false);
+            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled screen/title.");
+        }
+
+        // Insert new UI_Top_Title02_003
+        Transform screenGroup = launcherRoot.transform.Find("screen");
+        if (screenGroup != null && screenGroup.Find("UI_Top_Title02_003") == null)
+        {
+            Texture2D titleTex = CustomTexturePatch.LoadCustomTexture("UI_Top_Title02_003");
+            if (titleTex != null)
+            {
+                GameObject titleGO = new GameObject("UI_Top_Title02_003");
+                titleGO.transform.SetParent(screenGroup, false);
+
+                RectTransform titleRt = titleGO.AddComponent<RectTransform>();
+                titleRt.anchorMin = new Vector2(0.5f, 0.5f);
+                titleRt.anchorMax = new Vector2(0.5f, 0.5f);
+                titleRt.pivot     = new Vector2(0.5f, 0.5f);
+                titleRt.sizeDelta = new Vector2(titleTex.width, titleTex.height);
+                
+                // Start with the same location/scale as the original title override
+                titleRt.localScale = new Vector3(0.55f, 0.55f, 1f);
+                titleRt.localPosition = new Vector3(0, 354.713f, 0f);
+
+                Image titleImg = titleGO.AddComponent<Image>();
+                titleImg.sprite = Sprite.Create(titleTex, new Rect(0, 0, titleTex.width, titleTex.height), new Vector2(0.5f, 0.5f), 100f);
+                titleImg.color = Color.white;
+                titleImg.raycastTarget = false;
+
+                Plugin.Log.LogInfo("[PSPLauncherPatch] UI_Top_Title02_003 inserted into screen.");
+            }
+            else
+            {
+                Plugin.Log.LogWarning("[PSPLauncherPatch] UI_Top_Title02_003 texture not found. Place UI_Top_Title02_003.png in PKCore/Textures/.");
+            }
         }
 
         // Disable header_nuetral
@@ -140,6 +172,20 @@ public static class PSPLauncherPatch
         {
             headerNeutral.gameObject.SetActive(false);
             Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled header_nuetral.");
+        }
+
+        Transform headerGs1 = launcherRoot.transform.Find("header_group/header_gs1");
+        if (headerGs1 != null)
+        {
+            headerGs1.gameObject.SetActive(false);
+            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled header_gs1.");
+        }
+
+        Transform headerGs2 = launcherRoot.transform.Find("header_group/header_gs2");
+        if (headerGs2 != null)
+        {
+            headerGs2.gameObject.SetActive(false);
+            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled header_gs2.");
         }
 
         // --- Scrolling overlay (index 1, just above bg) ---
@@ -166,6 +212,46 @@ public static class PSPLauncherPatch
                 gs1Reflect.gameObject.SetActive(false);
                 Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled reflect on menu_gs1/all.");
             }
+
+            Transform gs1Body = gs1All.Find("body");
+            if (gs1Body != null)
+            {
+                Transform gs1Title = gs1Body.Find("title");
+                if (gs1Title != null)
+                {
+                    gs1Title.gameObject.SetActive(false);
+                    Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled title on menu_gs1/all/body.");
+                }
+
+                if (gs1Body.Find("PSPSuikoden1Logo") == null)
+                {
+                    Texture2D logoTex = CustomTexturePatch.LoadCustomTexture("PSPSuikoden1Logo");
+                    if (logoTex != null)
+                    {
+                        GameObject logoGO = new GameObject("PSPSuikoden1Logo");
+                        logoGO.transform.SetParent(gs1Body, false);
+
+                        RectTransform logoRt = logoGO.AddComponent<RectTransform>();
+                        logoRt.anchorMin = new Vector2(0.5f, 0.5f);
+                        logoRt.anchorMax = new Vector2(0.5f, 0.5f);
+                        logoRt.pivot     = new Vector2(0.5f, 0.5f);
+                        logoRt.sizeDelta = new Vector2(logoTex.width, logoTex.height);
+                        logoRt.localScale = new Vector3(0.18f, 0.18f, 1f);
+                        logoGO.transform.localPosition = new Vector3(2.6419f, 437.0217f, 0f);
+
+                        Image logoImg = logoGO.AddComponent<Image>();
+                        logoImg.sprite = Sprite.Create(logoTex, new Rect(0, 0, logoTex.width, logoTex.height), new Vector2(0.5f, 0.5f), 100f);
+                        logoImg.color = Color.white;
+                        logoImg.raycastTarget = false;
+
+                        Plugin.Log.LogInfo("[PSPLauncherPatch] PSPSuikoden1Logo inserted into menu_gs1/all/body.");
+                    }
+                    else
+                    {
+                        Plugin.Log.LogWarning("[PSPLauncherPatch] PSPSuikoden1Logo texture not found. Place PSPSuikoden1Logo.png in PKCore/Textures/.");
+                    }
+                }
+            }
         }
 
         // Reposition menu_gs2/all and disable its reflect child
@@ -180,6 +266,46 @@ public static class PSPLauncherPatch
             {
                 gs2Reflect.gameObject.SetActive(false);
                 Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled reflect on menu_gs2/all.");
+            }
+
+            Transform gs2Body = gs2All.Find("body");
+            if (gs2Body != null)
+            {
+                Transform gs2Title = gs2Body.Find("title");
+                if (gs2Title != null)
+                {
+                    gs2Title.gameObject.SetActive(false);
+                    Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled title on menu_gs2/all/body.");
+                }
+
+                if (gs2Body.Find("PSPSuikoden2Logo") == null)
+                {
+                    Texture2D logo2Tex = CustomTexturePatch.LoadCustomTexture("PSPSuikoden2Logo");
+                    if (logo2Tex != null)
+                    {
+                        GameObject logo2GO = new GameObject("PSPSuikoden2Logo");
+                        logo2GO.transform.SetParent(gs2Body, false);
+
+                        RectTransform logo2Rt = logo2GO.AddComponent<RectTransform>();
+                        logo2Rt.anchorMin = new Vector2(0.5f, 0.5f);
+                        logo2Rt.anchorMax = new Vector2(0.5f, 0.5f);
+                        logo2Rt.pivot     = new Vector2(0.5f, 0.5f);
+                        logo2Rt.sizeDelta = new Vector2(logo2Tex.width, logo2Tex.height);
+                        logo2Rt.localScale = new Vector3(0.3f, 0.3f, 1f);
+                        logo2GO.transform.localPosition = new Vector3(-5.1141f, 393.6655f, 0f);
+
+                        Image logo2Img = logo2GO.AddComponent<Image>();
+                        logo2Img.sprite = Sprite.Create(logo2Tex, new Rect(0, 0, logo2Tex.width, logo2Tex.height), new Vector2(0.5f, 0.5f), 100f);
+                        logo2Img.color = Color.white;
+                        logo2Img.raycastTarget = false;
+
+                        Plugin.Log.LogInfo("[PSPLauncherPatch] PSPSuikoden2Logo inserted into menu_gs2/all/body.");
+                    }
+                    else
+                    {
+                        Plugin.Log.LogWarning("[PSPLauncherPatch] PSPSuikoden2Logo texture not found. Place PSPSuikoden2Logo.png in PKCore/Textures/.");
+                    }
+                }
             }
         }
 
@@ -216,7 +342,7 @@ public static class PSPLauncherPatch
         _bgCreated = true;
     }
 
-    private static void TryInsertGalleryBg(GameObject parent, string textureName, ref bool createdFlag, Vector2 fixedSize = default)
+    private static void TryInsertGalleryBg(GameObject parent, string textureName, ref bool createdFlag, Vector2 fixedSize = default, Vector2 anchoredPos = default)
     {
         if (parent.transform.Find(textureName) != null)
         {
@@ -243,7 +369,7 @@ public static class PSPLauncherPatch
             bgRt.anchorMax = new Vector2(0.5f, 0.5f);
             bgRt.pivot     = new Vector2(0.5f, 0.5f);
             bgRt.sizeDelta = fixedSize;
-            bgRt.anchoredPosition = Vector2.zero;
+            bgRt.anchoredPosition = anchoredPos;
         }
         else
         {
