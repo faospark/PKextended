@@ -48,7 +48,30 @@ public static class PSPLauncherPatch
         {
             var soundList = GameObject.Find("UI_Root/UI_Canvas_Root/GalleryParent/UI_SoundList_01(Clone)/Window01");
             if (soundList != null)
+            {
                 TryInsertGalleryBg(soundList, "PSPGallerySoundsBg", ref _soundsBgCreated, new Vector2(1920, 1080), new Vector2(0, 54));
+
+                var titleArea = soundList.transform.Find("Title_Area");
+                if (titleArea != null)
+                {
+                    var fontBehavior = titleArea.Find("Font_Behavior");
+                    if (fontBehavior != null) fontBehavior.gameObject.SetActive(true);
+
+                    var title1 = titleArea.Find("Text_Title (1)");
+                    if (title1 != null)
+                    {
+                        var tmp1 = title1.GetComponent<TMPro.TextMeshProUGUI>();
+                        if (tmp1 != null) tmp1.color = new Color(1f, 1f, 1f, 1f);
+                    }
+
+                    var title2 = titleArea.Find("Text_Title (2)");
+                    if (title2 != null)
+                    {
+                        var tmp2 = title2.GetComponent<TMPro.TextMeshProUGUI>();
+                        if (tmp2 != null) tmp2.color = new Color(1f, 1f, 1f, 1f);
+                    }
+                }
+            }
         }
 
         {
@@ -85,6 +108,33 @@ public static class PSPLauncherPatch
                     TryInsertGalleryBg(galleryMovies, desired, ref dummy, new Vector2(1920, 1080), new Vector2(0, 12f), desiredTex);
                     _currentMoviesBgName = desired;
                 }
+
+                var imgBg = galleryMovies.transform.Find("Img_bg");
+                if (imgBg != null) imgBg.localScale = new Vector3(0.89f, 0.8f, 1f);
+
+                var imgFlame = galleryMovies.transform.Find("Img_Flame");
+                if (imgFlame != null) imgFlame.localScale = new Vector3(0.89f, 0.8f, 1f);
+
+                var scrollView = galleryMovies.transform.Find("Scroll View");
+                if (scrollView != null) scrollView.localScale = new Vector3(0.8f, 0.8f, 1f);
+            }
+        }
+
+        {
+            var launcherCanvas = GameObject.Find("Launcher_Root_Variant(Clone)/Launcher_Root_UI/UI_Canvas");
+            if (launcherCanvas != null)
+            {
+                var config01 = launcherCanvas.transform.Find("UI_Config_01");
+                if (config01 == null) config01 = launcherCanvas.transform.Find("UI_Config_01(Clone)");
+                if (config01 != null) config01.localScale = new Vector3(0.8f, 0.8f, 1f);
+
+                var config02 = launcherCanvas.transform.Find("UI_Config_02");
+                if (config02 == null) config02 = launcherCanvas.transform.Find("UI_Config_02(Clone)");
+                if (config02 != null) config02.localScale = new Vector3(0.8f, 0.8f, 1f);
+
+                var langSelect = launcherCanvas.transform.Find("LangSelectWindow");
+                if (langSelect == null) langSelect = launcherCanvas.transform.Find("LangSelectWindow(Clone)");
+                if (langSelect != null) langSelect.localScale = new Vector3(0.8f, 0.8f, 1f);
             }
         }
     }
