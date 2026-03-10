@@ -51,6 +51,10 @@ public class PortraitSystemPatch
     private static Dictionary<string, string> s1Portraits = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     private static string s1PortraitsPath;
 
+    // Tracks whether WE activated Name_Set (vs the game activating it for a native name).
+    // We must never deactivate a Name_Set the game owns.
+    private static bool s_nameSetActivatedByUs = false;
+
     private static void LoadDialogOverrides()
     {
         string baseDir = Path.Combine(BepInEx.Paths.GameRootPath, "PKCore");
@@ -718,82 +722,273 @@ public class PortraitSystemPatch
     }
 
     /// <summary>
-    /// Suikoden 1: if Face_Pos is inactive when a dialog opens, activate it and inject a portrait.
-    /// If already active (native portrait present), do nothing.
+    /// Suikoden 1: called when the coroutine-based message window opens.
+    /// Handles two independent concerns: portrait injection and speaker name injection.
     /// </summary>
     [HarmonyPatch(typeof(UIMessageWindow), nameof(UIMessageWindow.OpenMessageWindow))]
     [HarmonyPatch(new[] { typeof(Vector3) })]
     [HarmonyPostfix]
     public static void OpenMessageWindow_S1_Postfix(UIMessageWindow __instance)
     {
+        // Use LastMessageTextId (only set by GetSystemTextEx/dialogue text) rather than
+        // LastTextId which can be overwritten by any UI text lookup between the message
+        // text fetch and OpenMessageWindow firing.
+        string textId = TextDatabasePatch.LastMessageTextId ?? TextDatabasePatch.LastTextId;
+
         try
         {
             Transform uiSet = __instance.transform.Find("UI_Set");
             if (uiSet == null) return;
 
+            // ── Portrait injection ──────────────────────────────────────────────
             Transform facePos = uiSet.Find("All_Select/Img_BG/Command_Layout/Face_Pos");
             if (facePos == null)
-            {
                 Plugin.Log.LogWarning("[PotraitSystem] S1: Face_Pos not found");
-                return;
-            }
-
-            // If Face_Pos is already active, a native portrait is shown — do nothing
-            if (facePos.gameObject.activeSelf)
-            {
+            else if (facePos.gameObject.activeSelf)
                 Plugin.Log.LogInfo("[PotraitSystem] S1: Face_Pos already active, leaving it alone");
-                return;
-            }
-
-            // Face_Pos is inactive — only inject if there's a mapping for this message ID
-            string textId = TextDatabasePatch.LastTextId;
-            string mapped = null;
-            s1Portraits?.TryGetValue(textId ?? "", out mapped);
-
-            if (string.IsNullOrEmpty(mapped))
+            else
             {
-                Plugin.Log.LogInfo($"[PotraitSystem] S1: no mapping for '{textId}', leaving Face_Pos inactive");
-                return;
+                string mapped = null;
+                s1Portraits?.TryGetValue(textId ?? "", out mapped);
+
+                if (string.IsNullOrEmpty(mapped))
+                    Plugin.Log.LogInfo($"[PotraitSystem] S1: no portrait mapping for '{textId}'");
+                else
+                {
+                    Plugin.Log.LogInfo($"[PotraitSystem] S1: matched '{textId}' -> '{mapped}'");
+                    Texture2D tex = LoadPortraitTexture(mapped);
+                    if (tex == null)
+                        Plugin.Log.LogWarning($"[PotraitSystem] S1: texture '{mapped}' not found");
+                    else
+                    {
+                        facePos.gameObject.SetActive(true);
+                        Transform imgFaceTransform = facePos.Find("Img_Face");
+                        if (imgFaceTransform == null)
+                            Plugin.Log.LogWarning("[PotraitSystem] S1: Img_Face not found");
+                        else
+                        {
+                            imgFaceTransform.gameObject.SetActive(true);
+                            var imgFace = imgFaceTransform.GetComponent<UnityEngine.UI.Image>();
+                            if (imgFace != null)
+                            {
+                                Vector2 pivot = cachedPortraitSprite != null ? cachedPortraitSprite.pivot : new Vector2(0.5f, 0.5f);
+                                float ppu = cachedPortraitSprite != null ? cachedPortraitSprite.pixelsPerUnit : 100f;
+                                Sprite newSprite = Sprite.Create(tex,
+                                    new Rect(0, 0, tex.width, tex.height),
+                                    pivot, ppu, 0, SpriteMeshType.FullRect);
+                                UnityEngine.Object.DontDestroyOnLoad(newSprite);
+                                UnityEngine.Object.DontDestroyOnLoad(tex);
+                                imgFace.sprite = newSprite;
+                                Plugin.Log.LogInfo($"[PotraitSystem] S1: ✓ Injected portrait '{mapped}'");
+                            }
+                        }
+                    }
+                }
             }
 
-            Plugin.Log.LogInfo($"[PotraitSystem] S1: matched '{textId}' -> '{mapped}'");
-
-            Texture2D tex = LoadPortraitTexture(mapped);
-            if (tex == null)
-            {
-                Plugin.Log.LogWarning($"[PotraitSystem] S1: texture '{mapped}' not found, aborting");
-                return;
-            }
-
-            // Activate Face_Pos + Img_Face
-            facePos.gameObject.SetActive(true);
-            Transform imgFaceTransform = facePos.Find("Img_Face");
-            if (imgFaceTransform == null)
-            {
-                Plugin.Log.LogWarning("[PotraitSystem] S1: Img_Face not found");
-                return;
-            }
-            imgFaceTransform.gameObject.SetActive(true);
-
-            var imgFace = imgFaceTransform.GetComponent<UnityEngine.UI.Image>();
-            if (imgFace == null) return;
-
-            Vector2 pivot = cachedPortraitSprite != null ? cachedPortraitSprite.pivot : new Vector2(0.5f, 0.5f);
-            float ppu = cachedPortraitSprite != null ? cachedPortraitSprite.pixelsPerUnit : 100f;
-
-            Sprite newSprite = Sprite.Create(tex,
-                new Rect(0, 0, tex.width, tex.height),
-                pivot, ppu, 0, SpriteMeshType.FullRect);
-
-            UnityEngine.Object.DontDestroyOnLoad(newSprite);
-            UnityEngine.Object.DontDestroyOnLoad(tex);
-
-            imgFace.sprite = newSprite;
-            Plugin.Log.LogInfo($"[PotraitSystem] S1: ✓ Injected '{mapped}'");
+            // ── Speaker name injection ─────────────────────────────────────────
+            // AddNameText may never be called for unnamed NPCs in S1 so we also
+            // drive the name UI directly here, which runs for every dialogue open.
+            S1_InjectSpeakerName(uiSet, textId);
         }
         catch (Exception ex)
         {
-            Plugin.Log.LogError($"[PotraitSystem] S1: injection failed - {ex.Message}");
+            Plugin.Log.LogError($"[PotraitSystem] S1: postfix failed - {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Activate Name_Set and write the speaker name into Txt_Name.
+    /// Pass null/empty speakerName to hide the panel (resets between dialogues).
+    /// </summary>
+    private static void S1_InjectSpeakerName(Transform uiSet, string textId)
+    {
+        Transform nameSet = uiSet.Find("All_Select/Img_BG/Command_Layout/Text_Layout/Name_Set");
+        if (nameSet == null)
+        {
+            Plugin.Log.LogWarning("[S1Speaker] Name_Set not found at 'All_Select/Img_BG/Command_Layout/Text_Layout/Name_Set'");
+            return;
+        }
+
+        string speakerData = GetSpeakerOverride(textId ?? "");
+        string displayName = null;
+        if (!string.IsNullOrEmpty(speakerData))
+        {
+            displayName = speakerData.Contains("|")
+                ? speakerData.Split('|')[0].Trim()
+                : speakerData;
+        }
+
+        if (string.IsNullOrEmpty(displayName))
+        {
+            // Only deactivate if WE previously activated this panel.
+            // Never touch a Name_Set the game activated for a native character name.
+            if (s_nameSetActivatedByUs && nameSet.gameObject.activeSelf)
+            {
+                nameSet.gameObject.SetActive(false);
+                Plugin.Log.LogInfo("[S1Speaker] Deactivated Name_Set (no override for this dialogue)");
+            }
+            s_nameSetActivatedByUs = false;
+            return;
+        }
+
+        // Activate the container if not already active
+        if (!nameSet.gameObject.activeSelf)
+        {
+            nameSet.gameObject.SetActive(true);
+            s_nameSetActivatedByUs = true;
+            Plugin.Log.LogInfo("[S1Speaker] Activated Name_Set");
+        }
+        else
+        {
+            // Already active — could be native or ours; mark as ours since we're overriding
+            s_nameSetActivatedByUs = true;
+        }
+
+        // Write name to Txt_Name text component
+        Transform txtNameT = nameSet.Find("Txt_Name");
+        if (txtNameT == null)
+        {
+            Plugin.Log.LogWarning("[S1Speaker] Txt_Name not found inside Name_Set");
+            return;
+        }
+
+        var tmp = txtNameT.GetComponent<TMPro.TextMeshProUGUI>();
+        if (tmp != null)
+        {
+            tmp.text = displayName;
+            Plugin.Log.LogInfo($"[S1Speaker] ✓ Set Txt_Name = '{displayName}' (text ID '{textId}')");
+            return;
+        }
+
+        var legacyText = txtNameT.GetComponent<UnityEngine.UI.Text>();
+        if (legacyText != null)
+        {
+            legacyText.text = displayName;
+            Plugin.Log.LogInfo($"[S1Speaker] ✓ Set Txt_Name (legacy) = '{displayName}' (text ID '{textId}')");
+            return;
+        }
+
+        Plugin.Log.LogWarning("[S1Speaker] No text component found on Txt_Name");
+    }
+
+    /// <summary>
+    /// Suikoden 1: Intercept AddNameText to inject a speaker name for NPCs that have none.
+    /// S1 builds dialogue incrementally (AddMessageText char-by-char) and calls AddNameText once
+    /// with the speaker's name (or empty string for unnamed NPCs).  We look up the current text ID
+    /// in SpeakerOverrides.json and override the name when the game would show nothing.
+    /// If the game already provides a non-empty name we leave it untouched.
+    /// </summary>
+    [HarmonyPatch(typeof(UIMessageWindow), nameof(UIMessageWindow.AddNameText))]
+    [HarmonyPrefix]
+    public static void AddNameText_S1_Prefix(UIMessageWindow __instance, ref string name)
+    {
+        if (Plugin.Config.DetailedLogs.Value)
+            Plugin.Log.LogInfo($"[S1Speaker] AddNameText fired — GSD1={GameDetection.IsGSD1()}, name='{name}'");
+
+        if (!GameDetection.IsGSD1())
+            return;
+
+        // If the game already assigned a speaker name, mark the panel as game-owned and leave it
+        if (!string.IsNullOrEmpty(name))
+        {
+            s_nameSetActivatedByUs = false; // game owns Name_Set for this dialogue
+            if (Plugin.Config.DetailedLogs.Value)
+                Plugin.Log.LogInfo($"[S1Speaker] AddNameText: existing name '{name}', leaving untouched");
+            return;
+        }
+
+        string textId = TextDatabasePatch.LastTextId;
+        if (string.IsNullOrEmpty(textId))
+        {
+            if (Plugin.Config.DetailedLogs.Value)
+                Plugin.Log.LogInfo("[S1Speaker] AddNameText: no LastTextId available, skipping");
+            return;
+        }
+
+        string speakerData = GetSpeakerOverride(textId);
+        if (string.IsNullOrEmpty(speakerData))
+        {
+            if (Plugin.Config.DetailedLogs.Value)
+                Plugin.Log.LogInfo($"[S1Speaker] AddNameText: no override for '{textId}'");
+            return;
+        }
+
+        // Strip expression variant if present (e.g. "McDohl|smile" -> "McDohl")
+        string displayName = speakerData.Contains("|")
+            ? speakerData.Split('|')[0].Trim()
+            : speakerData;
+
+        Plugin.Log.LogInfo($"[S1Speaker] AddNameText: injecting '{displayName}' for text ID '{textId}'");
+        name = displayName;
+    }
+
+    /// <summary>
+    /// Postfix: directly drive the S1 name UI after the native AddNameText call.
+    /// - When a name is present: activates Name_Set and writes the text to Txt_Name.
+    /// - When name is empty: deactivates Name_Set so it resets between dialogues.
+    /// </summary>
+    [HarmonyPatch(typeof(UIMessageWindow), nameof(UIMessageWindow.AddNameText))]
+    [HarmonyPostfix]
+    public static void AddNameText_S1_Postfix(UIMessageWindow __instance, string name)
+    {
+        if (!GameDetection.IsGSD1())
+            return;
+
+        try
+        {
+            Transform uiSet = __instance.transform.Find("UI_Set");
+            if (uiSet == null) return;
+
+            Transform nameSet = uiSet.Find("All_Select/Img_BG/Command_Layout/Text_Layout/Name_Set");
+            if (nameSet == null)
+            {
+                Plugin.Log.LogWarning("[S1Speaker] Name_Set not found at expected path");
+                return;
+            }
+
+            // No speaker — hide the panel so it doesn't bleed into the next dialogue
+            if (string.IsNullOrEmpty(name))
+            {
+                if (nameSet.gameObject.activeSelf)
+                    nameSet.gameObject.SetActive(false);
+                return;
+            }
+
+            // Activate the container
+            if (!nameSet.gameObject.activeSelf)
+                nameSet.gameObject.SetActive(true);
+
+            // Set the text directly on Txt_Name
+            Transform txtNameTransform = nameSet.Find("Txt_Name");
+            if (txtNameTransform == null)
+            {
+                Plugin.Log.LogWarning("[S1Speaker] Txt_Name not found inside Name_Set");
+                return;
+            }
+
+            var tmp = txtNameTransform.GetComponent<TMPro.TextMeshProUGUI>();
+            if (tmp != null)
+            {
+                tmp.text = name;
+                Plugin.Log.LogInfo($"[S1Speaker] ✓ Set Txt_Name = '{name}'");
+                return;
+            }
+
+            // Fallback: legacy Unity Text component
+            var legacyText = txtNameTransform.GetComponent<UnityEngine.UI.Text>();
+            if (legacyText != null)
+            {
+                legacyText.text = name;
+                Plugin.Log.LogInfo($"[S1Speaker] ✓ Set Txt_Name (legacy Text) = '{name}'");
+                return;
+            }
+
+            Plugin.Log.LogWarning("[S1Speaker] No text component found on Txt_Name");
+        }
+        catch (Exception ex)
+        {
+            Plugin.Log.LogWarning($"[S1Speaker] Postfix error: {ex.Message}");
         }
     }
 

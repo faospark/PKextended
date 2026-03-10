@@ -14,6 +14,11 @@ public class TextDatabasePatch
     // Store the last queried text ID for portrait injection
     public static string LastTextId { get; private set; }
 
+    // Only updated by GetSystemTextEx (dialogue/message text in S1).
+    // Isolated from GetSystemText which handles UI elements — avoids timing
+    // issues where a UI lookup overwrites the ID before OpenMessageWindow fires.
+    public static string LastMessageTextId { get; private set; }
+
     // Patch GetSystemText to intercept ID-based lookups
     // Using Priority.Last to run after other mods (like SuikodenFix) so we can override their fixes if a custom override exists
     [HarmonyPatch(typeof(TextMasterData), nameof(TextMasterData.GetSystemText))]
@@ -75,26 +80,30 @@ public class TextDatabasePatch
 
         if (!string.IsNullOrEmpty(speakerData))
         {
-            // Parse to separate character name from expression (e.g., "Luca|blood" -> "Luca", "blood")
-            // Keep full string for portrait system, but only inject character name in text
-            string displayName = speakerData;
-            if (speakerData.Contains("|"))
+            // S1 builds messages char-by-char via AddMessageText — tags are not parsed there
+            // and would display as raw text.  AddNameText_S1_Prefix handles name injection for S1.
+            if (GameDetection.IsGSD1())
             {
-                displayName = speakerData.Split('|')[0].Trim();
-            }
-
-            // Inject the tag with FULL speaker data (includes expression for portrait loading)
-            // but the display name in the game will be clean
-            string speakerTag = $"<speaker:{speakerData}>";
-
-            // Avoid double tagging
-            if (!__result.StartsWith(speakerTag))
-            {
-                __result = $"{speakerTag}{__result}";
-
                 if (Plugin.Config.LogTextIDs.Value)
-                    Plugin.Log.LogInfo($"[TextDebug] Injected Speaker: {speakerKey} -> {displayName}" +
-                        (speakerData.Contains("|") ? $" (variant: {speakerData.Split('|')[1]})" : ""));
+                    Plugin.Log.LogInfo($"[TextDebug] S1 speaker '{speakerData}' stored for '{speakerKey}' (handled by AddNameText patch)");
+            }
+            else
+            {
+                // S2: inject <speaker:...> tag; OpenMessageWindow_Prefix strips it and sets the name
+                string displayName = speakerData.Contains("|")
+                    ? speakerData.Split('|')[0].Trim()
+                    : speakerData;
+
+                string speakerTag = $"<speaker:{speakerData}>";
+
+                if (!__result.StartsWith(speakerTag))
+                {
+                    __result = $"{speakerTag}{__result}";
+
+                    if (Plugin.Config.LogTextIDs.Value)
+                        Plugin.Log.LogInfo($"[TextDebug] Injected Speaker: {speakerKey} -> {displayName}" +
+                            (speakerData.Contains("|") ? $" (variant: {speakerData.Split('|')[1]})" : ""));
+                }
             }
         }
     }
@@ -118,6 +127,7 @@ public class TextDatabasePatch
         }
 
         LastTextId = $"{id}:{index}";
+        LastMessageTextId = $"{id}:{index}"; // dedicated tracker — not polluted by UI text lookups
 
         // 2. Speaker Injection
         if (!Plugin.Config.EnableDialogOverrides.Value)
@@ -128,23 +138,27 @@ public class TextDatabasePatch
 
         if (!string.IsNullOrEmpty(speakerData))
         {
-            // Parse to separate character name from expression
-            string displayName = speakerData;
-            if (speakerData.Contains("|"))
+            if (GameDetection.IsGSD1())
             {
-                displayName = speakerData.Split('|')[0].Trim();
-            }
-
-            // Inject full speaker tag (with expression for portrait system)
-            string speakerTag = $"<speaker:{speakerData}>";
-
-            if (!__result.StartsWith(speakerTag))
-            {
-                __result = $"{speakerTag}{__result}";
-
                 if (Plugin.Config.LogTextIDs.Value)
-                    Plugin.Log.LogInfo($"[TextDebug] Injected Speaker: {speakerKey} -> {displayName}" +
-                        (speakerData.Contains("|") ? $" (variant: {speakerData.Split('|')[1]})" : ""));
+                    Plugin.Log.LogInfo($"[TextDebug] S1 speaker '{speakerData}' stored for '{speakerKey}' (handled by AddNameText patch)");
+            }
+            else
+            {
+                string displayName = speakerData.Contains("|")
+                    ? speakerData.Split('|')[0].Trim()
+                    : speakerData;
+
+                string speakerTag = $"<speaker:{speakerData}>";
+
+                if (!__result.StartsWith(speakerTag))
+                {
+                    __result = $"{speakerTag}{__result}";
+
+                    if (Plugin.Config.LogTextIDs.Value)
+                        Plugin.Log.LogInfo($"[TextDebug] Injected Speaker: {speakerKey} -> {displayName}" +
+                            (speakerData.Contains("|") ? $" (variant: {speakerData.Split('|')[1]})" : ""));
+                }
             }
         }
     }
