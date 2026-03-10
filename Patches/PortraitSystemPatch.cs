@@ -47,10 +47,6 @@ public class PortraitSystemPatch
     private static Dictionary<string, string> speakerOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     private static string speakerOverridesPath;
 
-    // --- S1 Specific Configuration ---
-    private static Dictionary<string, string> s1Portraits = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    private static string s1PortraitsPath;
-
     // Tracks whether WE activated Name_Set (vs the game activating it for a native name).
     // We must never deactivate a Name_Set the game owns.
     private static bool s_nameSetActivatedByUs = false;
@@ -65,16 +61,6 @@ public class PortraitSystemPatch
 
         dialogOverridesPath = Path.Combine(configDir, "DialogOverrides.json");
         speakerOverridesPath = Path.Combine(configDir, "SpeakerOverrides.json");
-        s1PortraitsPath = Path.Combine(configDir, "S1Portrait.json");
-
-        // Migration logic omitted for brevity in this refactor, assuming it's already handled or moved to AssetLoader
-
-        // Load S1 Portraits Overrides
-        var loadedS1 = AssetLoader.LoadJsonAsync<Dictionary<string, string>>(s1PortraitsPath).Result;
-        if (loadedS1 != null)
-        {
-            s1Portraits = new Dictionary<string, string>(loadedS1, StringComparer.OrdinalIgnoreCase);
-        }
 
         // Load Dialog Overrides using AssetLoader (Sync for initialization)
         var loaded = AssetLoader.LoadJsonAsync<Dictionary<string, string>>(dialogOverridesPath).Result;
@@ -107,20 +93,6 @@ public class PortraitSystemPatch
 
         if (dialogReplacements.TryGetValue(key, out string replacement))
             return replacement;
-
-        return null;
-    }
-
-    /// <summary>
-    /// Get an S1 portrait override by text ID key
-    /// </summary>
-    public static string GetS1PortraitOverride(string key)
-    {
-        if (s1Portraits == null || s1Portraits.Count == 0)
-            return null;
-
-        if (s1Portraits.TryGetValue(key, out string portraitValue))
-            return portraitValue;
 
         return null;
     }
@@ -757,9 +729,8 @@ public class PortraitSystemPatch
     /// <summary>
     /// S1 portrait injection. Priority order:
     ///   1. Native portrait already active — leave it alone.
-    ///   2. S1Portrait.json explicit mapping (textId -> texture filename).
-    ///   3. SpeakerOverrides.json name-based fallback — looks for a texture
-    ///      matching the speaker name (e.g. "Elf Village Chief.png") in NPCPortraits/.
+    ///   2. SpeakerOverrides.json mapping — uses the speaker name as the texture filename
+    ///      (e.g. "Elf Village Chief" -> looks for "Elf Village Chief.png" in NPCPortraits/).
     /// </summary>
     private static void S1_InjectPortrait(Transform uiSet, string textId)
     {
@@ -778,26 +749,17 @@ public class PortraitSystemPatch
             return;
         }
 
-        // Resolve texture key: S1Portrait.json first, then speaker name fallback
+        // Resolve texture key from SpeakerOverrides.json (name part used as PNG filename)
         string textureKey = null;
         string source = null;
 
-        s1Portraits?.TryGetValue(textId ?? "", out textureKey);
-        if (!string.IsNullOrEmpty(textureKey))
+        string speakerData = GetSpeakerOverride(textId ?? "");
+        if (!string.IsNullOrEmpty(speakerData))
         {
-            source = "S1Portrait.json";
-        }
-        else
-        {
-            // Fall back to speaker name from SpeakerOverrides.json
-            string speakerData = GetSpeakerOverride(textId ?? "");
-            if (!string.IsNullOrEmpty(speakerData))
-            {
-                textureKey = speakerData.Contains("|")
-                    ? speakerData.Split('|')[0].Trim()
-                    : speakerData;
-                source = "SpeakerOverrides (name fallback)";
-            }
+            textureKey = speakerData.Contains("|")
+                ? speakerData.Split('|')[0].Trim()
+                : speakerData;
+            source = "SpeakerOverrides.json";
         }
 
         if (string.IsNullOrEmpty(textureKey))
@@ -1313,9 +1275,12 @@ public class PortraitSystemPatch
         string speakerName = __instance.speakerName;
         Plugin.Log.LogInfo($"[PotraitSystem] SetCharacterFace called - SpeakerName: '{speakerName}', HasSprite: {sprite != null}");
 
-        // Suikoden 1 mapping override (takes priority since S1 passes placeholder sprites)
+        // S1: resolve portrait texture key from SpeakerOverrides.json (name part used as PNG filename)
         string textId = TextDatabasePatch.LastTextId;
-        string s1MappedPortrait = GetS1PortraitOverride(textId);
+        string s1SpeakerData = GetSpeakerOverride(textId);
+        string s1MappedPortrait = !string.IsNullOrEmpty(s1SpeakerData)
+            ? (s1SpeakerData.Contains("|") ? s1SpeakerData.Split('|')[0].Trim() : s1SpeakerData)
+            : null;
 
         if (!string.IsNullOrEmpty(s1MappedPortrait))
         {
