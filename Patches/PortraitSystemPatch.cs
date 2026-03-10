@@ -741,50 +741,7 @@ public class PortraitSystemPatch
             if (uiSet == null) return;
 
             // ── Portrait injection ──────────────────────────────────────────────
-            Transform facePos = uiSet.Find("All_Select/Img_BG/Command_Layout/Face_Pos");
-            if (facePos == null)
-                Plugin.Log.LogWarning("[PotraitSystem] S1: Face_Pos not found");
-            else if (facePos.gameObject.activeSelf)
-                Plugin.Log.LogInfo("[PotraitSystem] S1: Face_Pos already active, leaving it alone");
-            else
-            {
-                string mapped = null;
-                s1Portraits?.TryGetValue(textId ?? "", out mapped);
-
-                if (string.IsNullOrEmpty(mapped))
-                    Plugin.Log.LogInfo($"[PotraitSystem] S1: no portrait mapping for '{textId}'");
-                else
-                {
-                    Plugin.Log.LogInfo($"[PotraitSystem] S1: matched '{textId}' -> '{mapped}'");
-                    Texture2D tex = LoadPortraitTexture(mapped);
-                    if (tex == null)
-                        Plugin.Log.LogWarning($"[PotraitSystem] S1: texture '{mapped}' not found");
-                    else
-                    {
-                        facePos.gameObject.SetActive(true);
-                        Transform imgFaceTransform = facePos.Find("Img_Face");
-                        if (imgFaceTransform == null)
-                            Plugin.Log.LogWarning("[PotraitSystem] S1: Img_Face not found");
-                        else
-                        {
-                            imgFaceTransform.gameObject.SetActive(true);
-                            var imgFace = imgFaceTransform.GetComponent<UnityEngine.UI.Image>();
-                            if (imgFace != null)
-                            {
-                                Vector2 pivot = cachedPortraitSprite != null ? cachedPortraitSprite.pivot : new Vector2(0.5f, 0.5f);
-                                float ppu = cachedPortraitSprite != null ? cachedPortraitSprite.pixelsPerUnit : 100f;
-                                Sprite newSprite = Sprite.Create(tex,
-                                    new Rect(0, 0, tex.width, tex.height),
-                                    pivot, ppu, 0, SpriteMeshType.FullRect);
-                                UnityEngine.Object.DontDestroyOnLoad(newSprite);
-                                UnityEngine.Object.DontDestroyOnLoad(tex);
-                                imgFace.sprite = newSprite;
-                                Plugin.Log.LogInfo($"[PotraitSystem] S1: ✓ Injected portrait '{mapped}'");
-                            }
-                        }
-                    }
-                }
-            }
+            S1_InjectPortrait(uiSet, textId);
 
             // ── Speaker name injection ─────────────────────────────────────────
             // AddNameText may never be called for unnamed NPCs in S1 so we also
@@ -795,6 +752,94 @@ public class PortraitSystemPatch
         {
             Plugin.Log.LogError($"[PotraitSystem] S1: postfix failed - {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// S1 portrait injection. Priority order:
+    ///   1. Native portrait already active — leave it alone.
+    ///   2. S1Portrait.json explicit mapping (textId -> texture filename).
+    ///   3. SpeakerOverrides.json name-based fallback — looks for a texture
+    ///      matching the speaker name (e.g. "Elf Village Chief.png") in NPCPortraits/.
+    /// </summary>
+    private static void S1_InjectPortrait(Transform uiSet, string textId)
+    {
+        Transform facePos = uiSet.Find("All_Select/Img_BG/Command_Layout/Face_Pos");
+        if (facePos == null)
+        {
+            Plugin.Log.LogWarning("[PotraitSystem] S1: Face_Pos not found");
+            return;
+        }
+
+        // Native portrait already present — leave it alone
+        if (facePos.gameObject.activeSelf)
+        {
+            if (Plugin.Config.DetailedLogs.Value)
+                Plugin.Log.LogInfo("[PotraitSystem] S1: Face_Pos already active, leaving it alone");
+            return;
+        }
+
+        // Resolve texture key: S1Portrait.json first, then speaker name fallback
+        string textureKey = null;
+        string source = null;
+
+        s1Portraits?.TryGetValue(textId ?? "", out textureKey);
+        if (!string.IsNullOrEmpty(textureKey))
+        {
+            source = "S1Portrait.json";
+        }
+        else
+        {
+            // Fall back to speaker name from SpeakerOverrides.json
+            string speakerData = GetSpeakerOverride(textId ?? "");
+            if (!string.IsNullOrEmpty(speakerData))
+            {
+                textureKey = speakerData.Contains("|")
+                    ? speakerData.Split('|')[0].Trim()
+                    : speakerData;
+                source = "SpeakerOverrides (name fallback)";
+            }
+        }
+
+        if (string.IsNullOrEmpty(textureKey))
+        {
+            if (Plugin.Config.DetailedLogs.Value)
+                Plugin.Log.LogInfo($"[PotraitSystem] S1: no portrait mapping for '{textId}'");
+            return;
+        }
+
+        Plugin.Log.LogInfo($"[PotraitSystem] S1: '{textId}' -> '{textureKey}' (via {source})");
+
+        Texture2D tex = LoadPortraitTexture(textureKey);
+        if (tex == null)
+        {
+            Plugin.Log.LogWarning($"[PotraitSystem] S1: texture '{textureKey}' not found");
+            return;
+        }
+
+        facePos.gameObject.SetActive(true);
+        Transform imgFaceTransform = facePos.Find("Img_Face");
+        if (imgFaceTransform == null)
+        {
+            Plugin.Log.LogWarning("[PotraitSystem] S1: Img_Face not found");
+            return;
+        }
+
+        imgFaceTransform.gameObject.SetActive(true);
+        var imgFace = imgFaceTransform.GetComponent<UnityEngine.UI.Image>();
+        if (imgFace == null) return;
+
+        Vector2 pivot = cachedPortraitSprite != null ? cachedPortraitSprite.pivot : new Vector2(0.5f, 0.5f);
+        float ppu   = cachedPortraitSprite != null ? cachedPortraitSprite.pixelsPerUnit : 100f;
+
+        Sprite newSprite = Sprite.Create(tex,
+            new Rect(0, 0, tex.width, tex.height),
+            pivot, ppu, 0, SpriteMeshType.FullRect);
+
+        UnityEngine.Object.DontDestroyOnLoad(newSprite);
+        UnityEngine.Object.DontDestroyOnLoad(tex);
+
+        imgFace.sprite = newSprite;
+        Plugin.Log.LogInfo($"[PotraitSystem] S1: ✓ Injected portrait '{textureKey}'");
     }
 
     /// <summary>
