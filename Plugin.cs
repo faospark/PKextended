@@ -79,7 +79,8 @@ public class Plugin : BasePlugin
     public void Update()
     {
         Patches.GameDetection.Update();
-        Patches.PSPLauncherPatch.Update();
+        if (Config.PSPLauncher.Value)
+            Patches.PSPLauncherPatch.Update();
         AssetLoader.Update();
     }
 

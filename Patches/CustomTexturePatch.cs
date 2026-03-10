@@ -492,11 +492,17 @@ public partial class CustomTexturePatch
         
         // Scan all files in one pass
         HashSet<string> validExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg", ".tga", ".dds" };
-        string[] allFiles = Directory.GetFiles(customTexturesPath, "*.*", SearchOption.AllDirectories);
         
-        string modsFolder = Path.Combine(customTexturesPath, "00-Mods");
+        string modsFolder = Path.Combine(Paths.GameRootPath, "PKCore", "00-Mods");
         string gsd1Folder = Path.Combine(customTexturesPath, "GSD1");
         string gsd2Folder = Path.Combine(customTexturesPath, "GSD2");
+
+        // Scan Textures folder + 00-Mods folder (now sibling of Textures, not a child)
+        string[] textureFiles = Directory.GetFiles(customTexturesPath, "*.*", SearchOption.AllDirectories);
+        string[] modsFiles = Directory.Exists(modsFolder)
+            ? Directory.GetFiles(modsFolder, "*.*", SearchOption.AllDirectories)
+            : Array.Empty<string>();
+        string[] allFiles = textureFiles.Concat(modsFiles).ToArray();
         
 
         

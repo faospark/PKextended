@@ -34,7 +34,6 @@ public static class PSPLauncherPatch
         if (waterObject != null && waterObject.activeSelf)
         {
             waterObject.SetActive(false);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Successfully disabled model_water on Launcher.");
         }
 
         if (!_bgCreated)
@@ -171,14 +170,11 @@ public static class PSPLauncherPatch
         bgImg.color = Color.white;
         bgImg.raycastTarget = false;
 
-        Plugin.Log.LogInfo("[PSPLauncherPatch] PSPBg fullscreen background inserted.");
-
         // Disable screen_gradation overlay
         Transform screenGradation = launcherRoot.transform.Find("screen/screen_gradation");
         if (screenGradation != null)
         {
             screenGradation.gameObject.SetActive(false);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled screen_gradation.");
         }
 
         // Disable screen/frame
@@ -186,7 +182,6 @@ public static class PSPLauncherPatch
         if (screenFrame != null)
         {
             screenFrame.gameObject.SetActive(false);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled screen/frame.");
         }
 
         // Disable screen/title
@@ -194,7 +189,6 @@ public static class PSPLauncherPatch
         if (screenTitle != null)
         {
             screenTitle.gameObject.SetActive(false);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled screen/title.");
         }
 
         // Insert new UI_Top_Title02_003
@@ -221,8 +215,6 @@ public static class PSPLauncherPatch
                 titleImg.sprite = Sprite.Create(titleTex, new Rect(0, 0, titleTex.width, titleTex.height), new Vector2(0.5f, 0.5f), 100f);
                 titleImg.color = Color.white;
                 titleImg.raycastTarget = false;
-
-                Plugin.Log.LogInfo("[PSPLauncherPatch] UI_Top_Title02_003 inserted into screen.");
             }
             else
             {
@@ -235,21 +227,18 @@ public static class PSPLauncherPatch
         if (headerNeutral != null)
         {
             headerNeutral.gameObject.SetActive(false);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled header_nuetral.");
         }
 
         Transform headerGs1 = launcherRoot.transform.Find("header_group/header_gs1");
         if (headerGs1 != null)
         {
             headerGs1.gameObject.SetActive(false);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled header_gs1.");
         }
 
         Transform headerGs2 = launcherRoot.transform.Find("header_group/header_gs2");
         if (headerGs2 != null)
         {
             headerGs2.gameObject.SetActive(false);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled header_gs2.");
         }
 
         // --- Scrolling overlay (index 1, just above bg) ---
@@ -258,23 +247,18 @@ public static class PSPLauncherPatch
         {
             CreateScrollingOverlay(launcherRoot, overlayTex);
         }
-        else
-        {
-            Plugin.Log.LogInfo("[PSPLauncherPatch] No PSPLauncherOverlay texture found — skipping overlay.");
-        }
+
 
         // Reposition menu_gs1/all and disable its reflect child
         Transform gs1All = launcherRoot.transform.Find("menu_group/menu_title/menu_gs1/all");
         if (gs1All != null)
         {
             gs1All.localPosition = new Vector3(-0.0004f, -73.1621f, 0f);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Applied position to menu_gs1/all.");
 
             Transform gs1Reflect = gs1All.Find("reflect");
             if (gs1Reflect != null)
             {
                 gs1Reflect.gameObject.SetActive(false);
-                Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled reflect on menu_gs1/all.");
             }
 
             Transform gs1Body = gs1All.Find("body");
@@ -284,14 +268,12 @@ public static class PSPLauncherPatch
                 if (gs1Title != null)
                 {
                     gs1Title.gameObject.SetActive(false);
-                    Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled title on menu_gs1/all/body.");
                 }
 
                 Transform gs1Pic = gs1Body.Find("pic");
                 if (gs1Pic != null)
                 {
                     gs1Pic.gameObject.SetActive(false);
-                    Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled pic on menu_gs1/all/body.");
                 }
 
                 if (gs1Body.Find("UI_Top_Title_BG_GSD1") == null)
@@ -320,8 +302,6 @@ public static class PSPLauncherPatch
                         bgImg1.sprite = Sprite.Create(bgTex1, new Rect(0, 0, bgTex1.width, bgTex1.height), new Vector2(0.5f, 0.5f), 100f);
                         bgImg1.color = Color.white;
                         bgImg1.raycastTarget = false;
-
-                        Plugin.Log.LogInfo("[PSPLauncherPatch] UI_Top_Title_BG_GSD1 inserted into menu_gs1/all/body.");
                     }
                     else
                     {
@@ -349,8 +329,6 @@ public static class PSPLauncherPatch
                         logoImg.sprite = Sprite.Create(logoTex, new Rect(0, 0, logoTex.width, logoTex.height), new Vector2(0.5f, 0.5f), 100f);
                         logoImg.color = Color.white;
                         logoImg.raycastTarget = false;
-
-                        Plugin.Log.LogInfo("[PSPLauncherPatch] PSPSuikoden1Logo inserted into menu_gs1/all/body.");
                     }
                     else
                     {
@@ -365,13 +343,11 @@ public static class PSPLauncherPatch
         if (gs2All != null)
         {
             gs2All.localPosition = new Vector3(0.0004f, -78.1504f, 0f);
-            Plugin.Log.LogInfo("[PSPLauncherPatch] Applied position to menu_gs2/all.");
 
             Transform gs2Reflect = gs2All.Find("reflect");
             if (gs2Reflect != null)
             {
                 gs2Reflect.gameObject.SetActive(false);
-                Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled reflect on menu_gs2/all.");
             }
 
             Transform gs2Body = gs2All.Find("body");
@@ -381,14 +357,12 @@ public static class PSPLauncherPatch
                 if (gs2Title != null)
                 {
                     gs2Title.gameObject.SetActive(false);
-                    Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled title on menu_gs2/all/body.");
                 }
 
                 Transform gs2Pic = gs2Body.Find("pic");
                 if (gs2Pic != null)
                 {
                     gs2Pic.gameObject.SetActive(false);
-                    Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled pic on menu_gs2/all/body.");
                 }
 
                 if (gs2Body.Find("UI_Top_Title_BG_GSD2") == null)
@@ -417,8 +391,6 @@ public static class PSPLauncherPatch
                         bgImg2.sprite = Sprite.Create(bgTex2, new Rect(0, 0, bgTex2.width, bgTex2.height), new Vector2(0.5f, 0.5f), 100f);
                         bgImg2.color = Color.white;
                         bgImg2.raycastTarget = false;
-
-                        Plugin.Log.LogInfo("[PSPLauncherPatch] UI_Top_Title_BG_GSD2 inserted into menu_gs2/all/body.");
                     }
                     else
                     {
@@ -446,8 +418,6 @@ public static class PSPLauncherPatch
                         logo2Img.sprite = Sprite.Create(logo2Tex, new Rect(0, 0, logo2Tex.width, logo2Tex.height), new Vector2(0.5f, 0.5f), 100f);
                         logo2Img.color = Color.white;
                         logo2Img.raycastTarget = false;
-
-                        Plugin.Log.LogInfo("[PSPLauncherPatch] PSPSuikoden2Logo inserted into menu_gs2/all/body.");
                     }
                     else
                     {
@@ -465,14 +435,12 @@ public static class PSPLauncherPatch
             if (line != null)
             {
                 line.gameObject.SetActive(false);
-                Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled Line on UI_Bg_02(Clone).");
             }
 
             Transform bgGradation = uiBg02.transform.Find("bg_gradation");
             if (bgGradation != null)
             {
                 bgGradation.gameObject.SetActive(false);
-                Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled bg_gradation on UI_Bg_02(Clone).");
             }
 
             Transform bg = uiBg02.transform.Find("bg");
@@ -482,7 +450,6 @@ public static class PSPLauncherPatch
                 if (bgImage != null)
                 {
                     bgImage.color = new Color(0.1f, 0.345f, 0.922f, 1f);
-                    Plugin.Log.LogInfo("[PSPLauncherPatch] Set bg color on UI_Bg_02(Clone)/bg.");
                 }
             }
         }
@@ -499,7 +466,6 @@ public static class PSPLauncherPatch
                 if (originalBgImg != null && originalBgImg.enabled)
                 {
                     originalBgImg.enabled = false;
-                    Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled Image component on Img_Bg.");
                 }
 
                 // Disable child Img_Bg object inside Img_Bg
@@ -507,7 +473,6 @@ public static class PSPLauncherPatch
                 if (nestedImgBg != null && nestedImgBg.gameObject.activeSelf)
                 {
                     nestedImgBg.gameObject.SetActive(false);
-                    Plugin.Log.LogInfo("[PSPLauncherPatch] Disabled nested Img_Bg on UI_Com_Footer(Clone)/Img_Bg.");
                 }
 
                 if (imgBg.Find("footerbg") == null)
@@ -526,8 +491,6 @@ public static class PSPLauncherPatch
                     Image footerBgImg = footerBgGO.AddComponent<Image>();
                     footerBgImg.color = new Color(0f, 0f, 0f, 0.7f); // Black with 50% alpha
                     footerBgImg.raycastTarget = false;
-
-                    Plugin.Log.LogInfo("[PSPLauncherPatch] footerbg placeholder inserted into Img_Bg.");
                 }
             }
         }
@@ -577,7 +540,6 @@ public static class PSPLauncherPatch
         bgImg.color = Color.white;
         bgImg.raycastTarget = false;
 
-        Plugin.Log.LogInfo($"[PSPLauncherPatch] {textureName} background inserted into {parent.name}.");
         createdFlag = true;
     }
 
@@ -627,7 +589,6 @@ public static class PSPLauncherPatch
           .SetLoops(-1, LoopType.Restart)
           .SetUpdate(UpdateType.Normal, true);
 
-        Plugin.Log.LogInfo($"[PSPLauncherPatch] PSPOverlay seamless scroll started ({OverlayScrollDuration}s loop).");
     }
 }
 

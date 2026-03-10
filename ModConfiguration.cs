@@ -61,9 +61,11 @@ public sealed class ModConfiguration
     public ConfigEntry<bool> ScaleDownDialogBox { get; private set; }
     public ConfigEntry<string> ScaledDownMenu { get; private set; }
     public ConfigEntry<string> SMAAQuality { get; private set; }
+    public ConfigEntry<bool> PSPLauncher { get; private set; }
 
     // Sound Settings
-    public ConfigEntry<bool> EnableSoundRedirect { get; private set; }
+    public HiddenConfigEntry<bool> EnableSoundRedirect { get; private set; }
+    public ConfigEntry<bool> BetterLauncherBGM { get; private set; }
 
     // Performance Settings
     public ConfigEntry<bool> EnableTextureManifestCache { get; private set; }
@@ -184,6 +186,13 @@ public sealed class ModConfiguration
             "Main menu layout preset. false = Normal , true: scaled down 80% with adjusted position)."
         );
 
+        PSPLauncher = _config.Bind(
+            "02 User Interface",
+            "PSPLauncher",
+            false,
+            "Enable the PSP inspired Launcher."
+        );
+
         SavePointColor = _config.Bind(
             "03 General",
             "SavePointColor",
@@ -255,11 +264,13 @@ public sealed class ModConfiguration
             "Enable war battle ability modification. Allows you to customize character abilities in Suikoden 2's war battles. Wont appear on the game menu of Apple but will have an effect on battle. Base is already boosted but can be further configures in PKCore/Config/S2WarAbilities.json"
         );
 
-        EnableSoundRedirect = _config.Bind(
+  
+
+        BetterLauncherBGM = _config.Bind(
             "03 Sound",
-            "EnableSoundRedirect",
+            "BetterLauncherBGM",
             true,
-            "Enable custom sound file replacement. Place .acb and .awb files in {GameRoot}/PKCore/Sound/ mirroring the original Sound folder structure (e.g. PKCore/Sound/BGM2/BATTLE1.acb). Any file present there will replace the original."
+            "Enable Better Launcher BGM mod. Loads sound files from PKCore/00-Mods/Better-Launcher-BGM-Mod/Sound/ to replace the launcher music. Requires EnableSoundRedirect to be true."
         );
 
         // Performance section - all performance related settings
@@ -341,7 +352,7 @@ public sealed class ModConfiguration
         // ========================================
         // These settings are NOT written to the config file and are hardcoded to false
         // If you need to enable them for development, replace these with _config.Bind() calls
-
+        EnableSoundRedirect = new HiddenConfigEntry<bool>(true);
         EnableDialogOverrides = new HiddenConfigEntry<bool>(true);
         EnableCustomObjects = new HiddenConfigEntry<bool>(false);
         DebugCustomObjects = new HiddenConfigEntry<bool>(false);

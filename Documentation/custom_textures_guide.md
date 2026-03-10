@@ -90,20 +90,23 @@ PKCore/Textures/
 - Overrides base folder textures
 - Prevents cross-contamination between games
 
-#### **Layer 3: User Mods Folder (HIGHEST Priority)**
+#### **Layer 3: 00-Mods Folder (HIGHEST Priority)**
 ```
-PKCore/Textures/
-└── 00-Mods/
-    ├── my_custom_texture.png
-    ├── GSD1/
-    │   └── custom_s1_texture.png
-    └── GSD2/
-        └── custom_s2_texture.png
+PKCore/00-Mods/
+└── MyMod/
+    └── Textures/
+        ├── my_custom_texture.png
+        ├── GSD1/
+        │   └── custom_s1_texture.png
+        └── GSD2/
+            └── custom_s2_texture.png
 ```
-- **00-Mods/**: Reserved for user customizations
-- **Highest priority** - Always overrides everything else
-- Can contain game-specific subfolders (GSD1/GSD2) for targeted replacements
-- Perfect for personal modifications without touching main texture pack
+- **Highest priority** — always overrides base and game-specific folders
+- Each named subfolder is an independent mod package
+- Supports `GSD1/`/`GSD2/` isolation inside each mod's `Textures/` folder
+- Also supports `Sound/` subfolders for custom audio (see [00-Mods Guide](00-mods_guide.md))
+
+> For full details on using the `00-Mods/` folder — including sound support, multi-mod priority, and packaging — see the **[00-Mods Guide](00-mods_guide.md)**.
 
 ### Example Complete Structure
 
@@ -536,6 +539,7 @@ A: Check logs with `LogReplaceableTextures = true` to see if the texture is even
 
 ## Related Documentation
 
+- [00-Mods Guide](00-mods_guide.md) - Using the 00-Mods folder for textures, sounds, and mod packaging
 - [Configuration Guide](configuration_guide.md) - All config options explained
 - [Caching Mechanism](caching_mechanism.md) - Deep dive into the caching system
 - [NPC Portraits Walkthrough](walkthrough_npc_portraits.md) - Guide for custom NPC portraits
