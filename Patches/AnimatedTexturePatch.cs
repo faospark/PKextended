@@ -16,6 +16,7 @@ public class AnimatedTexturePatch
 
     // Just add new prefixes/substrings here as you find more animated objects that need replacing
     private static readonly string[] AnimatedObjectKeywords = {
+        "t_gsd1_ve2_19_sword_",
         "dragon",
         "t_gsd1_vaa_00_obj_ushi_"
     };
