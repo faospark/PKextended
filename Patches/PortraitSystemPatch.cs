@@ -41,18 +41,18 @@ public class PortraitSystemPatch
     private static string lastSpeakerWithExpression = null;
 
     // --- Dialog Replacement System ---
-    private static Dictionary<string, string> dialogReplacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    private static LocalizedOverrideMap dialogReplacements = new LocalizedOverrideMap();
     private static string dialogOverridesPath;
 
     // --- Speaker Injection System ---
-    private static Dictionary<string, string> s1SpeakerOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    private static Dictionary<string, string> s2SpeakerOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    private static LocalizedOverrideMap s1SpeakerOverrides = new LocalizedOverrideMap();
+    private static LocalizedOverrideMap s2SpeakerOverrides = new LocalizedOverrideMap();
     private static string s1SpeakerOverridesPath;
     private static string s2SpeakerOverridesPath;
 
     // --- Game-specific Dialog Replacements (from 00-Mods GSD1/ or GSD2/ subfolders) ---
-    private static Dictionary<string, string> gsd1DialogReplacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    private static Dictionary<string, string> gsd2DialogReplacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    private static LocalizedOverrideMap gsd1DialogReplacements = new LocalizedOverrideMap();
+    private static LocalizedOverrideMap gsd2DialogReplacements = new LocalizedOverrideMap();
 
     private static bool _dialogOverridesLoaded = false;
 
@@ -85,30 +85,15 @@ public class PortraitSystemPatch
         s1SpeakerOverridesPath = Path.Combine(configDir, "S1SpeakerOverrides.json");
         s2SpeakerOverridesPath = Path.Combine(configDir, "S2SpeakerOverrides.json");
 
-        // Load Dialog Overrides using AssetLoader (Sync for initialization)
-        var loaded = AssetLoader.LoadJsonSync<Dictionary<string, string>>(dialogOverridesPath);
-        if (loaded != null)
-        {
-            dialogReplacements = new Dictionary<string, string>(loaded, StringComparer.OrdinalIgnoreCase);
-        }
+        dialogReplacements.Clear();
+        s1SpeakerOverrides.Clear();
+        s2SpeakerOverrides.Clear();
+        gsd1DialogReplacements.Clear();
+        gsd2DialogReplacements.Clear();
 
-        // Load S1 Speaker Overrides
-        var loadedS1Speakers = AssetLoader.LoadJsonSync<Dictionary<string, string>>(s1SpeakerOverridesPath);
-        if (loadedS1Speakers != null)
-        {
-            s1SpeakerOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var kvp in loadedS1Speakers)
-                s1SpeakerOverrides[kvp.Key] = kvp.Value;
-        }
-
-        // Load S2 Speaker Overrides
-        var loadedS2Speakers = AssetLoader.LoadJsonSync<Dictionary<string, string>>(s2SpeakerOverridesPath);
-        if (loadedS2Speakers != null)
-        {
-            s2SpeakerOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var kvp in loadedS2Speakers)
-                s2SpeakerOverrides[kvp.Key] = kvp.Value;
-        }
+        dialogReplacements.LoadFromFile(dialogOverridesPath, "Config/DialogOverrides");
+        s1SpeakerOverrides.LoadFromFile(s1SpeakerOverridesPath, "Config/S1SpeakerOverrides");
+        s2SpeakerOverrides.LoadFromFile(s2SpeakerOverridesPath, "Config/S2SpeakerOverrides");
 
         // Load overrides from 00-Mods (highest priority — overrides Config/ files)
         LoadDialogOverridesFromMods();
@@ -162,17 +147,12 @@ public class PortraitSystemPatch
     /// Load a JSON dictionary file and merge its entries into <paramref name="target"/>.
     /// Silently skips if the file does not exist.
     /// </summary>
-    private static void MergeJsonIntoDict(string filePath, Dictionary<string, string> target, string logLabel)
+    private static void MergeJsonIntoDict(string filePath, LocalizedOverrideMap target, string logLabel)
     {
-        if (!File.Exists(filePath)) return;
-
-        var loaded = AssetLoader.LoadJsonSync<Dictionary<string, string>>(filePath);
-        if (loaded == null || loaded.Count == 0) return;
-
-        foreach (var kvp in loaded)
-            target[kvp.Key] = kvp.Value;
-
-        Plugin.Log.LogInfo($"[TextOverride] [{logLabel}] Loaded {loaded.Count} entries from {Path.GetFileName(filePath)}");
+        if (target != null && File.Exists(filePath))
+        {
+            target.LoadFromFile(filePath, logLabel);
+        }
     }
 
     /// <summary>
@@ -197,8 +177,14 @@ public class PortraitSystemPatch
         return null;
     }
 
-    private static bool TryGetSpeaker(Dictionary<string, string> dict, string key, out string value)
+    private static bool TryGetSpeaker(LocalizedOverrideMap dict, string key, out string value)
     {
+        if (dict == null)
+        {
+            value = null;
+            return false;
+        }
+
         if (dict.TryGetValue(key, out value))
             return true;
 
@@ -220,6 +206,7 @@ public class PortraitSystemPatch
 
         return false;
     }
+
 
     /// <summary>
     /// Get a speaker override by ID key. Routes to S1SpeakerOverrides.json or S2SpeakerOverrides.json
