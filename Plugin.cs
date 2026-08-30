@@ -274,6 +274,10 @@ public class Plugin : BasePlugin
         // Disable specific va4_04 map objects (Suikoden 1) - always active
         harmony.PatchAll(typeof(S1DisableObjectsPatch));
 
+        // Language selection detection patch (TitlePanel)
+        Log.LogInfo("Applying LanguageSelection patch...");
+        harmony.PatchAll(typeof(LanguageSelectionPatch));
+
         // Apply Voice Acting Patch (Text-to-Speech)
 
 
