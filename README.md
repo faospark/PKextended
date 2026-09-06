@@ -11,7 +11,7 @@ The **core DLL component** for **[Project Kyaro](https://www.nexusmods.com/suiko
 
 **[Can Be Toggled]**
 
-* Re-Texture Framework
+* Re-Texture Framework (PNG, JPG, TGA, and DDS with BC1/BC3/BC7 DX10 header support)
 * Upscaled Smooth Sprites (can be toggled off)
 * Sprite Filtering and Anti-Aliasing (SMAA)
 * NPC Portraits Framework
@@ -65,7 +65,7 @@ The **core DLL component** for **[Project Kyaro](https://www.nexusmods.com/suiko
 
 Replace game textures with custom PNG or DDS files in `BepInEx/plugins/PKCore/Textures/`. Use `00-Mods/` subfolder for highest priority custom mods.
 
-**Performance Optimization**: Built-in manifest caching dramatically improves boot times. DDS format support allows pre-compressed textures (BC1/BC3/BC7) for reduced VRAM usage and faster loading.
+**Performance Optimization**: Built-in manifest caching dramatically improves boot times. DDS format support allows pre-compressed textures (**BC1**, **BC3**, and high-quality **BC7** with DX10 header support) for reduced VRAM usage and faster loading.
 
 ### Advanced Customization
 

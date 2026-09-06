@@ -149,7 +149,7 @@ PKCore supports the following DDS compression formats:
 
 - **BC1 (DXT1)**: No alpha channel, 6:1 compression, smallest file size
 - **BC3 (DXT5)**: Full alpha channel, 4:1 compression, good for transparency
-- **BC7**: Highest quality, 4:1 compression, best color accuracy
+- **BC7**: Highest quality, 4:1 compression, best color accuracy for 8-bit RGBA (supports standard DX10 extended headers exported by NVIDIA Texture Tools, Photoshop, Paint.NET, GIMP, and DirectXTex `texconv`)
 
 **Why Use DDS?**
 - Smaller VRAM usage (4-6x smaller than PNG)
@@ -157,8 +157,8 @@ PKCore supports the following DDS compression formats:
 - GPU can use compressed data directly
 
 **Creating DDS Files:**
-1. Use tools like [NVIDIA Texture Tools](https://developer.nvidia.com/nvidia-texture-tools-exporter) or [Paint.NET with DDS plugin](https://github.com/dlemstra/Magick.NET)
-2. Choose BC1 for opaque textures, BC3 for textures with alpha, BC7 for highest quality
+1. Use tools like [NVIDIA Texture Tools Exporter](https://developer.nvidia.com/nvidia-texture-tools-exporter), Photoshop DDS plugin, or [Paint.NET](https://www.getpaint.net/)
+2. Choose BC1 for opaque textures, BC3 for textures with basic alpha, or BC7 for highest quality color & smooth alpha
 3. Save with mipmaps enabled for best quality
 
 ---
